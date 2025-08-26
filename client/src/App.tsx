@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
 import Appointments from "@/pages/appointments";
@@ -12,6 +13,7 @@ import Calendar from "@/pages/calendar";
 import Billing from "@/pages/billing";
 import Reports from "@/pages/reports";
 import ClientPortal from "@/pages/client-portal";
+import AdminUsers from "@/pages/admin-users";
 import NotFound from "@/pages/not-found";
 import Navigation from "@/components/navigation";
 
@@ -32,7 +34,10 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Login} />
+          <Route path="/landing" component={Landing} />
+        </>
       ) : (
         <>
           <Navigation />
@@ -44,6 +49,9 @@ function Router() {
           <Route path="/reports" component={Reports} />
           {user?.role === 'client' && (
             <Route path="/portal" component={ClientPortal} />
+          )}
+          {user?.role === 'admin' && (
+            <Route path="/admin/users" component={AdminUsers} />
           )}
         </>
       )}

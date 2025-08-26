@@ -27,19 +27,40 @@ export const sessions = pgTable(
 );
 
 // User storage table for Replit Auth
+// User roles enum
+export const userRoleEnum = pgEnum("user_role", [
+  "admin",
+  "teacher", 
+  "client"
+]);
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role").default("client"), // "admin" or "client"
+  role: varchar("role").default("client"), // Keep as varchar for now
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const createUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  password: z.string().min(8).optional(), // For internal user creation
+});
 
 // Clients table (customers of the business)
 export const clients = pgTable("clients", {
