@@ -83,7 +83,7 @@ export interface IStorage {
   deleteAppointment(id: string): Promise<void>;
 
   // Invoice operations
-  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  createInvoice(invoice: Omit<InsertInvoice, 'invoiceNumber'>): Promise<Invoice>;
   getInvoices(): Promise<any[]>;
   getInvoicesByClientId(clientId: string): Promise<any[]>;
   getInvoice(id: string): Promise<any | undefined>;
@@ -441,7 +441,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Invoice operations
-  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+  async createInvoice(invoice: Omit<InsertInvoice, 'invoiceNumber'>): Promise<Invoice> {
     const invoiceNumber = `INV-${Date.now()}`;
     const [newInvoice] = await db
       .insert(invoices)

@@ -102,7 +102,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/users', isAuthenticated, isAdmin, async (req, res) => {
     try {
       const userData = createUserSchema.omit({ password: true }).parse(req.body);
-      const user = await storage.createUser(userData);
+      const user = await storage.createUser({
+        email: userData.email,
+        firstName: userData.firstName || undefined,
+        lastName: userData.lastName || undefined,
+        role: userData.role || 'client',
+      });
       res.json(user);
     } catch (error) {
       console.error("Error creating user:", error);
