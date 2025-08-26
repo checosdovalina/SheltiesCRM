@@ -94,6 +94,7 @@ export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
 
   try {
     const user = await storage.getUser(req.session.userId);
+    
     if (!user) {
       req.session.destroy(() => {});
       return res.status(401).json({ message: "Unauthorized" });
