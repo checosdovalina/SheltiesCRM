@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAdmin, authenticateUser, registerAdmin } from "./auth";
 import {
   insertClientSchema,
   insertDogSchema,
@@ -11,39 +11,93 @@ import {
   insertExpenseSchema,
   insertProgressEntrySchema,
   createUserSchema,
+  loginSchema,
+  registerSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupAuth(app);
 
-  // Auth routes
+  // Auth routes - Custom login/register system
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const loginData = loginSchema.parse(req.body);
+      const user = await authenticateUser(loginData);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Email o contraseña incorrectos" });
+      }
+
+      // Set session
+      (req.session as any).userId = user.id;
+      res.json({ 
+        id: user.id, 
+        email: user.email, 
+        firstName: user.firstName, 
+        lastName: user.lastName, 
+        role: user.role 
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(400).json({ message: "Error en el inicio de sesión" });
+    }
+  });
+
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const registerData = registerSchema.parse(req.body);
+      const user = await registerAdmin(registerData);
+      
+      if (!user) {
+        return res.status(400).json({ message: "Error al crear el usuario admin" });
+      }
+
+      // Set session
+      (req.session as any).userId = user.id;
+      res.json({ 
+        id: user.id, 
+        email: user.email, 
+        firstName: user.firstName, 
+        lastName: user.lastName, 
+        role: user.role 
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(400).json({ message: "Error en el registro" });
+    }
+  });
+
+  app.post('/api/auth/logout', async (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Error al cerrar sesión" });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ message: "Sesión cerrada exitosamente" });
+    });
+  });
+
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      res.json(req.user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
-  // Admin user management routes
-  const isAdmin = async (req: any, res: any, next: any) => {
+  // Check if admin exists (for registration UI)
+  app.get('/api/auth/admin-exists', async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (user?.role !== 'admin') {
-        return res.status(403).json({ message: "Access denied. Admin role required." });
-      }
-      next();
+      const admins = await storage.getAdminUsers();
+      res.json({ exists: admins.length > 0 });
     } catch (error) {
-      console.error("Error checking admin role:", error);
-      res.status(500).json({ message: "Failed to verify permissions" });
+      console.error("Error checking admin existence:", error);
+      res.status(500).json({ message: "Error checking admin status" });
     }
-  };
+  });
 
   app.post('/api/admin/users', isAuthenticated, isAdmin, async (req, res) => {
     try {

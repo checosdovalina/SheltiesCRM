@@ -35,6 +35,17 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   
+  // Custom authentication methods
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUserWithPassword(userData: { 
+    email: string; 
+    password: string; 
+    firstName?: string; 
+    lastName?: string; 
+    role: string 
+  }): Promise<User>;
+  getAdminUsers(): Promise<User[]>;
+  
   // Admin user management
   createUser(userData: { email: string; firstName?: string; lastName?: string; role: string }): Promise<User>;
   getAllUsers(): Promise<User[]>;
@@ -163,6 +174,36 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+
+  // Custom authentication methods
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUserWithPassword(userData: { 
+    email: string; 
+    password: string; 
+    firstName?: string; 
+    lastName?: string; 
+    role: string 
+  }): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        role: userData.role,
+      })
+      .returning();
+    return user;
+  }
+
+  async getAdminUsers(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.role, 'admin'));
   }
 
   // Client operations
