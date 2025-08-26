@@ -32,6 +32,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Set session
       (req.session as any).userId = user.id;
+      
+      // Save session explicitly
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve(null);
+        });
+      });
+      
       res.json({ 
         id: user.id, 
         email: user.email, 

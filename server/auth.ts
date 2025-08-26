@@ -26,7 +26,8 @@ export function getSession() {
       httpOnly: true,
       secure: false, // Set to true in production with HTTPS
       maxAge: sessionTtl,
-      sameSite: 'lax', // Important for cross-origin requests
+      sameSite: 'lax',
+      path: '/', // Ensure cookie is available for all paths
     },
   });
 }
