@@ -79,9 +79,9 @@ export default function Dashboard() {
     );
   }
 
-  const upcomingAppointments = (appointments || [])?.filter(
-    (apt: any) => new Date(apt.appointmentDate) > new Date()
-  )?.slice(0, 3) || [];
+  const upcomingAppointments = Array.isArray(appointments) 
+    ? appointments.filter((apt: any) => new Date(apt.appointmentDate) > new Date()).slice(0, 3)
+    : [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
