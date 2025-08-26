@@ -79,7 +79,7 @@ export default function Dashboard() {
     );
   }
 
-  const upcomingAppointments = appointments?.filter(
+  const upcomingAppointments = (appointments || [])?.filter(
     (apt: any) => new Date(apt.appointmentDate) > new Date()
   )?.slice(0, 3) || [];
 
@@ -121,7 +121,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Citas Hoy</p>
                 <p className="text-2xl font-bold text-foreground" data-testid="metric-appointments-today">
-                  {metricsLoading ? "..." : metrics?.appointmentsToday || 0}
+                  {metricsLoading ? "..." : (metrics as any)?.appointmentsToday || 0}
                 </p>
               </div>
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -138,7 +138,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Ingresos del Mes</p>
                 <p className="text-2xl font-bold text-foreground" data-testid="metric-monthly-revenue">
-                  {metricsLoading ? "..." : `$${Number(metrics?.monthlyRevenue || 0).toLocaleString()}`}
+                  {metricsLoading ? "..." : `$${Number((metrics as any)?.monthlyRevenue || 0).toLocaleString()}`}
                 </p>
               </div>
               <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
@@ -155,7 +155,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Clientes Activos</p>
                 <p className="text-2xl font-bold text-foreground" data-testid="metric-active-clients">
-                  {metricsLoading ? "..." : metrics?.activeClients || 0}
+                  {metricsLoading ? "..." : (metrics as any)?.activeClients || 0}
                 </p>
               </div>
               <div className="w-12 h-12 bg-chart-2/10 rounded-lg flex items-center justify-center">
@@ -172,7 +172,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Perros en Hospedaje</p>
                 <p className="text-2xl font-bold text-foreground" data-testid="metric-dogs-boarding">
-                  {metricsLoading ? "..." : metrics?.dogsBoarding || 0}
+                  {metricsLoading ? "..." : (metrics as any)?.dogsBoarding || 0}
                 </p>
               </div>
               <div className="w-12 h-12 bg-chart-4/10 rounded-lg flex items-center justify-center">
