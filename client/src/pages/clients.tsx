@@ -82,11 +82,13 @@ export default function Clients() {
     );
   }
 
-  const filteredClients = clients?.filter((client: any) => 
-    client.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredClients = Array.isArray(clients) 
+    ? clients.filter((client: any) => 
+        client.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   const handleEditClient = (client: any) => {
     setEditingClient(client);
