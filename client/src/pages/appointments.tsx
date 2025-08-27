@@ -217,25 +217,25 @@ export default function Appointments() {
           sortedAppointments.map((appointment: any) => (
             <Card key={appointment.id} className="hover:shadow-md transition-shadow" data-testid={`appointment-card-${appointment.id}`}>
               <CardContent className="p-4 sm:p-6">
-                {/* Mobile Layout - Stack everything vertically */}
-                <div className="block sm:hidden space-y-4">
+                {/* Mobile Layout - Stack everything vertically with better spacing */}
+                <div className="block sm:hidden space-y-3">
                   {/* Client and Dog Info */}
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-start space-x-3">
                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-xs font-medium text-primary">
                         {appointment.client?.firstName?.[0]}{appointment.client?.lastName?.[0]}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <h3 className="font-semibold text-foreground text-sm" data-testid={`appointment-client-${appointment.id}`}>
+                      <div className="flex items-center gap-1 mb-1">
+                        <User className="w-3 h-3 text-muted-foreground" />
+                        <h3 className="font-semibold text-foreground text-sm leading-tight" data-testid={`appointment-client-${appointment.id}`}>
                           {appointment.client?.firstName} {appointment.client?.lastName}
                         </h3>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Dog className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground" data-testid={`appointment-dog-${appointment.id}`}>
+                      <div className="flex items-center gap-1">
+                        <Dog className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground leading-tight" data-testid={`appointment-dog-${appointment.id}`}>
                           {appointment.dog?.name} ({appointment.dog?.breed})
                         </span>
                       </div>
@@ -244,18 +244,18 @@ export default function Appointments() {
                   
                   {/* Service Info */}
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className={getServiceTypeColor(appointment.service?.type)}>
+                    <Badge variant="outline" className={`${getServiceTypeColor(appointment.service?.type)} text-xs`}>
                       {getServiceTypeText(appointment.service?.type)}
                     </Badge>
-                    <span className="text-sm text-muted-foreground" data-testid={`appointment-service-${appointment.id}`}>
+                    <span className="text-xs text-muted-foreground" data-testid={`appointment-service-${appointment.id}`}>
                       {appointment.service?.name}
                     </span>
                   </div>
 
-                  {/* Date, Time and Price */}
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center space-x-2 text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
+                  {/* Date, Time */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center space-x-1 text-muted-foreground">
+                      <Calendar className="w-3 h-3" />
                       <span data-testid={`appointment-date-${appointment.id}`}>
                         {new Date(appointment.appointmentDate).toLocaleDateString('es-ES', {
                           weekday: 'short',
@@ -264,8 +264,8 @@ export default function Appointments() {
                         })}
                       </span>
                     </div>
-                    <div className="flex items-center space-x-2 text-muted-foreground">
-                      <Clock className="w-4 h-4" />
+                    <div className="flex items-center space-x-1 text-muted-foreground">
+                      <Clock className="w-3 h-3" />
                       <span data-testid={`appointment-time-${appointment.id}`}>
                         {new Date(appointment.appointmentDate).toLocaleTimeString('es-ES', {
                           hour: '2-digit',
@@ -276,12 +276,12 @@ export default function Appointments() {
                   </div>
 
                   {/* Status and Price */}
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-2 pt-1">
                     <Select
                       value={appointment.status}
                       onValueChange={(value) => handleStatusUpdate(appointment.id, value)}
                     >
-                      <SelectTrigger className="w-[120px]" data-testid={`select-status-${appointment.id}`}>
+                      <SelectTrigger className="w-[100px] h-8 text-xs" data-testid={`select-status-${appointment.id}`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -295,12 +295,21 @@ export default function Appointments() {
 
                     {appointment.price && (
                       <div className="text-right">
-                        <p className="font-semibold text-foreground" data-testid={`appointment-price-${appointment.id}`}>
+                        <p className="font-semibold text-foreground text-sm" data-testid={`appointment-price-${appointment.id}`}>
                           ${Number(appointment.price).toLocaleString()}
                         </p>
                       </div>
                     )}
                   </div>
+
+                  {/* Notes for Mobile */}
+                  {appointment.notes && (
+                    <div className="pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground line-clamp-2" data-testid={`appointment-notes-${appointment.id}`}>
+                        <strong>Notas:</strong> {appointment.notes}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Desktop Layout - Original horizontal layout */}
@@ -388,8 +397,9 @@ export default function Appointments() {
                   </div>
                 </div>
 
+                {/* Notes for Desktop only (mobile has notes in its own section) */}
                 {appointment.notes && (
-                  <div className="mt-4 pt-4 border-t border-border">
+                  <div className="hidden sm:block mt-4 pt-4 border-t border-border">
                     <p className="text-sm text-muted-foreground" data-testid={`appointment-notes-${appointment.id}`}>
                       <strong>Notas:</strong> {appointment.notes}
                     </p>
