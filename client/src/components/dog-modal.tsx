@@ -215,6 +215,9 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
   });
 
   function onSubmit(data: z.infer<typeof insertDogSchema>) {
+    console.log("Form submission data:", data);
+    console.log("Current imageUrl in form:", form.getValues("imageUrl"));
+    console.log("Current uploadedImageUrl state:", uploadedImageUrl);
     createDogMutation.mutate(data);
   }
 
