@@ -328,7 +328,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Debe seleccionar un servicio" });
       }
       
-      const appointmentData = insertAppointmentSchema.parse(req.body);
+      // Convert data types before validation
+      const processedData = {
+        ...req.body,
+        appointmentDate: new Date(req.body.appointmentDate),
+        price: req.body.price ? req.body.price.toString() : null,
+      };
+      
+      const appointmentData = insertAppointmentSchema.parse(processedData);
       console.log("[DEBUG] Parsed appointment data:", JSON.stringify(appointmentData, null, 2));
       const appointment = await storage.createAppointment(appointmentData);
       console.log("[DEBUG] Created appointment:", JSON.stringify(appointment, null, 2));
