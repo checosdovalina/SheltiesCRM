@@ -89,49 +89,80 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
 
   const handleImageUpload = async () => {
     try {
+      console.log("Requesting upload URL...");
       const response = await fetch("/api/dogs/upload-image", {
         method: "POST",
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        }
       });
       
+      console.log("Upload URL response:", response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error("Failed to get upload URL");
+        const errorData = await response.json();
+        console.error("Upload URL error:", errorData);
+        throw new Error(`Failed to get upload URL: ${errorData.message || response.statusText}`);
       }
       
       const { uploadURL } = await response.json();
+      console.log("Received upload URL:", uploadURL);
+      
       return {
         method: "PUT" as const,
         url: uploadURL,
       };
     } catch (error) {
+      console.error("Upload preparation error:", error);
       toast({
         title: "Error",
-        description: "No se pudo preparar la subida de imagen",
+        description: `No se pudo preparar la subida de imagen: ${error instanceof Error ? error.message : 'Error desconocido'}`,
         variant: "destructive",
       });
       throw error;
     }
   };
 
-  const handleImageComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+  const handleImageComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       if (uploadedFile.uploadURL) {
-        // Extract the image path from the upload URL to create the serving URL
-        const url = new URL(uploadedFile.uploadURL);
-        const pathParts = url.pathname.split('/');
-        const bucketName = pathParts[1];
-        const imagePath = pathParts.slice(2).join('/');
-        
-        // Create the serving URL using our API endpoint
-        const imageUrl = `/objects/uploads/${imagePath}`;
-        setUploadedImageUrl(imageUrl);
-        form.setValue("imageUrl", imageUrl);
-        toast({
-          title: "Imagen subida",
-          description: "La foto de la mascota se ha subido correctamente",
-        });
+        try {
+          // Extract the image path from the upload URL to create the serving URL
+          const url = new URL(uploadedFile.uploadURL);
+          const pathParts = url.pathname.split('/');
+          const bucketName = pathParts[1];
+          const imagePath = pathParts.slice(2).join('/');
+          
+          // Create the serving URL using our API endpoint
+          const imageUrl = `/objects/uploads/${imagePath}`;
+          
+          console.log("Image uploaded successfully:", { uploadURL: uploadedFile.uploadURL, imageUrl });
+          
+          setUploadedImageUrl(imageUrl);
+          form.setValue("imageUrl", imageUrl);
+          
+          toast({
+            title: "Imagen subida",
+            description: "La foto de la mascota se ha subido correctamente",
+          });
+        } catch (error) {
+          console.error("Error processing uploaded image:", error);
+          toast({
+            title: "Error",
+            description: "Hubo un problema al procesar la imagen subida",
+            variant: "destructive",
+          });
+        }
       }
+    } else {
+      console.log("Upload result:", result);
+      toast({
+        title: "Error de subida",
+        description: "No se pudo subir la imagen. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
     }
   };
 
