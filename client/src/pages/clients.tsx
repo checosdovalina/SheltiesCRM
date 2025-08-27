@@ -44,12 +44,12 @@ export default function Clients() {
     retry: false,
   });
 
-  // Get dogs count for each client
+  // Get dogs data for each client
   const { data: dogsData } = useQuery({
     queryKey: ["/api/clients-with-dogs"],
     queryFn: async () => {
       if (!clients || !Array.isArray(clients) || clients.length === 0) return {};
-      const dogsCount: Record<string, number> = {};
+      const dogsInfo: Record<string, any[]> = {};
       
       await Promise.all(
         clients.map(async (client: any) => {
@@ -59,17 +59,17 @@ export default function Clients() {
             });
             if (response.ok) {
               const dogs = await response.json();
-              dogsCount[client.id] = dogs.length;
+              dogsInfo[client.id] = dogs;
             } else {
-              dogsCount[client.id] = 0;
+              dogsInfo[client.id] = [];
             }
           } catch {
-            dogsCount[client.id] = 0;
+            dogsInfo[client.id] = [];
           }
         })
       );
       
-      return dogsCount;
+      return dogsInfo;
     },
     enabled: !!clients && Array.isArray(clients) && clients.length > 0,
     retry: false,
@@ -271,9 +271,33 @@ export default function Clients() {
                   <div className="flex items-center justify-between text-sm mb-3">
                     <span className="text-muted-foreground">Mascotas registradas:</span>
                     <Badge variant="secondary">
-                      {dogsData?.[client.id] || 0}
+                      {dogsData?.[client.id]?.length || 0}
                     </Badge>
                   </div>
+                  
+                  {/* Lista de mascotas */}
+                  {dogsData?.[client.id] && dogsData[client.id].length > 0 && (
+                    <div className="mb-3 space-y-1">
+                      {dogsData[client.id].map((dog: any) => (
+                        <div key={dog.id} className="flex items-center justify-between text-xs bg-muted/50 rounded-md px-2 py-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium text-foreground">{dog.name}</span>
+                            {dog.petTypeName && (
+                              <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                {dog.petTypeName}
+                              </Badge>
+                            )}
+                          </div>
+                          {dog.breed && (
+                            <span className="text-muted-foreground truncate max-w-[80px]">
+                              {dog.breed}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <Button
                     variant="outline"
                     size="sm"
