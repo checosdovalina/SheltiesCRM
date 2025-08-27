@@ -210,7 +210,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/dogs', isAuthenticated, async (req, res) => {
     try {
       const dogData = insertDogSchema.parse(req.body);
+      console.log("[DEBUG] Creating dog with data:", JSON.stringify(dogData, null, 2)); // Debug log
       const dog = await storage.createDog(dogData);
+      console.log("[DEBUG] Created dog result:", JSON.stringify(dog, null, 2)); // Debug log
       res.json(dog);
     } catch (error) {
       console.error("Error creating dog:", error);
