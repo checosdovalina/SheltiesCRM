@@ -624,6 +624,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Object storage routes for serving pet images
+  app.get("/objects/:objectPath(*)", isAuthenticated, async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      
+      // Check ACL policy if needed (for now, allow all authenticated users to view pet images)
+      const canAccess = await objectStorageService.canAccessObjectEntity({
+        objectFile,
+        userId: (req as any).session?.userId,
+      });
+      
+      if (!canAccess) {
+        return res.sendStatus(404); // Return 404 instead of 401 for security
+      }
+      
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving object:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
