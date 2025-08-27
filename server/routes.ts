@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin, authenticateUser, registerAdmin } from "./auth";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import {
   insertClientSchema,
   insertDogSchema,
@@ -386,6 +387,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting dog:", error);
       res.status(500).json({ message: "Failed to delete dog" });
+    }
+  });
+
+  // Dog image upload route
+  app.post('/api/dogs/upload-image', isAuthenticated, async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getDogImageUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting dog image upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // Serve dog images
+  app.get('/dog-images/:imageId(*)', async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const imagePath = `/dog-images/${req.params.imageId}`;
+      const imageFile = await objectStorageService.getDogImageFile(imagePath);
+      await objectStorageService.downloadObject(imageFile, res);
+    } catch (error) {
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+      console.error("Error serving dog image:", error);
+      res.status(500).json({ message: "Failed to serve image" });
     }
   });
 

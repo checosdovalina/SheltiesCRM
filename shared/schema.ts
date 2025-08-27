@@ -115,6 +115,7 @@ export const dogs = pgTable("dogs", {
   age: integer("age"),
   weight: decimal("weight"),
   notes: text("notes"),
+  imageUrl: varchar("image_url"), // URL to the dog's photo in object storage
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

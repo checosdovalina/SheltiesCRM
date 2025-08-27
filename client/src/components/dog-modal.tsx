@@ -24,6 +24,9 @@ import { useToast } from "@/hooks/use-toast";
 import { insertDogSchema } from "@shared/schema";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { ImageUploader } from "@/components/ImageUploader";
+import { Camera, X } from "lucide-react";
+import type { UploadResult } from "@uppy/core";
 
 interface DogModalProps {
   open: boolean;
@@ -36,6 +39,7 @@ interface DogModalProps {
 export default function DogModal({ open, onOpenChange, clientId, clientName, dog }: DogModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
 
   const form = useForm<z.infer<typeof insertDogSchema>>({
     resolver: zodResolver(insertDogSchema),
@@ -46,6 +50,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
       age: undefined,
       weight: "",
       notes: "",
+      imageUrl: "",
     },
   });
 
@@ -60,7 +65,9 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
           age: dog.age || undefined,
           weight: dog.weight || "",
           notes: dog.notes || "",
+          imageUrl: dog.imageUrl || "",
         });
+        setUploadedImageUrl(dog.imageUrl || "");
       } else {
         form.reset({
           clientId: clientId,
@@ -69,10 +76,65 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
           age: undefined,
           weight: "",
           notes: "",
+          imageUrl: "",
         });
+        setUploadedImageUrl("");
       }
     }
   }, [dog, open, form, clientId]);
+
+  const handleImageUpload = async () => {
+    try {
+      const response = await fetch("/api/dogs/upload-image", {
+        method: "POST",
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to get upload URL");
+      }
+      
+      const { uploadURL } = await response.json();
+      return {
+        method: "PUT" as const,
+        url: uploadURL,
+      };
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo preparar la subida de imagen",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const handleImageComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadedFile = result.successful[0];
+      if (uploadedFile.uploadURL) {
+        // Extract the image path from the upload URL to create the serving URL
+        const url = new URL(uploadedFile.uploadURL);
+        const pathParts = url.pathname.split('/');
+        const bucketName = pathParts[1];
+        const imagePath = pathParts.slice(2).join('/');
+        
+        // Create the serving URL using our API endpoint
+        const imageUrl = `/dog-images/${imagePath}`;
+        setUploadedImageUrl(imageUrl);
+        form.setValue("imageUrl", imageUrl);
+        toast({
+          title: "Imagen subida",
+          description: "La foto de la mascota se ha subido correctamente",
+        });
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setUploadedImageUrl("");
+    form.setValue("imageUrl", "");
+  };
 
   const createDogMutation = useMutation({
     mutationFn: async (data: z.infer<typeof insertDogSchema>) => {
@@ -228,6 +290,49 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
                       data-testid="input-dog-notes"
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Image Upload Section */}
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Foto de la mascota (opcional)</FormLabel>
+                  <div className="space-y-4">
+                    {uploadedImageUrl ? (
+                      <div className="relative inline-block">
+                        <img
+                          src={uploadedImageUrl}
+                          alt="Foto de la mascota"
+                          className="w-32 h-32 object-cover rounded-lg border-2 border-border"
+                          data-testid="dog-image-preview"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                          onClick={removeImage}
+                          data-testid="button-remove-image"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <ImageUploader
+                        onGetUploadParameters={handleImageUpload}
+                        onComplete={handleImageComplete}
+                        buttonClassName="w-full"
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Subir Foto
+                      </ImageUploader>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
