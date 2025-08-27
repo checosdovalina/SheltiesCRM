@@ -48,7 +48,7 @@ export default function Clients() {
   const { data: dogsData } = useQuery({
     queryKey: ["/api/clients-with-dogs"],
     queryFn: async () => {
-      if (!clients || clients.length === 0) return {};
+      if (!clients || !Array.isArray(clients) || clients.length === 0) return {};
       const dogsCount: Record<string, number> = {};
       
       await Promise.all(
@@ -71,7 +71,7 @@ export default function Clients() {
       
       return dogsCount;
     },
-    enabled: !!clients && clients.length > 0,
+    enabled: !!clients && Array.isArray(clients) && clients.length > 0,
     retry: false,
   });
 

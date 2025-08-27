@@ -150,6 +150,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       queryClient.invalidateQueries({ queryKey: ["/api/clients", clientId, "dogs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients-with-dogs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/metrics"] });
       
       toast({
