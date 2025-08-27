@@ -100,7 +100,7 @@ export default function AppointmentModal({
   });
 
   const selectedServiceId = form.watch("serviceId");
-  const selectedService = services?.find((service: any) => service.id === selectedServiceId);
+  const selectedService = Array.isArray(services) ? services.find((service: any) => service.id === selectedServiceId) : null;
 
   // Auto-populate price when service changes
   useEffect(() => {
@@ -196,7 +196,7 @@ export default function AppointmentModal({
                     <SelectContent>
                       {clientsLoading ? (
                         <SelectItem value="loading" disabled>Cargando clientes...</SelectItem>
-                      ) : clients?.map((client: any) => (
+                      ) : Array.isArray(clients) && clients.map((client: any) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.firstName} {client.lastName}
                         </SelectItem>
@@ -214,7 +214,7 @@ export default function AppointmentModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Mascota</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedClientId}>
+                  <Select onValueChange={field.onChange} value={field.value || ""} disabled={!selectedClientId}>
                     <FormControl>
                       <SelectTrigger data-testid="select-dog">
                         <SelectValue placeholder="Seleccionar mascota..." />
@@ -223,7 +223,7 @@ export default function AppointmentModal({
                     <SelectContent>
                       {!selectedClientId ? (
                         <SelectItem value="no-client" disabled>Primero selecciona un cliente</SelectItem>
-                      ) : dogs?.map((dog: any) => (
+                      ) : Array.isArray(dogs) && dogs.map((dog: any) => (
                         <SelectItem key={dog.id} value={dog.id}>
                           {dog.name} {dog.breed ? `(${dog.breed})` : ''}
                         </SelectItem>
@@ -250,7 +250,7 @@ export default function AppointmentModal({
                     <SelectContent>
                       {servicesLoading ? (
                         <SelectItem value="loading" disabled>Cargando servicios...</SelectItem>
-                      ) : services?.map((service: any) => (
+                      ) : Array.isArray(services) && services.map((service: any) => (
                         <SelectItem key={service.id} value={service.id}>
                           {service.name} - ${Number(service.price).toLocaleString()}
                         </SelectItem>
@@ -304,6 +304,7 @@ export default function AppointmentModal({
                       step="0.01"
                       placeholder="0.00"
                       {...field}
+                      value={field.value || ""}
                       data-testid="input-appointment-price"
                     />
                   </FormControl>
@@ -319,7 +320,7 @@ export default function AppointmentModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Estado</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger data-testid="select-appointment-status">
                           <SelectValue />
@@ -350,6 +351,7 @@ export default function AppointmentModal({
                       placeholder="Notas adicionales sobre la cita..."
                       rows={3}
                       {...field}
+                      value={field.value || ""}
                       data-testid="textarea-appointment-notes"
                     />
                   </FormControl>

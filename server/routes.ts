@@ -300,8 +300,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Appointment routes
   app.post('/api/appointments', isAuthenticated, async (req, res) => {
     try {
+      console.log("[DEBUG] Creating appointment with data:", JSON.stringify(req.body, null, 2));
       const appointmentData = insertAppointmentSchema.parse(req.body);
+      console.log("[DEBUG] Parsed appointment data:", JSON.stringify(appointmentData, null, 2));
       const appointment = await storage.createAppointment(appointmentData);
+      console.log("[DEBUG] Created appointment:", JSON.stringify(appointment, null, 2));
       res.json(appointment);
     } catch (error) {
       console.error("Error creating appointment:", error);
