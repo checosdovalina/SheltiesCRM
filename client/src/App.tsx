@@ -8,6 +8,7 @@ import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
+import Services from "@/pages/services";
 import Appointments from "@/pages/appointments";
 import Calendar from "@/pages/calendar";
 import Billing from "@/pages/billing";
@@ -48,6 +49,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/clients" component={Clients} />
+          <Route path="/services" component={Services} />
           <Route path="/appointments" component={Appointments} />
           <Route path="/calendar" component={Calendar} />
           <Route path="/billing" component={Billing} />

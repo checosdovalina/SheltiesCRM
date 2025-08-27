@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
@@ -38,6 +39,49 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+
+  // Create default services if none exist
+  try {
+    const services = await storage.getServices();
+    if (services.length === 0) {
+      log("Creating default services...");
+      await storage.createService({
+        name: "Entrenamiento Básico",
+        type: "training",
+        price: "50.00",
+        description: "Entrenamiento básico de obediencia para perros",
+        duration: 60,
+        isActive: true
+      });
+      await storage.createService({
+        name: "Guardería Diaria", 
+        type: "daycare",
+        price: "30.00",
+        description: "Servicio de guardería para mascotas durante el día",
+        duration: 480,
+        isActive: true
+      });
+      await storage.createService({
+        name: "Pensión Nocturna",
+        type: "boarding", 
+        price: "80.00",
+        description: "Pensión nocturna para mascotas",
+        duration: 1440,
+        isActive: true
+      });
+      await storage.createService({
+        name: "Consulta de Comportamiento",
+        type: "other",
+        price: "75.00", 
+        description: "Consulta especializada en comportamiento canino",
+        duration: 90,
+        isActive: true
+      });
+      log("Default services created successfully");
+    }
+  } catch (error) {
+    console.error("Error creating default services:", error);
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

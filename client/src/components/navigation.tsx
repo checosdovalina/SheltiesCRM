@@ -12,7 +12,8 @@ import {
   LogOut,
   User,
   ChevronDown,
-  Settings
+  Settings,
+  Wrench
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -42,6 +43,7 @@ export default function Navigation() {
   const navigationItems = [
     { path: "/", label: "Dashboard", icon: Home, mobileLabel: "Inicio" },
     { path: "/clients", label: "Clientes", icon: Users, mobileLabel: "Clientes" },
+    { path: "/services", label: "Servicios", icon: Wrench, mobileLabel: "Servicios" },
     { path: "/appointments", label: "Citas", icon: Calendar, mobileLabel: "Citas" },
     { path: "/billing", label: "Facturación", icon: CreditCard, mobileLabel: "Facturas" },
     { path: "/reports", label: "Reportes", icon: BarChart3, mobileLabel: "Reportes" },
