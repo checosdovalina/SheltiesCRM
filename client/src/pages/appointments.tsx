@@ -216,8 +216,95 @@ export default function Appointments() {
         ) : sortedAppointments.length > 0 ? (
           sortedAppointments.map((appointment: any) => (
             <Card key={appointment.id} className="hover:shadow-md transition-shadow" data-testid={`appointment-card-${appointment.id}`}>
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <CardContent className="p-4 sm:p-6">
+                {/* Mobile Layout - Stack everything vertically */}
+                <div className="block sm:hidden space-y-4">
+                  {/* Client and Dog Info */}
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-medium text-primary">
+                        {appointment.client?.firstName?.[0]}{appointment.client?.lastName?.[0]}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <h3 className="font-semibold text-foreground text-sm" data-testid={`appointment-client-${appointment.id}`}>
+                          {appointment.client?.firstName} {appointment.client?.lastName}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Dog className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground" data-testid={`appointment-dog-${appointment.id}`}>
+                          {appointment.dog?.name} ({appointment.dog?.breed})
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Service Info */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className={getServiceTypeColor(appointment.service?.type)}>
+                      {getServiceTypeText(appointment.service?.type)}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground" data-testid={`appointment-service-${appointment.id}`}>
+                      {appointment.service?.name}
+                    </span>
+                  </div>
+
+                  {/* Date, Time and Price */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center space-x-2 text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      <span data-testid={`appointment-date-${appointment.id}`}>
+                        {new Date(appointment.appointmentDate).toLocaleDateString('es-ES', {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short'
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-muted-foreground">
+                      <Clock className="w-4 h-4" />
+                      <span data-testid={`appointment-time-${appointment.id}`}>
+                        {new Date(appointment.appointmentDate).toLocaleTimeString('es-ES', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status and Price */}
+                  <div className="flex items-center justify-between gap-3">
+                    <Select
+                      value={appointment.status}
+                      onValueChange={(value) => handleStatusUpdate(appointment.id, value)}
+                    >
+                      <SelectTrigger className="w-[120px]" data-testid={`select-status-${appointment.id}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pendiente</SelectItem>
+                        <SelectItem value="confirmed">Confirmada</SelectItem>
+                        <SelectItem value="completed">Completada</SelectItem>
+                        <SelectItem value="cancelled">Cancelada</SelectItem>
+                        <SelectItem value="no_show">No asistió</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {appointment.price && (
+                      <div className="text-right">
+                        <p className="font-semibold text-foreground" data-testid={`appointment-price-${appointment.id}`}>
+                          ${Number(appointment.price).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Desktop Layout - Original horizontal layout */}
+                <div className="hidden sm:flex sm:items-center gap-4">
                   {/* Avatar and Basic Info */}
                   <div className="flex items-center space-x-4 flex-1">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
@@ -250,7 +337,7 @@ export default function Appointments() {
                   </div>
 
                   {/* Date and Time */}
-                  <div className="flex items-center space-x-4 sm:flex-col sm:space-x-0 sm:space-y-2 sm:items-end">
+                  <div className="flex flex-col space-y-2 items-end">
                     <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                       <Calendar className="w-4 h-4" />
                       <span data-testid={`appointment-date-${appointment.id}`}>
@@ -274,7 +361,7 @@ export default function Appointments() {
                   </div>
 
                   {/* Status and Price */}
-                  <div className="flex items-center justify-between sm:flex-col sm:items-end sm:space-y-2">
+                  <div className="flex flex-col items-end space-y-2">
                     <Select
                       value={appointment.status}
                       onValueChange={(value) => handleStatusUpdate(appointment.id, value)}
