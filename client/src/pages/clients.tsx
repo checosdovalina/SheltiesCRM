@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Users, Search, Plus, Mail, Phone, MapPin, Edit, Trash2 } from "lucide-react";
+import { Users, Search, Plus, Mail, Phone, MapPin, Edit, Trash2, Dog } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import ClientModal from "@/components/client-modal";
+import DogModal from "@/components/dog-modal";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Clients() {
@@ -18,6 +19,9 @@ export default function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showClientModal, setShowClientModal] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
+  const [showDogModal, setShowDogModal] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [editingDog, setEditingDog] = useState<any>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -37,6 +41,37 @@ export default function Clients() {
   const { data: clients, isLoading: clientsLoading } = useQuery({
     queryKey: ["/api/clients"],
     enabled: isAuthenticated,
+    retry: false,
+  });
+
+  // Get dogs count for each client
+  const { data: dogsData } = useQuery({
+    queryKey: ["/api/clients-with-dogs"],
+    queryFn: async () => {
+      if (!clients || clients.length === 0) return {};
+      const dogsCount: Record<string, number> = {};
+      
+      await Promise.all(
+        clients.map(async (client: any) => {
+          try {
+            const response = await fetch(`/api/clients/${client.id}/dogs`, {
+              credentials: "include",
+            });
+            if (response.ok) {
+              const dogs = await response.json();
+              dogsCount[client.id] = dogs.length;
+            } else {
+              dogsCount[client.id] = 0;
+            }
+          } catch {
+            dogsCount[client.id] = 0;
+          }
+        })
+      );
+      
+      return dogsCount;
+    },
+    enabled: !!clients && clients.length > 0,
     retry: false,
   });
 
@@ -104,6 +139,18 @@ export default function Clients() {
   const handleModalClose = () => {
     setShowClientModal(false);
     setEditingClient(null);
+  };
+
+  const handleAddPet = (client: any) => {
+    setSelectedClient(client);
+    setEditingDog(null);
+    setShowDogModal(true);
+  };
+
+  const handleDogModalClose = () => {
+    setShowDogModal(false);
+    setSelectedClient(null);
+    setEditingDog(null);
   };
 
   return (
@@ -221,10 +268,22 @@ export default function Clients() {
                   </div>
                 )}
                 <div className="pt-2 border-t border-border">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm mb-3">
                     <span className="text-muted-foreground">Mascotas registradas:</span>
-                    <Badge variant="secondary">0</Badge>
+                    <Badge variant="secondary">
+                      {dogsData?.[client.id] || 0}
+                    </Badge>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => handleAddPet(client)}
+                    data-testid={`button-add-pet-${client.id}`}
+                  >
+                    <Dog className="w-4 h-4 mr-2" />
+                    Agregar Mascota
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -261,6 +320,17 @@ export default function Clients() {
         onOpenChange={handleModalClose}
         client={editingClient}
       />
+      
+      {/* Dog Modal */}
+      {selectedClient && (
+        <DogModal
+          open={showDogModal}
+          onOpenChange={handleDogModalClose}
+          clientId={selectedClient.id}
+          clientName={`${selectedClient.firstName} ${selectedClient.lastName}`}
+          dog={editingDog}
+        />
+      )}
     </div>
   );
 }

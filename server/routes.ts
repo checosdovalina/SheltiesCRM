@@ -346,6 +346,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dogs routes
+  app.post('/api/dogs', isAuthenticated, async (req, res) => {
+    try {
+      const dogData = insertDogSchema.parse(req.body);
+      const dog = await storage.createDog(dogData);
+      res.json(dog);
+    } catch (error) {
+      console.error("Error creating dog:", error);
+      res.status(400).json({ message: "Failed to create dog" });
+    }
+  });
+
+  app.get('/api/clients/:clientId/dogs', isAuthenticated, async (req, res) => {
+    try {
+      const dogs = await storage.getDogsByClientId(req.params.clientId);
+      res.json(dogs);
+    } catch (error) {
+      console.error("Error fetching dogs:", error);
+      res.status(500).json({ message: "Failed to fetch dogs" });
+    }
+  });
+
+  app.put('/api/dogs/:id', isAuthenticated, async (req, res) => {
+    try {
+      const dogData = insertDogSchema.partial().parse(req.body);
+      const dog = await storage.updateDog(req.params.id, dogData);
+      res.json(dog);
+    } catch (error) {
+      console.error("Error updating dog:", error);
+      res.status(400).json({ message: "Failed to update dog" });
+    }
+  });
+
+  app.delete('/api/dogs/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteDog(req.params.id);
+      res.json({ message: "Dog deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting dog:", error);
+      res.status(500).json({ message: "Failed to delete dog" });
+    }
+  });
+
   // Invoice routes
   app.post('/api/invoices', isAuthenticated, async (req, res) => {
     try {
