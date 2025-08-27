@@ -124,7 +124,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
         const imagePath = pathParts.slice(2).join('/');
         
         // Create the serving URL using our API endpoint
-        const imageUrl = `/dog-images/${imagePath}`;
+        const imageUrl = `/objects/uploads/${imagePath}`;
         setUploadedImageUrl(imageUrl);
         form.setValue("imageUrl", imageUrl);
         toast({

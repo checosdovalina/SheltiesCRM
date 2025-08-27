@@ -424,7 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/dogs/upload-image', isAuthenticated, async (req, res) => {
     try {
       const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getDogImageUploadURL();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       res.json({ uploadURL });
     } catch (error) {
       console.error("Error getting dog image upload URL:", error);
