@@ -85,7 +85,7 @@ export default function Appointments() {
     );
   }
 
-  const filteredAppointments = appointments?.filter((appointment: any) => {
+  const filteredAppointments = (appointments || [])?.filter((appointment: any) => {
     const matchesSearch = 
       appointment.client?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       appointment.client?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -149,7 +149,7 @@ export default function Appointments() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
@@ -216,56 +216,43 @@ export default function Appointments() {
         ) : sortedAppointments.length > 0 ? (
           sortedAppointments.map((appointment: any) => (
             <Card key={appointment.id} className="hover:shadow-md transition-shadow" data-testid={`appointment-card-${appointment.id}`}>
-              <CardContent className="p-4 sm:p-6">
-                {/* Mobile Layout - Stack everything vertically with better spacing */}
-                <div className="block sm:hidden space-y-3">
-                  {/* Client and Dog Info */}
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <CardContent className="p-3 sm:p-6">
+                {/* Mobile Layout - Ultra compact for better fit */}
+                <div className="block sm:hidden space-y-2">
+                  {/* Client and Dog Info - More compact */}
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-xs font-medium text-primary">
                         {appointment.client?.firstName?.[0]}{appointment.client?.lastName?.[0]}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1 mb-1">
-                        <User className="w-3 h-3 text-muted-foreground" />
-                        <h3 className="font-semibold text-foreground text-sm leading-tight" data-testid={`appointment-client-${appointment.id}`}>
-                          {appointment.client?.firstName} {appointment.client?.lastName}
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Dog className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground leading-tight" data-testid={`appointment-dog-${appointment.id}`}>
-                          {appointment.dog?.name} ({appointment.dog?.breed})
-                        </span>
-                      </div>
+                      <h3 className="font-semibold text-foreground text-sm leading-none mb-1" data-testid={`appointment-client-${appointment.id}`}>
+                        {appointment.client?.firstName} {appointment.client?.lastName}
+                      </h3>
+                      <span className="text-xs text-muted-foreground leading-none" data-testid={`appointment-dog-${appointment.id}`}>
+                        {appointment.dog?.name} • {appointment.dog?.breed}
+                      </span>
                     </div>
                   </div>
                   
-                  {/* Service Info */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className={`${getServiceTypeColor(appointment.service?.type)} text-xs`}>
-                      {getServiceTypeText(appointment.service?.type)}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground" data-testid={`appointment-service-${appointment.id}`}>
-                      {appointment.service?.name}
-                    </span>
-                  </div>
-
-                  {/* Date, Time */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center space-x-1 text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
+                  {/* Service, Date & Time - All in one line */}
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Badge variant="outline" className="text-xs px-1 py-0">
+                        {getServiceTypeText(appointment.service?.type)}
+                      </Badge>
+                      <span className="text-muted-foreground truncate">
+                        {appointment.service?.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground flex-shrink-0">
                       <span data-testid={`appointment-date-${appointment.id}`}>
                         {new Date(appointment.appointmentDate).toLocaleDateString('es-ES', {
-                          weekday: 'short',
                           day: 'numeric',
                           month: 'short'
                         })}
                       </span>
-                    </div>
-                    <div className="flex items-center space-x-1 text-muted-foreground">
-                      <Clock className="w-3 h-3" />
                       <span data-testid={`appointment-time-${appointment.id}`}>
                         {new Date(appointment.appointmentDate).toLocaleTimeString('es-ES', {
                           hour: '2-digit',
@@ -275,13 +262,13 @@ export default function Appointments() {
                     </div>
                   </div>
 
-                  {/* Status and Price */}
-                  <div className="flex items-center justify-between gap-2 pt-1">
+                  {/* Status and Price - Bottom row */}
+                  <div className="flex items-center justify-between gap-2">
                     <Select
                       value={appointment.status}
                       onValueChange={(value) => handleStatusUpdate(appointment.id, value)}
                     >
-                      <SelectTrigger className="w-[100px] h-8 text-xs" data-testid={`select-status-${appointment.id}`}>
+                      <SelectTrigger className="w-[90px] h-7 text-xs" data-testid={`select-status-${appointment.id}`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -294,18 +281,16 @@ export default function Appointments() {
                     </Select>
 
                     {appointment.price && (
-                      <div className="text-right">
-                        <p className="font-semibold text-foreground text-sm" data-testid={`appointment-price-${appointment.id}`}>
-                          ${Number(appointment.price).toLocaleString()}
-                        </p>
-                      </div>
+                      <p className="font-semibold text-foreground text-sm" data-testid={`appointment-price-${appointment.id}`}>
+                        ${Number(appointment.price).toLocaleString()}
+                      </p>
                     )}
                   </div>
 
-                  {/* Notes for Mobile */}
-                  {appointment.notes && (
-                    <div className="pt-2 border-t border-border">
-                      <p className="text-xs text-muted-foreground line-clamp-2" data-testid={`appointment-notes-${appointment.id}`}>
+                  {/* Notes for Mobile - Only if present and very compact */}
+                  {appointment.notes && appointment.notes.length > 0 && (
+                    <div className="pt-1 border-t border-border">
+                      <p className="text-xs text-muted-foreground line-clamp-1" data-testid={`appointment-notes-${appointment.id}`}>
                         <strong>Notas:</strong> {appointment.notes}
                       </p>
                     </div>
