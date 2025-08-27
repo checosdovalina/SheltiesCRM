@@ -17,6 +17,9 @@ import { z } from "zod";
 const appointmentFormSchema = insertAppointmentSchema.extend({
   appointmentDate: z.string().min(1, "La fecha es requerida"),
   appointmentTime: z.string().min(1, "La hora es requerida"),
+  clientId: z.string().min(1, "Debe seleccionar un cliente"),
+  dogId: z.string().min(1, "Debe seleccionar una mascota"),
+  serviceId: z.string().min(1, "Debe seleccionar un servicio"),
 });
 
 interface AppointmentModalProps {

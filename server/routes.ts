@@ -316,6 +316,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/appointments', isAuthenticated, async (req, res) => {
     try {
       console.log("[DEBUG] Creating appointment with data:", JSON.stringify(req.body, null, 2));
+      
+      // Validate required fields
+      if (!req.body.clientId || req.body.clientId === '') {
+        return res.status(400).json({ message: "Debe seleccionar un cliente" });
+      }
+      if (!req.body.dogId || req.body.dogId === '') {
+        return res.status(400).json({ message: "Debe seleccionar una mascota" });
+      }
+      if (!req.body.serviceId || req.body.serviceId === '') {
+        return res.status(400).json({ message: "Debe seleccionar un servicio" });
+      }
+      
       const appointmentData = insertAppointmentSchema.parse(req.body);
       console.log("[DEBUG] Parsed appointment data:", JSON.stringify(appointmentData, null, 2));
       const appointment = await storage.createAppointment(appointmentData);
@@ -323,7 +335,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(appointment);
     } catch (error) {
       console.error("Error creating appointment:", error);
-      res.status(400).json({ message: "Failed to create appointment" });
+      if (error.name === 'ZodError') {
+        const fieldErrors = error.errors.map(err => `${err.path.join('.')}: ${err.message}`);
+        return res.status(400).json({ message: `Error de validación: ${fieldErrors.join(', ')}` });
+      }
+      res.status(400).json({ 
+        message: error.message || "No se pudo crear la cita. Verifique que todos los campos obligatorios estén completos." 
+      });
     }
   });
 
