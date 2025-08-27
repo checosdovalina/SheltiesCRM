@@ -187,6 +187,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/clients-with-dogs', isAuthenticated, async (req, res) => {
+    try {
+      const clientsWithDogs = await storage.getClientsWithDogs();
+      res.json(clientsWithDogs);
+    } catch (error) {
+      console.error("Error fetching clients with dogs:", error);
+      res.status(500).json({ message: "Failed to fetch clients with dogs" });
+    }
+  });
+
   app.get('/api/clients/:id', isAuthenticated, async (req, res) => {
     try {
       const client = await storage.getClient(req.params.id);

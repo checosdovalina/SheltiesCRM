@@ -247,6 +247,39 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(clients).orderBy(desc(clients.createdAt));
   }
 
+  async getClientsWithDogs(): Promise<any[]> {
+    const clientsList = await db.select().from(clients).orderBy(desc(clients.createdAt));
+    const result = [];
+    
+    for (const client of clientsList) {
+      const clientDogs = await db
+        .select({
+          id: dogs.id,
+          clientId: dogs.clientId,
+          petTypeId: dogs.petTypeId,
+          petTypeName: petTypes.name,
+          name: dogs.name,
+          breed: dogs.breed,
+          age: dogs.age,
+          weight: dogs.weight,
+          notes: dogs.notes,
+          imageUrl: dogs.imageUrl,
+          createdAt: dogs.createdAt,
+          updatedAt: dogs.updatedAt,
+        })
+        .from(dogs)
+        .leftJoin(petTypes, eq(dogs.petTypeId, petTypes.id))
+        .where(eq(dogs.clientId, client.id));
+      
+      result.push({
+        ...client,
+        dogs: clientDogs
+      });
+    }
+    
+    return result;
+  }
+
   async getClient(id: string): Promise<Client | undefined> {
     const [client] = await db.select().from(clients).where(eq(clients.id, id));
     return client;

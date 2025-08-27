@@ -26,18 +26,18 @@ export default function Records() {
   });
 
   // Filter dogs based on search term
-  const filteredDogs = (clients || [])?.flatMap((client: any) => 
-    client.dogs?.map((dog: any) => ({
+  const filteredDogs = (clients || []).flatMap((client: any) => 
+    (client.dogs || []).map((dog: any) => ({
       ...dog,
       clientName: `${client.firstName} ${client.lastName}`,
       clientEmail: client.email,
       clientPhone: client.phone,
-    })) || []
+    }))
   ).filter((dog: any) => 
     dog.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     dog.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     dog.breed?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   if (clientsLoading) {
     return (
