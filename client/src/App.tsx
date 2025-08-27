@@ -32,16 +32,21 @@ function Router() {
     );
   }
 
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/" component={Login} />
+        <Route path="/landing" component={Landing} />
+        <Route component={NotFound} />
+      </Switch>
+    );
+  }
+
   return (
-    <Switch>
-      {!isAuthenticated ? (
-        <>
-          <Route path="/" component={Login} />
-          <Route path="/landing" component={Landing} />
-        </>
-      ) : (
-        <>
-          <Navigation />
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <main>
+        <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/clients" component={ClientsDebug} />
           <Route path="/appointments" component={Appointments} />
@@ -54,10 +59,10 @@ function Router() {
           {user?.role === 'admin' && (
             <Route path="/admin/users" component={AdminUsers} />
           )}
-        </>
-      )}
-      <Route component={NotFound} />
-    </Switch>
+          <Route component={NotFound} />
+        </Switch>
+      </main>
+    </div>
   );
 }
 
