@@ -188,7 +188,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md" data-testid="dialog-dog-modal">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="dialog-dog-modal">
         <DialogHeader>
           <DialogTitle data-testid="text-dog-modal-title">
             {dog ? "Editar Mascota" : `Agregar Mascota a ${clientName}`}
