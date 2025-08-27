@@ -147,6 +147,12 @@ export default function Clients() {
     setShowDogModal(true);
   };
 
+  const handleEditPet = (client: any, dog: any) => {
+    setSelectedClient(client);
+    setEditingDog(dog);
+    setShowDogModal(true);
+  };
+
   const handleDogModalClose = () => {
     setShowDogModal(false);
     setSelectedClient(null);
@@ -279,8 +285,25 @@ export default function Clients() {
                   {dogsData?.[client.id] && dogsData[client.id].length > 0 && (
                     <div className="mb-3 space-y-1">
                       {dogsData[client.id].map((dog: any) => (
-                        <div key={dog.id} className="flex items-center justify-between text-xs bg-muted/50 rounded-md px-2 py-1">
+                        <div 
+                          key={dog.id} 
+                          className="flex items-center justify-between text-xs bg-muted/50 hover:bg-muted/80 rounded-md px-2 py-1 cursor-pointer transition-colors"
+                          onClick={() => handleEditPet(client, dog)}
+                          data-testid={`pet-item-${dog.id}`}
+                        >
                           <div className="flex items-center space-x-2">
+                            {/* Foto de la mascota */}
+                            {dog.imageUrl ? (
+                              <img 
+                                src={dog.imageUrl} 
+                                alt={dog.name}
+                                className="w-6 h-6 rounded-full object-cover border border-border"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 bg-muted border border-border rounded-full flex items-center justify-center">
+                                <Dog className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            )}
                             <span className="font-medium text-foreground">{dog.name}</span>
                             {dog.petTypeName && (
                               <Badge variant="outline" className="text-[10px] px-1 py-0">
