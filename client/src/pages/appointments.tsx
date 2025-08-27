@@ -197,7 +197,7 @@ export default function Appointments() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
@@ -242,7 +242,7 @@ export default function Appointments() {
       </div>
 
       {/* Appointments List */}
-      <div className="space-y-4">
+      <div className="space-y-4 pb-8">
         {appointmentsLoading ? (
           [...Array(5)].map((_, i) => (
             <Card key={i} className="animate-pulse">
@@ -263,7 +263,7 @@ export default function Appointments() {
           ))
         ) : sortedAppointments.length > 0 ? (
           sortedAppointments.map((appointment: any) => (
-            <Card key={appointment.id} className="hover:shadow-md transition-shadow" data-testid={`appointment-card-${appointment.id}`}>
+            <Card key={appointment.id} className="hover:shadow-md transition-shadow mb-4" data-testid={`appointment-card-${appointment.id}`}>
               <CardContent className="p-3 sm:p-6">
                 {/* Mobile Layout - Ultra compact for better fit */}
                 <div className="block sm:hidden space-y-2">
