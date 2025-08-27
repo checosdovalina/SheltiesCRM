@@ -26,6 +26,9 @@ import {
   type InsertExpense,
   type ProgressEntry,
   type InsertProgressEntry,
+  petTypes,
+  PetType,
+  InsertPetType,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sql, count } from "drizzle-orm";
@@ -58,6 +61,12 @@ export interface IStorage {
   getClientByUserId(userId: string): Promise<Client | undefined>;
   updateClient(id: string, client: Partial<InsertClient>): Promise<Client>;
   deleteClient(id: string): Promise<void>;
+
+  // Pet Type operations
+  createPetType(petType: InsertPetType): Promise<PetType>;
+  getPetTypes(): Promise<PetType[]>;
+  getPetType(id: string): Promise<PetType | undefined>;
+  getPetTypeByName(name: string): Promise<PetType | undefined>;
 
   // Dog operations
   createDog(dog: InsertDog): Promise<Dog>;
@@ -239,14 +248,51 @@ export class DatabaseStorage implements IStorage {
     await db.delete(clients).where(eq(clients.id, id));
   }
 
+  // Pet Type operations
+  async createPetType(petType: InsertPetType): Promise<PetType> {
+    const [newPetType] = await db.insert(petTypes).values(petType).returning();
+    return newPetType;
+  }
+
+  async getPetTypes(): Promise<PetType[]> {
+    return await db.select().from(petTypes).orderBy(petTypes.name);
+  }
+
+  async getPetType(id: string): Promise<PetType | undefined> {
+    const [petType] = await db.select().from(petTypes).where(eq(petTypes.id, id));
+    return petType;
+  }
+
+  async getPetTypeByName(name: string): Promise<PetType | undefined> {
+    const [petType] = await db.select().from(petTypes).where(eq(petTypes.name, name));
+    return petType;
+  }
+
   // Dog operations
   async createDog(dog: InsertDog): Promise<Dog> {
     const [newDog] = await db.insert(dogs).values(dog).returning();
     return newDog;
   }
 
-  async getDogsByClientId(clientId: string): Promise<Dog[]> {
-    return await db.select().from(dogs).where(eq(dogs.clientId, clientId));
+  async getDogsByClientId(clientId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: dogs.id,
+        clientId: dogs.clientId,
+        petTypeId: dogs.petTypeId,
+        petTypeName: petTypes.name,
+        name: dogs.name,
+        breed: dogs.breed,
+        age: dogs.age,
+        weight: dogs.weight,
+        notes: dogs.notes,
+        imageUrl: dogs.imageUrl,
+        createdAt: dogs.createdAt,
+        updatedAt: dogs.updatedAt,
+      })
+      .from(dogs)
+      .leftJoin(petTypes, eq(dogs.petTypeId, petTypes.id))
+      .where(eq(dogs.clientId, clientId));
   }
 
   async getDog(id: string): Promise<Dog | undefined> {

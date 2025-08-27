@@ -106,10 +106,28 @@ export const insertClientSchema = createInsertSchema(clients).omit({
   updatedAt: true,
 });
 
+// Pet Types table
+export const petTypes = pgTable("pet_types", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").unique().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type PetType = typeof petTypes.$inferSelect;
+export type InsertPetType = typeof petTypes.$inferInsert;
+
+export const insertPetTypeSchema = createInsertSchema(petTypes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Dogs table
 export const dogs = pgTable("dogs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").references(() => clients.id).notNull(),
+  petTypeId: varchar("pet_type_id").references(() => petTypes.id).notNull(),
   name: varchar("name").notNull(),
   breed: varchar("breed"),
   age: integer("age"),

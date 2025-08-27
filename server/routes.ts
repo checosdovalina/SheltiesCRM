@@ -11,6 +11,7 @@ import {
   insertInvoiceSchema,
   insertExpenseSchema,
   insertProgressEntrySchema,
+  insertPetTypeSchema,
   createUserSchema,
   loginSchema,
   registerSchema,
@@ -344,6 +345,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating appointment:", error);
       res.status(400).json({ message: "Failed to update appointment" });
+    }
+  });
+
+  // Pet types routes
+  app.get('/api/pet-types', isAuthenticated, async (req, res) => {
+    try {
+      const petTypes = await storage.getPetTypes();
+      res.json(petTypes);
+    } catch (error) {
+      console.error("Error fetching pet types:", error);
+      res.status(500).json({ message: "Failed to fetch pet types" });
+    }
+  });
+
+  app.post('/api/pet-types', isAuthenticated, async (req, res) => {
+    try {
+      const petTypeData = insertPetTypeSchema.parse(req.body);
+      
+      // Check if pet type already exists
+      const existingPetType = await storage.getPetTypeByName(petTypeData.name);
+      if (existingPetType) {
+        return res.status(400).json({ message: "Pet type already exists" });
+      }
+      
+      const petType = await storage.createPetType(petTypeData);
+      res.json(petType);
+    } catch (error) {
+      console.error("Error creating pet type:", error);
+      res.status(400).json({ message: "Failed to create pet type" });
     }
   });
 

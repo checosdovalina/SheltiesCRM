@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,7 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { insertDogSchema } from "@shared/schema";
+import { insertDogSchema, Dog } from "@shared/schema";
+import { PetTypeSelector } from "./PetTypeSelector";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { ImageUploader } from "@/components/ImageUploader";
@@ -45,6 +46,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     resolver: zodResolver(insertDogSchema),
     defaultValues: {
       clientId: clientId,
+      petTypeId: "",
       name: "",
       breed: "",
       age: undefined,
@@ -60,6 +62,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
       if (dog) {
         form.reset({
           clientId: clientId,
+          petTypeId: dog.petTypeId || "",
           name: dog.name || "",
           breed: dog.breed || "",
           age: dog.age || undefined,
@@ -71,6 +74,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
       } else {
         form.reset({
           clientId: clientId,
+          petTypeId: "",
           name: "",
           breed: "",
           age: undefined,
@@ -204,6 +208,24 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
                       placeholder="Ej: Buddy, Luna, Max..." 
                       {...field}
                       data-testid="input-dog-name"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="petTypeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de Mascota</FormLabel>
+                  <FormControl>
+                    <PetTypeSelector
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Selecciona el tipo de mascota"
                     />
                   </FormControl>
                   <FormMessage />
