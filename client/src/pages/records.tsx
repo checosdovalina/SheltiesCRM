@@ -26,7 +26,7 @@ export default function Records() {
   });
 
   // Filter dogs based on search term
-  const filteredDogs = clients?.flatMap((client: any) => 
+  const filteredDogs = (clients || [])?.flatMap((client: any) => 
     client.dogs?.map((dog: any) => ({
       ...dog,
       clientName: `${client.firstName} ${client.lastName}`,
