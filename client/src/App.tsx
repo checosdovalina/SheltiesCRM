@@ -13,6 +13,8 @@ import Appointments from "@/pages/appointments";
 import Calendar from "@/pages/calendar";
 import Billing from "@/pages/billing";
 import Reports from "@/pages/reports";
+import Records from "@/pages/records";
+import RecordDetail from "@/pages/record-detail";
 import ClientPortal from "@/pages/client-portal";
 import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
@@ -54,6 +56,8 @@ function Router() {
           <Route path="/calendar" component={Calendar} />
           <Route path="/billing" component={Billing} />
           <Route path="/reports" component={Reports} />
+          <Route path="/records" component={Records} />
+          <Route path="/records/:dogId" component={RecordDetail} />
           {user?.role === 'client' && (
             <Route path="/portal" component={ClientPortal} />
           )}

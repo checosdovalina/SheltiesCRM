@@ -705,6 +705,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dog Records/Expediente endpoints
+  app.get('/api/dogs/:dogId/record', isAuthenticated, async (req, res) => {
+    try {
+      const { dogId } = req.params;
+      const record = await storage.getDogCompleteRecord(dogId);
+      
+      if (!record) {
+        return res.status(404).json({ message: "Dog record not found" });
+      }
+
+      res.json(record);
+    } catch (error) {
+      console.error("Error fetching dog record:", error);
+      res.status(500).json({ message: "Failed to fetch dog record" });
+    }
+  });
+
+  // Medical Records endpoints
+  app.post('/api/medical-records', isAuthenticated, async (req, res) => {
+    try {
+      const medicalRecord = await storage.createMedicalRecord(req.body);
+      res.json(medicalRecord);
+    } catch (error) {
+      console.error("Error creating medical record:", error);
+      res.status(400).json({ message: "Failed to create medical record" });
+    }
+  });
+
+  app.get('/api/dogs/:dogId/medical-records', isAuthenticated, async (req, res) => {
+    try {
+      const { dogId } = req.params;
+      const records = await storage.getMedicalRecordsByDogId(dogId);
+      res.json(records);
+    } catch (error) {
+      console.error("Error fetching medical records:", error);
+      res.status(500).json({ message: "Failed to fetch medical records" });
+    }
+  });
+
+  app.get('/api/medical-records/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const record = await storage.getMedicalRecord(id);
+      
+      if (!record) {
+        return res.status(404).json({ message: "Medical record not found" });
+      }
+
+      res.json(record);
+    } catch (error) {
+      console.error("Error fetching medical record:", error);
+      res.status(500).json({ message: "Failed to fetch medical record" });
+    }
+  });
+
+  app.put('/api/medical-records/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const record = await storage.updateMedicalRecord(id, req.body);
+      res.json(record);
+    } catch (error) {
+      console.error("Error updating medical record:", error);
+      res.status(400).json({ message: "Failed to update medical record" });
+    }
+  });
+
+  app.delete('/api/medical-records/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteMedicalRecord(id);
+      res.json({ message: "Medical record deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting medical record:", error);
+      res.status(500).json({ message: "Failed to delete medical record" });
+    }
+  });
+
+  // Training Sessions endpoints
+  app.post('/api/training-sessions', isAuthenticated, async (req, res) => {
+    try {
+      const session = await storage.createTrainingSession(req.body);
+      res.json(session);
+    } catch (error) {
+      console.error("Error creating training session:", error);
+      res.status(400).json({ message: "Failed to create training session" });
+    }
+  });
+
+  app.get('/api/dogs/:dogId/training-sessions', isAuthenticated, async (req, res) => {
+    try {
+      const { dogId } = req.params;
+      const sessions = await storage.getTrainingSessionsByDogId(dogId);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching training sessions:", error);
+      res.status(500).json({ message: "Failed to fetch training sessions" });
+    }
+  });
+
+  app.get('/api/training-sessions/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const session = await storage.getTrainingSession(id);
+      
+      if (!session) {
+        return res.status(404).json({ message: "Training session not found" });
+      }
+
+      res.json(session);
+    } catch (error) {
+      console.error("Error fetching training session:", error);
+      res.status(500).json({ message: "Failed to fetch training session" });
+    }
+  });
+
+  app.put('/api/training-sessions/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const session = await storage.updateTrainingSession(id, req.body);
+      res.json(session);
+    } catch (error) {
+      console.error("Error updating training session:", error);
+      res.status(400).json({ message: "Failed to update training session" });
+    }
+  });
+
+  app.delete('/api/training-sessions/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteTrainingSession(id);
+      res.json({ message: "Training session deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting training session:", error);
+      res.status(500).json({ message: "Failed to delete training session" });
+    }
+  });
+
+  // Evidence endpoints
+  app.post('/api/evidence', isAuthenticated, async (req, res) => {
+    try {
+      const evidence = await storage.createEvidence(req.body);
+      res.json(evidence);
+    } catch (error) {
+      console.error("Error creating evidence:", error);
+      res.status(400).json({ message: "Failed to create evidence" });
+    }
+  });
+
+  app.get('/api/dogs/:dogId/evidence', isAuthenticated, async (req, res) => {
+    try {
+      const { dogId } = req.params;
+      const evidences = await storage.getEvidenceByDogId(dogId);
+      res.json(evidences);
+    } catch (error) {
+      console.error("Error fetching evidence:", error);
+      res.status(500).json({ message: "Failed to fetch evidence" });
+    }
+  });
+
+  app.get('/api/training-sessions/:sessionId/evidence', isAuthenticated, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const evidences = await storage.getEvidenceByTrainingSessionId(sessionId);
+      res.json(evidences);
+    } catch (error) {
+      console.error("Error fetching session evidence:", error);
+      res.status(500).json({ message: "Failed to fetch session evidence" });
+    }
+  });
+
+  app.delete('/api/evidence/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteEvidence(id);
+      res.json({ message: "Evidence deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting evidence:", error);
+      res.status(500).json({ message: "Failed to delete evidence" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

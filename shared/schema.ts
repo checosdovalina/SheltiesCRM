@@ -330,8 +330,15 @@ export const dogsRelations = relations(dogs, ({ one, many }) => ({
     fields: [dogs.clientId],
     references: [clients.id],
   }),
+  petType: one(petTypes, {
+    fields: [dogs.petTypeId],
+    references: [petTypes.id],
+  }),
   appointments: many(appointments),
   progressEntries: many(progressEntries),
+  medicalRecords: many(medicalRecords),
+  trainingSessions: many(trainingSessions),
+  evidence: many(evidence),
 }));
 
 export const servicesRelations = relations(services, ({ many }) => ({
@@ -386,6 +393,129 @@ export const progressEntriesRelations = relations(progressEntries, ({ one }) => 
   }),
   appointment: one(appointments, {
     fields: [progressEntries.appointmentId],
+    references: [appointments.id],
+  }),
+}));
+
+// Medical Records (Expediente Médico)
+export const medicalRecords = pgTable("medical_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dogId: varchar("dog_id").references(() => dogs.id).notNull(),
+  recordDate: timestamp("record_date").defaultNow(),
+  recordType: varchar("record_type").notNull(), // "medical", "vaccination", "allergy", "surgery", etc.
+  title: varchar("title").notNull(),
+  description: text("description"),
+  veterinarian: varchar("veterinarian"),
+  medications: text("medications"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type MedicalRecord = typeof medicalRecords.$inferSelect;
+export type InsertMedicalRecord = typeof medicalRecords.$inferInsert;
+
+export const insertMedicalRecordSchema = createInsertSchema(medicalRecords).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Training Sessions (Sesiones de Entrenamiento)
+export const trainingSessions = pgTable("training_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dogId: varchar("dog_id").references(() => dogs.id).notNull(),
+  appointmentId: varchar("appointment_id").references(() => appointments.id),
+  sessionDate: timestamp("session_date").defaultNow(),
+  trainer: varchar("trainer"),
+  objective: varchar("objective").notNull(),
+  activities: text("activities"),
+  progress: text("progress"),
+  behaviorNotes: text("behavior_notes"),
+  nextSteps: text("next_steps"),
+  rating: integer("rating"), // 1-10 scale
+  duration: integer("duration"), // in minutes
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type TrainingSession = typeof trainingSessions.$inferSelect;
+export type InsertTrainingSession = typeof trainingSessions.$inferInsert;
+
+export const insertTrainingSessionSchema = createInsertSchema(trainingSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Evidence/Media (Evidencias)
+export const evidenceTypeEnum = pgEnum("evidence_type", [
+  "photo",
+  "video",
+  "document",
+  "note"
+]);
+
+export const evidence = pgTable("evidence", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dogId: varchar("dog_id").references(() => dogs.id).notNull(),
+  trainingSessionId: varchar("training_session_id").references(() => trainingSessions.id),
+  medicalRecordId: varchar("medical_record_id").references(() => medicalRecords.id),
+  appointmentId: varchar("appointment_id").references(() => appointments.id),
+  type: evidenceTypeEnum("type").notNull(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  fileUrl: varchar("file_url"), // URL to file in object storage
+  fileName: varchar("file_name"),
+  fileSize: integer("file_size"), // in bytes
+  mimeType: varchar("mime_type"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Evidence = typeof evidence.$inferSelect;
+export type InsertEvidence = typeof evidence.$inferInsert;
+
+export const insertEvidenceSchema = createInsertSchema(evidence).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Relations for new tables
+export const medicalRecordsRelations = relations(medicalRecords, ({ one, many }) => ({
+  dog: one(dogs, {
+    fields: [medicalRecords.dogId],
+    references: [dogs.id],
+  }),
+  evidence: many(evidence),
+}));
+
+export const trainingSessionsRelations = relations(trainingSessions, ({ one, many }) => ({
+  dog: one(dogs, {
+    fields: [trainingSessions.dogId],
+    references: [dogs.id],
+  }),
+  appointment: one(appointments, {
+    fields: [trainingSessions.appointmentId],
+    references: [appointments.id],
+  }),
+  evidence: many(evidence),
+}));
+
+export const evidenceRelations = relations(evidence, ({ one }) => ({
+  dog: one(dogs, {
+    fields: [evidence.dogId],
+    references: [dogs.id],
+  }),
+  trainingSession: one(trainingSessions, {
+    fields: [evidence.trainingSessionId],
+    references: [trainingSessions.id],
+  }),
+  medicalRecord: one(medicalRecords, {
+    fields: [evidence.medicalRecordId],
+    references: [medicalRecords.id],
+  }),
+  appointment: one(appointments, {
+    fields: [evidence.appointmentId],
     references: [appointments.id],
   }),
 }));

@@ -13,7 +13,8 @@ import {
   User,
   ChevronDown,
   Settings,
-  Wrench
+  Wrench,
+  FileText
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -45,6 +46,7 @@ export default function Navigation() {
     { path: "/clients", label: "Clientes", icon: Users, mobileLabel: "Clientes" },
     { path: "/services", label: "Servicios", icon: Wrench, mobileLabel: "Servicios" },
     { path: "/appointments", label: "Citas", icon: Calendar, mobileLabel: "Citas" },
+    { path: "/records", label: "Expedientes", icon: FileText, mobileLabel: "Expedientes" },
     { path: "/billing", label: "Facturación", icon: CreditCard, mobileLabel: "Facturas" },
     { path: "/reports", label: "Reportes", icon: BarChart3, mobileLabel: "Reportes" },
   ];

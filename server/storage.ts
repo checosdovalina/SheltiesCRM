@@ -8,6 +8,9 @@ import {
   invoiceItems,
   expenses,
   progressEntries,
+  medicalRecords,
+  trainingSessions,
+  evidence,
   type User,
   type UpsertUser,
   type Client,
@@ -26,6 +29,12 @@ import {
   type InsertExpense,
   type ProgressEntry,
   type InsertProgressEntry,
+  type MedicalRecord,
+  type InsertMedicalRecord,
+  type TrainingSession,
+  type InsertTrainingSession,
+  type Evidence,
+  type InsertEvidence,
   petTypes,
   PetType,
   InsertPetType,
@@ -844,6 +853,144 @@ export class DatabaseStorage implements IStorage {
       netProfit: netProfit.toFixed(2),
       serviceBreakdown,
     };
+  }
+
+  // Medical Records operations
+  async createMedicalRecord(medicalRecord: InsertMedicalRecord): Promise<MedicalRecord> {
+    const [newRecord] = await db.insert(medicalRecords).values(medicalRecord).returning();
+    return newRecord;
+  }
+
+  async getMedicalRecordsByDogId(dogId: string): Promise<MedicalRecord[]> {
+    return await db
+      .select()
+      .from(medicalRecords)
+      .where(eq(medicalRecords.dogId, dogId))
+      .orderBy(desc(medicalRecords.recordDate));
+  }
+
+  async getMedicalRecord(id: string): Promise<MedicalRecord | undefined> {
+    const [record] = await db.select().from(medicalRecords).where(eq(medicalRecords.id, id));
+    return record;
+  }
+
+  async updateMedicalRecord(id: string, recordData: Partial<InsertMedicalRecord>): Promise<MedicalRecord> {
+    const [record] = await db
+      .update(medicalRecords)
+      .set({ ...recordData, updatedAt: new Date() })
+      .where(eq(medicalRecords.id, id))
+      .returning();
+    return record;
+  }
+
+  async deleteMedicalRecord(id: string): Promise<void> {
+    await db.delete(medicalRecords).where(eq(medicalRecords.id, id));
+  }
+
+  // Training Sessions operations
+  async createTrainingSession(session: InsertTrainingSession): Promise<TrainingSession> {
+    const [newSession] = await db.insert(trainingSessions).values(session).returning();
+    return newSession;
+  }
+
+  async getTrainingSessionsByDogId(dogId: string): Promise<TrainingSession[]> {
+    return await db
+      .select()
+      .from(trainingSessions)
+      .where(eq(trainingSessions.dogId, dogId))
+      .orderBy(desc(trainingSessions.sessionDate));
+  }
+
+  async getTrainingSession(id: string): Promise<TrainingSession | undefined> {
+    const [session] = await db.select().from(trainingSessions).where(eq(trainingSessions.id, id));
+    return session;
+  }
+
+  async updateTrainingSession(id: string, sessionData: Partial<InsertTrainingSession>): Promise<TrainingSession> {
+    const [session] = await db
+      .update(trainingSessions)
+      .set({ ...sessionData, updatedAt: new Date() })
+      .where(eq(trainingSessions.id, id))
+      .returning();
+    return session;
+  }
+
+  async deleteTrainingSession(id: string): Promise<void> {
+    await db.delete(trainingSessions).where(eq(trainingSessions.id, id));
+  }
+
+  // Evidence operations
+  async createEvidence(evidence: InsertEvidence): Promise<Evidence> {
+    const [newEvidence] = await db.insert(evidence).values(evidence).returning();
+    return newEvidence;
+  }
+
+  async getEvidenceByDogId(dogId: string): Promise<Evidence[]> {
+    return await db
+      .select()
+      .from(evidence)
+      .where(eq(evidence.dogId, dogId))
+      .orderBy(desc(evidence.createdAt));
+  }
+
+  async getEvidenceByTrainingSessionId(sessionId: string): Promise<Evidence[]> {
+    return await db
+      .select()
+      .from(evidence)
+      .where(eq(evidence.trainingSessionId, sessionId))
+      .orderBy(desc(evidence.createdAt));
+  }
+
+  async getEvidence(id: string): Promise<Evidence | undefined> {
+    const [evidenceItem] = await db.select().from(evidence).where(eq(evidence.id, id));
+    return evidenceItem;
+  }
+
+  async deleteEvidence(id: string): Promise<void> {
+    await db.delete(evidence).where(eq(evidence.id, id));
+  }
+
+  // Dog complete record with all related data
+  async getDogCompleteRecord(dogId: string): Promise<any> {
+    const dog = await this.getDog(dogId);
+    if (!dog) return null;
+
+    const [client, appointments, medicalRecords, trainingSessions, evidences] = await Promise.all([
+      this.getClient(dog.clientId),
+      this.getAppointmentsByDogId(dogId),
+      this.getMedicalRecordsByDogId(dogId),
+      this.getTrainingSessionsByDogId(dogId),
+      this.getEvidenceByDogId(dogId)
+    ]);
+
+    return {
+      dog,
+      client,
+      appointments,
+      medicalRecords,
+      trainingSessions,
+      evidence: evidences,
+    };
+  }
+
+  async getAppointmentsByDogId(dogId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: appointments.id,
+        appointmentDate: appointments.appointmentDate,
+        status: appointments.status,
+        notes: appointments.notes,
+        price: appointments.price,
+        service: {
+          id: services.id,
+          name: services.name,
+          type: services.type,
+        },
+      })
+      .from(appointments)
+      .innerJoin(services, eq(appointments.serviceId, services.id))
+      .where(eq(appointments.dogId, dogId))
+      .orderBy(desc(appointments.appointmentDate));
   }
 }
 
