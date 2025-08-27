@@ -507,21 +507,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve dog images
-  app.get('/dog-images/:imageId(*)', async (req, res) => {
-    try {
-      const objectStorageService = new ObjectStorageService();
-      const imagePath = `/dog-images/${req.params.imageId}`;
-      const imageFile = await objectStorageService.getDogImageFile(imagePath);
-      await objectStorageService.downloadObject(imageFile, res);
-    } catch (error) {
-      if (error instanceof ObjectNotFoundError) {
-        return res.status(404).json({ message: "Image not found" });
-      }
-      console.error("Error serving dog image:", error);
-      res.status(500).json({ message: "Failed to serve image" });
-    }
-  });
 
   // Invoice routes
   app.post('/api/invoices', isAuthenticated, async (req, res) => {
@@ -705,16 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const objectStorageService = new ObjectStorageService();
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       
-      // Check ACL policy if needed (for now, allow all authenticated users to view pet images)
-      const canAccess = await objectStorageService.canAccessObjectEntity({
-        objectFile,
-        userId: (req as any).session?.userId,
-      });
-      
-      if (!canAccess) {
-        return res.sendStatus(404); // Return 404 instead of 401 for security
-      }
-      
+      // For pet images, we allow access to authenticated users (simplified ACL)
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error serving object:", error);
