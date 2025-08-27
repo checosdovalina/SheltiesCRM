@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, Plus, Search, User, Dog, Filter } from "lucide-react";
+import { Calendar, Clock, Plus, Search, User, Dog, Filter, Edit2, Trash2 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import AppointmentModal from "@/components/appointment-modal";
 import { apiRequest } from "@/lib/queryClient";
@@ -69,6 +69,38 @@ export default function Appointments() {
       toast({
         title: "Error",
         description: "No se pudo actualizar la cita.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAppointmentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/appointments/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      toast({
+        title: "Cita eliminada",
+        description: "La cita ha sido eliminada exitosamente.",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "No autorizado",
+          description: "Has sido desconectado. Iniciando sesión nuevamente...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la cita.",
         variant: "destructive",
       });
     },
@@ -142,6 +174,22 @@ export default function Appointments() {
       id: appointmentId,
       data: { status: newStatus }
     });
+  };
+
+  const handleEditAppointment = (appointment: any) => {
+    setEditingAppointment(appointment);
+    setShowAppointmentModal(true);
+  };
+
+  const handleDeleteAppointment = (appointmentId: string) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta cita? Esta acción no se puede deshacer.')) {
+      deleteAppointmentMutation.mutate(appointmentId);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowAppointmentModal(false);
+    setEditingAppointment(null);
   };
 
   const sortedAppointments = [...filteredAppointments].sort((a, b) => 
@@ -264,21 +312,44 @@ export default function Appointments() {
 
                   {/* Status and Price - Bottom row */}
                   <div className="flex items-center justify-between gap-2">
-                    <Select
-                      value={appointment.status}
-                      onValueChange={(value) => handleStatusUpdate(appointment.id, value)}
-                    >
-                      <SelectTrigger className="w-[90px] h-7 text-xs" data-testid={`select-status-${appointment.id}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="confirmed">Confirmada</SelectItem>
-                        <SelectItem value="completed">Completada</SelectItem>
-                        <SelectItem value="cancelled">Cancelada</SelectItem>
-                        <SelectItem value="no_show">No asistió</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={appointment.status}
+                        onValueChange={(value) => handleStatusUpdate(appointment.id, value)}
+                      >
+                        <SelectTrigger className="w-[90px] h-7 text-xs" data-testid={`select-status-${appointment.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pendiente</SelectItem>
+                          <SelectItem value="confirmed">Confirmada</SelectItem>
+                          <SelectItem value="completed">Completada</SelectItem>
+                          <SelectItem value="cancelled">Cancelada</SelectItem>
+                          <SelectItem value="no_show">No asistió</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEditAppointment(appointment)}
+                          className="h-7 w-7 p-0"
+                          data-testid={`button-edit-${appointment.id}`}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteAppointment(appointment.id)}
+                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                          data-testid={`button-delete-${appointment.id}`}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
 
                     {appointment.price && (
                       <p className="font-semibold text-foreground text-sm" data-testid={`appointment-price-${appointment.id}`}>
@@ -354,23 +425,46 @@ export default function Appointments() {
                     </div>
                   </div>
 
-                  {/* Status and Price */}
+                  {/* Status, Price and Actions */}
                   <div className="flex flex-col items-end space-y-2">
-                    <Select
-                      value={appointment.status}
-                      onValueChange={(value) => handleStatusUpdate(appointment.id, value)}
-                    >
-                      <SelectTrigger className="w-[140px]" data-testid={`select-status-${appointment.id}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="confirmed">Confirmada</SelectItem>
-                        <SelectItem value="completed">Completada</SelectItem>
-                        <SelectItem value="cancelled">Cancelada</SelectItem>
-                        <SelectItem value="no_show">No asistió</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEditAppointment(appointment)}
+                          className="h-8 w-8 p-0"
+                          data-testid={`button-edit-${appointment.id}`}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteAppointment(appointment.id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          data-testid={`button-delete-${appointment.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <Select
+                        value={appointment.status}
+                        onValueChange={(value) => handleStatusUpdate(appointment.id, value)}
+                      >
+                        <SelectTrigger className="w-[140px]" data-testid={`select-status-${appointment.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pendiente</SelectItem>
+                          <SelectItem value="confirmed">Confirmada</SelectItem>
+                          <SelectItem value="completed">Completada</SelectItem>
+                          <SelectItem value="cancelled">Cancelada</SelectItem>
+                          <SelectItem value="no_show">No asistió</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
                     {appointment.price && (
                       <div className="text-right">
@@ -423,7 +517,7 @@ export default function Appointments() {
       {/* Appointment Modal */}
       <AppointmentModal 
         open={showAppointmentModal} 
-        onOpenChange={setShowAppointmentModal}
+        onOpenChange={handleCloseModal}
         appointment={editingAppointment}
       />
     </div>

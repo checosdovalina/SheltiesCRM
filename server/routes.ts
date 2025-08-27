@@ -403,6 +403,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/appointments/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteAppointment(req.params.id);
+      res.json({ message: "Appointment deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+      res.status(500).json({ message: "Failed to delete appointment" });
+    }
+  });
+
   // Pet types routes
   app.get('/api/pet-types', isAuthenticated, async (req, res) => {
     try {
