@@ -150,6 +150,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user password
+  app.put('/api/admin/users/:id/password', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { password } = req.body;
+      if (!password || password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters long" });
+      }
+      const user = await storage.updateUserPassword(req.params.id, password);
+      res.json({ message: "Password updated successfully", userId: user.id });
+    } catch (error) {
+      console.error("Error updating user password:", error);
+      res.status(400).json({ message: "Failed to update user password" });
+    }
+  });
+
   // Client routes
   app.post('/api/clients', isAuthenticated, async (req: any, res) => {
     try {

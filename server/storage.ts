@@ -32,6 +32,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sql, count } from "drizzle-orm";
+import { hashPassword } from "./auth";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -53,6 +54,7 @@ export interface IStorage {
   createUser(userData: { email: string; firstName?: string; lastName?: string; role: string }): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUserRole(id: string, role: string): Promise<User>;
+  updateUserPassword(id: string, password: string): Promise<User>;
 
   // Client operations
   createClient(client: InsertClient): Promise<Client>;
@@ -185,6 +187,16 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateUserPassword(id: string, password: string): Promise<User> {
+    const hashedPassword = await hashPassword(password);
+    const [user] = await db
+      .update(users)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
   // Custom authentication methods
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
@@ -198,11 +210,12 @@ export class DatabaseStorage implements IStorage {
     lastName?: string; 
     role: string 
   }): Promise<User> {
+    const hashedPassword = await hashPassword(userData.password);
     const [user] = await db
       .insert(users)
       .values({
         email: userData.email,
-        password: userData.password,
+        password: hashedPassword,
         firstName: userData.firstName,
         lastName: userData.lastName,
         role: userData.role,

@@ -14,7 +14,7 @@ import Calendar from "@/pages/calendar";
 import Billing from "@/pages/billing";
 import Reports from "@/pages/reports";
 import ClientPortal from "@/pages/client-portal";
-import AdminUsers from "@/pages/admin-users";
+import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
 import Navigation from "@/components/navigation";
 
@@ -58,7 +58,7 @@ function Router() {
             <Route path="/portal" component={ClientPortal} />
           )}
           {user?.role === 'admin' && (
-            <Route path="/admin/users" component={AdminUsers} />
+            <Route path="/admin/users" component={Users} />
           )}
           <Route component={NotFound} />
         </Switch>
