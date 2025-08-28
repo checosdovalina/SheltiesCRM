@@ -68,73 +68,83 @@ export default function Navigation() {
   return (
     <>
       {/* Desktop Navigation - Hidden on mobile */}
-      <nav className="hidden md:block bg-card border-b border-border px-4 py-3 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-8">
-            <div className="flex items-center space-x-2 flex-shrink-0">
+      <nav className="hidden md:block bg-card shadow-sm">
+        {/* Header with logo and user info */}
+        <div className="border-b border-border px-6 py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-3">
               <img 
                 src={logoSheltiesSmall}
                 alt="Shelties"
-                className="h-8 w-auto object-contain"
+                className="h-10 w-auto object-contain"
                 data-testid="img-navigation-logo"
               />
-              <h1 className="text-xl font-bold text-foreground whitespace-nowrap" data-testid="text-app-title">
-                Shelties CRM
-              </h1>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground" data-testid="text-app-title">
+                  Shelties CRM
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Sistema de gestión canina
+                </p>
+              </div>
             </div>
-            
-            <div className="flex items-center space-x-1 min-w-0 flex-1">
-              <nav className="flex space-x-1 flex-wrap">
-                {filteredNavigation.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location === item.path;
-                  
-                  return (
-                    <Link key={item.path} href={item.path}>
-                      <Button
-                        variant={isActive ? "default" : "ghost"}
-                        size="sm"
-                        className={`px-3 py-2 text-sm font-medium ${
-                          isActive 
-                            ? "bg-primary text-primary-foreground" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                        }`}
-                        data-testid={`nav-${item.path.replace('/', '') || 'dashboard'}`}
-                      >
-                        <Icon className="w-4 h-4 mr-2" />
-                        {item.label}
-                      </Button>
-                    </Link>
-                  );
-                })}
-              </nav>
+
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 text-sm">
+                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-primary" data-testid="text-user-initials">
+                    {user?.firstName?.[0] || user?.email?.[0] || 'U'}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <div className="font-medium text-foreground" data-testid="text-user-name">
+                    {user?.firstName || user?.email || 'Usuario'}
+                  </div>
+                  {user?.role && (
+                    <div className="text-xs text-muted-foreground" data-testid="text-user-role">
+                      {user.role === 'client' ? 'Cliente' : user.role === 'teacher' ? 'Profesor' : 'Admin'}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="text-muted-foreground hover:text-destructive"
+                data-testid="button-logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <span data-testid="text-user-name">
-                {user?.firstName || user?.email || 'Usuario'}
-              </span>
-              {user?.role && (
-                <span className="px-2 py-1 bg-muted rounded text-xs" data-testid="text-user-role">
-                  {user.role === 'client' ? 'Cliente' : user.role === 'teacher' ? 'Profesor' : 'Admin'}
-                </span>
-              )}
-            </div>
-            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-              <span className="text-xs font-medium text-muted-foreground" data-testid="text-user-initials">
-                {user?.firstName?.[0] || user?.email?.[0] || 'U'}
-              </span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              data-testid="button-logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
+        {/* Navigation menu */}
+        <div className="px-6 py-3 bg-muted/30">
+          <div className="max-w-7xl mx-auto">
+            <nav className="flex items-center space-x-6">
+              {filteredNavigation.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+                
+                return (
+                  <Link key={item.path} href={item.path}>
+                    <div
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive 
+                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-background"
+                      }`}
+                      data-testid={`nav-${item.path.replace('/', '') || 'dashboard'}`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{item.label}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
         </div>
       </nav>
