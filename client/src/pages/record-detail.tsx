@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft,
   Dog, 
@@ -29,6 +30,7 @@ export default function RecordDetail() {
   const [match, params] = useRoute("/records/:dogId");
   const dogId = params?.dogId;
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Get dog complete record
   const { data: record, isLoading: recordLoading, error } = useQuery({
@@ -64,6 +66,28 @@ export default function RecordDetail() {
       setActiveTab(tab);
     }
   }, []);
+
+  // Handler functions for buttons
+  const handleAddMedicalRecord = () => {
+    toast({
+      title: "Próximamente",
+      description: "La funcionalidad para agregar registros médicos estará disponible pronto.",
+    });
+  };
+
+  const handleAddTrainingSession = () => {
+    toast({
+      title: "Próximamente", 
+      description: "La funcionalidad para agregar sesiones de entrenamiento estará disponible pronto.",
+    });
+  };
+
+  const handleAddEvidence = () => {
+    toast({
+      title: "Próximamente",
+      description: "La funcionalidad para subir evidencias estará disponible pronto.",
+    });
+  };
 
   if (recordLoading || !record) {
     return (
@@ -142,10 +166,10 @@ export default function RecordDetail() {
     );
   }
 
-  const { dog, client, appointments } = record;
+  const { dog, client, appointments } = record || { dog: null, client: null, appointments: [] };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -170,7 +194,7 @@ export default function RecordDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Dog Profile Card */}
         <div className="lg:col-span-1">
-          <Card className="sticky top-6">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Dog className="w-5 h-5" />
@@ -304,7 +328,7 @@ export default function RecordDetail() {
                       </div>
                       <div>
                         <p className="text-xl font-bold text-foreground">
-                          {medicalRecords?.length || 0}
+                          {Array.isArray(medicalRecords) ? medicalRecords.length : 0}
                         </p>
                         <p className="text-xs text-muted-foreground">Registros Médicos</p>
                       </div>
@@ -320,7 +344,7 @@ export default function RecordDetail() {
                       </div>
                       <div>
                         <p className="text-xl font-bold text-foreground">
-                          {trainingSessions?.length || 0}
+                          {Array.isArray(trainingSessions) ? trainingSessions.length : 0}
                         </p>
                         <p className="text-xs text-muted-foreground">Entrenamientos</p>
                       </div>
@@ -336,7 +360,7 @@ export default function RecordDetail() {
                       </div>
                       <div>
                         <p className="text-xl font-bold text-foreground">
-                          {evidence?.length || 0}
+                          {Array.isArray(evidence) ? evidence.length : 0}
                         </p>
                         <p className="text-xs text-muted-foreground">Evidencias</p>
                       </div>
@@ -351,7 +375,7 @@ export default function RecordDetail() {
                   <CardTitle>Historial de Servicios</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {appointments && appointments.length > 0 ? (
+                  {Array.isArray(appointments) && appointments.length > 0 ? (
                     <div className="space-y-3">
                       {appointments.slice(0, 5).map((appointment: any) => (
                         <div key={appointment.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -403,7 +427,7 @@ export default function RecordDetail() {
             <TabsContent value="medical" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-foreground">Registros Médicos</h3>
-                <Button size="sm" data-testid="button-add-medical-record">
+                <Button size="sm" data-testid="button-add-medical-record" onClick={handleAddMedicalRecord}>
                   <Plus className="w-4 h-4 mr-2" />
                   Agregar Registro
                 </Button>
@@ -423,7 +447,7 @@ export default function RecordDetail() {
                     </Card>
                   ))}
                 </div>
-              ) : medicalRecords && medicalRecords.length > 0 ? (
+              ) : Array.isArray(medicalRecords) && medicalRecords.length > 0 ? (
                 <div className="space-y-4">
                   {medicalRecords.map((record: any) => (
                     <Card key={record.id}>
@@ -466,7 +490,7 @@ export default function RecordDetail() {
                     <p className="text-muted-foreground mb-4">
                       Comienza agregando el primer registro médico
                     </p>
-                    <Button data-testid="button-first-medical-record">
+                    <Button data-testid="button-first-medical-record" onClick={handleAddMedicalRecord}>
                       <Plus className="w-4 h-4 mr-2" />
                       Agregar Primer Registro
                     </Button>
@@ -479,7 +503,7 @@ export default function RecordDetail() {
             <TabsContent value="training" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-foreground">Sesiones de Entrenamiento</h3>
-                <Button size="sm" data-testid="button-add-training-session">
+                <Button size="sm" data-testid="button-add-training-session" onClick={handleAddTrainingSession}>
                   <Plus className="w-4 h-4 mr-2" />
                   Nueva Sesión
                 </Button>
@@ -499,7 +523,7 @@ export default function RecordDetail() {
                     </Card>
                   ))}
                 </div>
-              ) : trainingSessions && trainingSessions.length > 0 ? (
+              ) : Array.isArray(trainingSessions) && trainingSessions.length > 0 ? (
                 <div className="space-y-4">
                   {trainingSessions.map((session: any) => (
                     <Card key={session.id}>
@@ -545,7 +569,7 @@ export default function RecordDetail() {
                     <p className="text-muted-foreground mb-4">
                       Comienza registrando la primera sesión de entrenamiento
                     </p>
-                    <Button data-testid="button-first-training-session">
+                    <Button data-testid="button-first-training-session" onClick={handleAddTrainingSession}>
                       <Plus className="w-4 h-4 mr-2" />
                       Registrar Primera Sesión
                     </Button>
@@ -558,7 +582,7 @@ export default function RecordDetail() {
             <TabsContent value="evidence" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-foreground">Evidencias</h3>
-                <Button size="sm" data-testid="button-add-evidence">
+                <Button size="sm" data-testid="button-add-evidence" onClick={handleAddEvidence}>
                   <Plus className="w-4 h-4 mr-2" />
                   Subir Evidencia
                 </Button>
@@ -578,7 +602,7 @@ export default function RecordDetail() {
                     </Card>
                   ))}
                 </div>
-              ) : evidence && evidence.length > 0 ? (
+              ) : Array.isArray(evidence) && evidence.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {evidence.map((item: any) => (
                     <Card key={item.id}>
@@ -617,7 +641,7 @@ export default function RecordDetail() {
                     <p className="text-muted-foreground mb-4">
                       Sube fotos, videos o documentos relacionados con esta mascota
                     </p>
-                    <Button data-testid="button-first-evidence">
+                    <Button data-testid="button-first-evidence" onClick={handleAddEvidence}>
                       <Plus className="w-4 h-4 mr-2" />
                       Subir Primera Evidencia
                     </Button>
