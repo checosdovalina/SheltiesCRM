@@ -155,8 +155,8 @@ export default function AppointmentModal({
       
       const appointmentData = {
         ...rest,
-        appointmentDate: combinedDateTime, // Send as Date object, not string
-        price: price && price.trim() !== "" ? price : null, // Keep as string, not number
+        appointmentDate: combinedDateTime.toISOString(), // Send as ISO string
+        price: price && price.trim() !== "" ? price : null, // Keep as string
         teacherId: teacherId && teacherId !== "unassigned" ? teacherId : null,
       };
 

@@ -418,7 +418,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/appointments/:id', isAuthenticated, async (req, res) => {
     try {
-      const appointmentData = insertAppointmentSchema.partial().parse(req.body);
+      // Convert data types before validation (same as POST route)
+      const processedData = {
+        ...req.body,
+        appointmentDate: req.body.appointmentDate ? new Date(req.body.appointmentDate) : undefined,
+        price: req.body.price ? req.body.price.toString() : null,
+      };
+      
+      const appointmentData = insertAppointmentSchema.partial().parse(processedData);
       const appointment = await storage.updateAppointment(req.params.id, appointmentData);
       res.json(appointment);
     } catch (error) {
