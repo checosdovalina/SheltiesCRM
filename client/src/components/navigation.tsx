@@ -70,21 +70,21 @@ export default function Navigation() {
       {/* Desktop Navigation - Hidden on mobile */}
       <nav className="hidden md:block bg-card border-b border-border px-4 py-3 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-2 flex-shrink-0">
               <img 
                 src={logoSheltiesSmall}
                 alt="Shelties"
                 className="h-8 w-auto object-contain"
                 data-testid="img-navigation-logo"
               />
-              <h1 className="text-xl font-bold text-foreground" data-testid="text-app-title">
+              <h1 className="text-xl font-bold text-foreground whitespace-nowrap" data-testid="text-app-title">
                 Shelties CRM
               </h1>
             </div>
             
-            <div className="flex items-center space-x-1 ml-8">
-              <nav className="flex space-x-1">
+            <div className="flex items-center space-x-1 min-w-0 flex-1">
+              <nav className="flex space-x-1 flex-wrap">
                 {filteredNavigation.map((item) => {
                   const Icon = item.icon;
                   const isActive = location === item.path;
