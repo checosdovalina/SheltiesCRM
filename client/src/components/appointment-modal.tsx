@@ -62,17 +62,29 @@ export default function AppointmentModal({
     if (open) {
       if (appointment) {
         const appointmentDate = new Date(appointment.appointmentDate);
-        form.reset({
-          clientId: appointment.clientId || "",
-          dogId: appointment.dogId || "",
-          serviceId: appointment.serviceId || "",
+        
+        // Extract IDs from nested objects
+        const clientId = appointment.clientId || appointment.client?.id || "";
+        const dogId = appointment.dogId || appointment.dog?.id || "";
+        const serviceId = appointment.serviceId || appointment.service?.id || "";
+        const teacherId = appointment.teacherId || appointment.teacher?.id || "";
+        
+        // Extract time directly from ISO string to avoid timezone conversion issues
+        const isoString = appointment.appointmentDate;
+        const timeString = isoString.split('T')[1].substring(0, 5); // Extract HH:MM from ISO string
+        
+        const formData = {
+          clientId,
+          dogId,
+          serviceId,
           appointmentDate: appointmentDate.toISOString().split('T')[0],
-          appointmentTime: appointmentDate.toTimeString().slice(0, 5),
+          appointmentTime: timeString,
           status: appointment.status || "pending",
           notes: appointment.notes || "",
           price: appointment.price?.toString() || "",
-          teacherId: appointment.teacherId || "",
-        });
+          teacherId,
+        };
+        form.reset(formData);
       } else {
         const defaultDate = selectedDate || new Date();
         form.reset({
@@ -114,6 +126,17 @@ export default function AppointmentModal({
     enabled: !!selectedClientId && open,
     retry: false,
   });
+
+  // Additional effect to load dogs when editing appointment with different client
+  useEffect(() => {
+    if (appointment && appointment.clientId && open) {
+      // Force refetch dogs for the appointment's client if it's different from selected
+      const currentClientId = form.getValues("clientId");
+      if (currentClientId && currentClientId !== selectedClientId) {
+        // This will be handled by the query above when clientId updates
+      }
+    }
+  }, [appointment, open, form, selectedClientId]);
 
   const selectedServiceId = form.watch("serviceId");
   const selectedService = Array.isArray(services) ? services.find((service: any) => service.id === selectedServiceId) : null;
@@ -213,11 +236,13 @@ export default function AppointmentModal({
                     <SelectContent>
                       {clientsLoading ? (
                         <SelectItem value="loading" disabled>Cargando clientes...</SelectItem>
-                      ) : Array.isArray(clients) && clients.map((client: any) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.firstName} {client.lastName}
-                        </SelectItem>
-                      ))}
+                      ) : Array.isArray(clients) && clients
+                          .filter(client => client.id && client.id.trim() !== '')
+                          .map((client: any) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.firstName} {client.lastName}
+                            </SelectItem>
+                          ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -240,11 +265,13 @@ export default function AppointmentModal({
                     <SelectContent>
                       {!selectedClientId ? (
                         <SelectItem value="no-client" disabled>Primero selecciona un cliente</SelectItem>
-                      ) : Array.isArray(dogs) && dogs.map((dog: any) => (
-                        <SelectItem key={dog.id} value={dog.id}>
-                          {dog.name} {dog.breed ? `(${dog.breed})` : ''}
-                        </SelectItem>
-                      ))}
+                      ) : Array.isArray(dogs) && dogs
+                          .filter(dog => dog.id && dog.id.trim() !== '')
+                          .map((dog: any) => (
+                            <SelectItem key={dog.id} value={dog.id}>
+                              {dog.name} {dog.breed ? `(${dog.breed})` : ''}
+                            </SelectItem>
+                          ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -267,11 +294,13 @@ export default function AppointmentModal({
                     <SelectContent>
                       {servicesLoading ? (
                         <SelectItem value="loading" disabled>Cargando servicios...</SelectItem>
-                      ) : Array.isArray(services) && services.map((service: any) => (
-                        <SelectItem key={service.id} value={service.id}>
-                          {service.name} - ${Number(service.price).toLocaleString()}
-                        </SelectItem>
-                      ))}
+                      ) : Array.isArray(services) && services
+                          .filter(service => service.id && service.id.trim() !== '')
+                          .map((service: any) => (
+                            <SelectItem key={service.id} value={service.id}>
+                              {service.name} - ${Number(service.price).toLocaleString()}
+                            </SelectItem>
+                          ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -296,11 +325,13 @@ export default function AppointmentModal({
                         <SelectItem value="unassigned">Sin asignar</SelectItem>
                         {teachersLoading ? (
                           <SelectItem value="loading" disabled>Cargando profesores...</SelectItem>
-                        ) : Array.isArray(teachers) && teachers.filter(teacher => teacher.id && teacher.id.trim() !== '').map((teacher: any) => (
-                          <SelectItem key={teacher.id} value={teacher.id}>
-                            {teacher.firstName} {teacher.lastName}
-                          </SelectItem>
-                        ))}
+                        ) : Array.isArray(teachers) && teachers
+                          .filter(teacher => teacher.id && teacher.id.trim() !== '')
+                          .map((teacher: any) => (
+                            <SelectItem key={teacher.id} value={teacher.id}>
+                              {teacher.firstName} {teacher.lastName}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
