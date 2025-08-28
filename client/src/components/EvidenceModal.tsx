@@ -80,8 +80,8 @@ export function EvidenceModal({ dogId, trigger }: EvidenceModalProps) {
         setUploading(true);
         try {
           // Get upload URL
-          const uploadResponse = await apiRequest("/api/objects/upload", "POST") as any;
-          const { uploadURL } = uploadResponse;
+          const uploadResponse = await apiRequest("POST", "/api/objects/upload");
+          const { uploadURL } = await uploadResponse.json();
 
           // Upload file
           const uploadResult = await fetch(uploadURL, {
@@ -120,7 +120,8 @@ export function EvidenceModal({ dogId, trigger }: EvidenceModalProps) {
         mimeType,
       };
 
-      return apiRequest("/api/evidence", "POST", payload);
+      const response = await apiRequest("POST", "/api/evidence", payload);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/dogs", dogId, "evidence"] });

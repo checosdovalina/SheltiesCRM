@@ -75,7 +75,8 @@ export function MedicalRecordModal({ dogId, trigger }: MedicalRecordModalProps) 
         ...data,
         recordDate: new Date(data.recordDate).toISOString(),
       };
-      return apiRequest(`/api/medical-records`, "POST", payload);
+      const response = await apiRequest("POST", `/api/medical-records`, payload);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/dogs", dogId, "medical-records"] });

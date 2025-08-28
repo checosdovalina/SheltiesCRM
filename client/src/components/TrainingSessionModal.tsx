@@ -80,7 +80,8 @@ export function TrainingSessionModal({ dogId, trigger }: TrainingSessionModalPro
         rating: data.rating || null,
         duration: data.duration || null,
       };
-      return apiRequest(`/api/training-sessions`, "POST", payload);
+      const response = await apiRequest("POST", `/api/training-sessions`, payload);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/dogs", dogId, "training-sessions"] });
