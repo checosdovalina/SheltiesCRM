@@ -25,6 +25,9 @@ import {
   FileText
 } from "lucide-react";
 import { Link } from "wouter";
+import { MedicalRecordModal } from "@/components/MedicalRecordModal";
+import { TrainingSessionModal } from "@/components/TrainingSessionModal";
+import { EvidenceModal } from "@/components/EvidenceModal";
 
 export default function RecordDetail() {
   const [match, params] = useRoute("/records/:dogId");
@@ -67,27 +70,7 @@ export default function RecordDetail() {
     }
   }, []);
 
-  // Handler functions for buttons
-  const handleAddMedicalRecord = () => {
-    toast({
-      title: "Próximamente",
-      description: "La funcionalidad para agregar registros médicos estará disponible pronto.",
-    });
-  };
-
-  const handleAddTrainingSession = () => {
-    toast({
-      title: "Próximamente", 
-      description: "La funcionalidad para agregar sesiones de entrenamiento estará disponible pronto.",
-    });
-  };
-
-  const handleAddEvidence = () => {
-    toast({
-      title: "Próximamente",
-      description: "La funcionalidad para subir evidencias estará disponible pronto.",
-    });
-  };
+  // Handler functions for buttons - these will be replaced with modal triggers
 
   if (recordLoading || !record) {
     return (
@@ -166,7 +149,9 @@ export default function RecordDetail() {
     );
   }
 
-  const { dog, client, appointments } = record || { dog: null, client: null, appointments: [] };
+  const dog = record?.dog || null;
+  const client = record?.client || null;
+  const appointments = record?.appointments || [];
 
   return (
     <div className="space-y-6 pb-8">
@@ -427,10 +412,15 @@ export default function RecordDetail() {
             <TabsContent value="medical" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-foreground">Registros Médicos</h3>
-                <Button size="sm" data-testid="button-add-medical-record" onClick={handleAddMedicalRecord}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Agregar Registro
-                </Button>
+                <MedicalRecordModal 
+                  dogId={dogId!}
+                  trigger={
+                    <Button size="sm" data-testid="button-add-medical-record">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Agregar Registro
+                    </Button>
+                  }
+                />
               </div>
 
               {medicalLoading ? (
@@ -490,10 +480,15 @@ export default function RecordDetail() {
                     <p className="text-muted-foreground mb-4">
                       Comienza agregando el primer registro médico
                     </p>
-                    <Button data-testid="button-first-medical-record" onClick={handleAddMedicalRecord}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Agregar Primer Registro
-                    </Button>
+                    <MedicalRecordModal 
+                      dogId={dogId!}
+                      trigger={
+                        <Button data-testid="button-first-medical-record">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Agregar Primer Registro
+                        </Button>
+                      }
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -503,10 +498,15 @@ export default function RecordDetail() {
             <TabsContent value="training" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-foreground">Sesiones de Entrenamiento</h3>
-                <Button size="sm" data-testid="button-add-training-session" onClick={handleAddTrainingSession}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Sesión
-                </Button>
+                <TrainingSessionModal 
+                  dogId={dogId!}
+                  trigger={
+                    <Button size="sm" data-testid="button-add-training-session">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nueva Sesión
+                    </Button>
+                  }
+                />
               </div>
 
               {trainingLoading ? (
@@ -569,10 +569,15 @@ export default function RecordDetail() {
                     <p className="text-muted-foreground mb-4">
                       Comienza registrando la primera sesión de entrenamiento
                     </p>
-                    <Button data-testid="button-first-training-session" onClick={handleAddTrainingSession}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Registrar Primera Sesión
-                    </Button>
+                    <TrainingSessionModal 
+                      dogId={dogId!}
+                      trigger={
+                        <Button data-testid="button-first-training-session">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Registrar Primera Sesión
+                        </Button>
+                      }
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -582,10 +587,15 @@ export default function RecordDetail() {
             <TabsContent value="evidence" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-foreground">Evidencias</h3>
-                <Button size="sm" data-testid="button-add-evidence" onClick={handleAddEvidence}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Subir Evidencia
-                </Button>
+                <EvidenceModal 
+                  dogId={dogId!}
+                  trigger={
+                    <Button size="sm" data-testid="button-add-evidence">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Subir Evidencia
+                    </Button>
+                  }
+                />
               </div>
 
               {evidenceLoading ? (
@@ -641,10 +651,15 @@ export default function RecordDetail() {
                     <p className="text-muted-foreground mb-4">
                       Sube fotos, videos o documentos relacionados con esta mascota
                     </p>
-                    <Button data-testid="button-first-evidence" onClick={handleAddEvidence}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Subir Primera Evidencia
-                    </Button>
+                    <EvidenceModal 
+                      dogId={dogId!}
+                      trigger={
+                        <Button data-testid="button-first-evidence">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Subir Primera Evidencia
+                        </Button>
+                      }
+                    />
                   </CardContent>
                 </Card>
               )}
