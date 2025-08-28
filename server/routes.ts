@@ -136,6 +136,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get teachers for appointment assignment
+  app.get('/api/teachers', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const teachers = users.filter(user => user.role === 'teacher');
+      res.json(teachers);
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+      res.status(500).json({ message: "Failed to fetch teachers" });
+    }
+  });
+
   app.put('/api/admin/users/:id/role', isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { role } = req.body;

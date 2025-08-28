@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -20,6 +21,7 @@ const appointmentFormSchema = insertAppointmentSchema.extend({
   clientId: z.string().min(1, "Debe seleccionar un cliente"),
   dogId: z.string().min(1, "Debe seleccionar una mascota"),
   serviceId: z.string().min(1, "Debe seleccionar un servicio"),
+  teacherId: z.string().optional(),
 });
 
 interface AppointmentModalProps {
@@ -37,6 +39,8 @@ export default function AppointmentModal({
 }: AppointmentModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const form = useForm<z.infer<typeof appointmentFormSchema>>({
     resolver: zodResolver(appointmentFormSchema),
@@ -49,6 +53,7 @@ export default function AppointmentModal({
       status: "pending",
       notes: "",
       price: "",
+      teacherId: "",
     },
   });
 
@@ -66,6 +71,7 @@ export default function AppointmentModal({
           status: appointment.status || "pending",
           notes: appointment.notes || "",
           price: appointment.price?.toString() || "",
+          teacherId: appointment.teacherId || "",
         });
       } else {
         const defaultDate = selectedDate || new Date();
@@ -78,6 +84,7 @@ export default function AppointmentModal({
           status: "pending",
           notes: "",
           price: "",
+          teacherId: "",
         });
       }
     }
@@ -92,6 +99,12 @@ export default function AppointmentModal({
   const { data: services, isLoading: servicesLoading } = useQuery({
     queryKey: ["/api/services"],
     enabled: open,
+    retry: false,
+  });
+
+  const { data: teachers, isLoading: teachersLoading } = useQuery({
+    queryKey: ["/api/teachers"],
+    enabled: open && isAdmin,
     retry: false,
   });
 
@@ -114,13 +127,14 @@ export default function AppointmentModal({
 
   const createAppointmentMutation = useMutation({
     mutationFn: async (data: z.infer<typeof appointmentFormSchema>) => {
-      const { appointmentDate, appointmentTime, price, ...rest } = data;
+      const { appointmentDate, appointmentTime, price, teacherId, ...rest } = data;
       const combinedDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
       
       const appointmentData = {
         ...rest,
         appointmentDate: combinedDateTime.toISOString(),
         price: price ? parseFloat(price) : null,
+        teacherId: teacherId || null,
       };
 
       const url = appointment ? `/api/appointments/${appointment.id}` : "/api/appointments";
@@ -264,6 +278,36 @@ export default function AppointmentModal({
                 </FormItem>
               )}
             />
+
+            {isAdmin && (
+              <FormField
+                control={form.control}
+                name="teacherId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profesor/Entrenador (Opcional)</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-teacher">
+                          <SelectValue placeholder="Seleccionar profesor..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Sin asignar</SelectItem>
+                        {teachersLoading ? (
+                          <SelectItem value="loading" disabled>Cargando profesores...</SelectItem>
+                        ) : Array.isArray(teachers) && teachers.map((teacher: any) => (
+                          <SelectItem key={teacher.id} value={teacher.id}>
+                            {teacher.firstName} {teacher.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
