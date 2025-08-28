@@ -134,7 +134,7 @@ export default function AppointmentModal({
         ...rest,
         appointmentDate: combinedDateTime.toISOString(),
         price: price ? parseFloat(price) : null,
-        teacherId: teacherId || null,
+        teacherId: teacherId && teacherId !== "unassigned" ? teacherId : null,
       };
 
       const url = appointment ? `/api/appointments/${appointment.id}` : "/api/appointments";
@@ -293,10 +293,10 @@ export default function AppointmentModal({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Sin asignar</SelectItem>
+                        <SelectItem value="unassigned">Sin asignar</SelectItem>
                         {teachersLoading ? (
                           <SelectItem value="loading" disabled>Cargando profesores...</SelectItem>
-                        ) : Array.isArray(teachers) && teachers.map((teacher: any) => (
+                        ) : Array.isArray(teachers) && teachers.filter(teacher => teacher.id && teacher.id.trim() !== '').map((teacher: any) => (
                           <SelectItem key={teacher.id} value={teacher.id}>
                             {teacher.firstName} {teacher.lastName}
                           </SelectItem>
