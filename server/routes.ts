@@ -884,6 +884,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Teacher Portal Routes
+  
+  // Get today's appointments for a teacher
+  app.get('/api/teacher/appointments/today', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'teacher') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const appointments = await storage.getTodayAppointmentsByTeacher(userId);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Error fetching teacher appointments:", error);
+      res.status(500).json({ message: "Failed to fetch appointments" });
+    }
+  });
+
+  // Get dogs assigned to a teacher
+  app.get('/api/teacher/assigned-dogs', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'teacher') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const dogs = await storage.getAssignedDogsByTeacher(userId);
+      res.json(dogs);
+    } catch (error) {
+      console.error("Error fetching assigned dogs:", error);
+      res.status(500).json({ message: "Failed to fetch assigned dogs" });
+    }
+  });
+
+  // Get recent notes for a teacher
+  app.get('/api/teacher/notes/recent', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'teacher') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const notes = await storage.getRecentNotesByTeacher(userId);
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching recent notes:", error);
+      res.status(500).json({ message: "Failed to fetch recent notes" });
+    }
+  });
+
+  // Get teacher personal statistics
+  app.get('/api/teacher/stats', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'teacher') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const stats = await storage.getTeacherStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching teacher stats:", error);
+      res.status(500).json({ message: "Failed to fetch teacher stats" });
+    }
+  });
+
+  // Create teacher assignment
+  app.post('/api/teacher/assignments', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const assignmentData = req.body;
+      const assignment = await storage.createTeacherAssignment(assignmentData);
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error creating teacher assignment:", error);
+      res.status(500).json({ message: "Failed to create assignment" });
+    }
+  });
+
+  // Get teacher assignments
+  app.get('/api/teacher/assignments', isAuthenticated, async (req, res) => {
+    try {
+      const assignments = await storage.getAllTeacherAssignments();
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching teacher assignments:", error);
+      res.status(500).json({ message: "Failed to fetch assignments" });
+    }
+  });
+
+  // Update teacher assignment
+  app.put('/api/teacher/assignments/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const assignment = await storage.updateTeacherAssignment(id, updateData);
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error updating teacher assignment:", error);
+      res.status(500).json({ message: "Failed to update assignment" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

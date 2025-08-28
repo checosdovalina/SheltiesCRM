@@ -59,6 +59,11 @@ export default function Navigation() {
   let filteredNavigation;
   if (user?.role === 'client') {
     filteredNavigation = [{ path: "/portal", label: "Mi Portal", icon: User, mobileLabel: "Portal" }];
+  } else if (user?.role === 'teacher') {
+    filteredNavigation = [
+      { path: "/teacher-portal", label: "Portal Entrenador", icon: User, mobileLabel: "Portal" },
+      { path: "/records", label: "Expedientes", icon: FileText, mobileLabel: "Expedientes" },
+    ];
   } else if (user?.role === 'admin') {
     filteredNavigation = [...navigationItems, ...adminItems];
   } else {

@@ -190,6 +190,7 @@ export const appointments = pgTable("appointments", {
   clientId: varchar("client_id").references(() => clients.id).notNull(),
   dogId: varchar("dog_id").references(() => dogs.id).notNull(),
   serviceId: varchar("service_id").references(() => services.id).notNull(),
+  teacherId: varchar("teacher_id").references(() => users.id), // Assigned teacher
   appointmentDate: timestamp("appointment_date").notNull(),
   status: appointmentStatusEnum("status").default("pending"),
   notes: text("notes"),
@@ -359,8 +360,13 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
     fields: [appointments.serviceId],
     references: [services.id],
   }),
+  teacher: one(users, {
+    fields: [appointments.teacherId],
+    references: [users.id],
+  }),
   invoiceItems: many(invoiceItems),
   progressEntries: many(progressEntries),
+  attendance: many(attendance),
 }));
 
 export const invoicesRelations = relations(invoices, ({ one, many }) => ({
@@ -517,5 +523,134 @@ export const evidenceRelations = relations(evidence, ({ one }) => ({
   appointment: one(appointments, {
     fields: [evidence.appointmentId],
     references: [appointments.id],
+  }),
+}));
+
+// Teacher Assignments - to track which teachers are assigned to which dogs
+export const teacherAssignments = pgTable("teacher_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  teacherId: varchar("teacher_id").references(() => users.id).notNull(),
+  dogId: varchar("dog_id").references(() => dogs.id).notNull(),
+  assignedDate: timestamp("assigned_date").defaultNow(),
+  isActive: boolean("is_active").default(true),
+  notes: text("notes"), // Special instructions for this assignment
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type TeacherAssignment = typeof teacherAssignments.$inferSelect;
+export type InsertTeacherAssignment = typeof teacherAssignments.$inferInsert;
+
+// Attendance tracking
+export const attendanceStatusEnum = pgEnum("attendance_status", [
+  "present",
+  "absent",
+  "excused",
+  "late"
+]);
+
+export const attendance = pgTable("attendance", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  appointmentId: varchar("appointment_id").references(() => appointments.id).notNull(),
+  dogId: varchar("dog_id").references(() => dogs.id).notNull(),
+  teacherId: varchar("teacher_id").references(() => users.id).notNull(),
+  status: attendanceStatusEnum("status").notNull(),
+  checkInTime: timestamp("check_in_time"),
+  checkOutTime: timestamp("check_out_time"),
+  notes: text("notes"), // Reason for absence, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Attendance = typeof attendance.$inferSelect;
+export type InsertAttendance = typeof attendance.$inferInsert;
+
+// Internal Communications and Notes
+export const communicationTypeEnum = pgEnum("communication_type", [
+  "note",
+  "incident",
+  "alert",
+  "reminder"
+]);
+
+export const internalNotes = pgTable("internal_notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  authorId: varchar("author_id").references(() => users.id).notNull(), // Who wrote the note
+  targetType: varchar("target_type").notNull(), // "dog", "client", "appointment", "general"
+  targetId: varchar("target_id"), // ID of the target (dogId, clientId, etc.)
+  type: communicationTypeEnum("type").default("note"),
+  title: varchar("title").notNull(),
+  content: text("content").notNull(),
+  isUrgent: boolean("is_urgent").default(false),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type InternalNote = typeof internalNotes.$inferSelect;
+export type InsertInternalNote = typeof internalNotes.$inferInsert;
+
+// Service Packages (for tracking usage like "10 sessions package")
+export const servicePackages = pgTable("service_packages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").references(() => clients.id).notNull(),
+  dogId: varchar("dog_id").references(() => dogs.id).notNull(),
+  serviceId: varchar("service_id").references(() => services.id).notNull(),
+  packageName: varchar("package_name").notNull(), // "10 Training Sessions", etc.
+  totalSessions: integer("total_sessions").notNull(),
+  usedSessions: integer("used_sessions").default(0),
+  expiryDate: timestamp("expiry_date"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type ServicePackage = typeof servicePackages.$inferSelect;
+export type InsertServicePackage = typeof servicePackages.$inferInsert;
+
+// Relations for new tables
+export const teacherAssignmentsRelations = relations(teacherAssignments, ({ one }) => ({
+  teacher: one(users, {
+    fields: [teacherAssignments.teacherId],
+    references: [users.id],
+  }),
+  dog: one(dogs, {
+    fields: [teacherAssignments.dogId],
+    references: [dogs.id],
+  }),
+}));
+
+export const attendanceRelations = relations(attendance, ({ one }) => ({
+  appointment: one(appointments, {
+    fields: [attendance.appointmentId],
+    references: [appointments.id],
+  }),
+  dog: one(dogs, {
+    fields: [attendance.dogId],
+    references: [dogs.id],
+  }),
+  teacher: one(users, {
+    fields: [attendance.teacherId],
+    references: [users.id],
+  }),
+}));
+
+export const internalNotesRelations = relations(internalNotes, ({ one }) => ({
+  author: one(users, {
+    fields: [internalNotes.authorId],
+    references: [users.id],
+  }),
+}));
+
+export const servicePackagesRelations = relations(servicePackages, ({ one }) => ({
+  client: one(clients, {
+    fields: [servicePackages.clientId],
+    references: [clients.id],
+  }),
+  dog: one(dogs, {
+    fields: [servicePackages.dogId],
+    references: [dogs.id],
+  }),
+  service: one(services, {
+    fields: [servicePackages.serviceId],
+    references: [services.id],
   }),
 }));

@@ -11,6 +11,9 @@ import {
   medicalRecords,
   trainingSessions,
   evidence,
+  teacherAssignments,
+  internalNotes,
+  servicePackages,
   type User,
   type UpsertUser,
   type Client,
@@ -35,12 +38,18 @@ import {
   type InsertTrainingSession,
   type Evidence,
   type InsertEvidence,
+  type TeacherAssignment,
+  type InsertTeacherAssignment,
+  type InternalNote,
+  type InsertInternalNote,
+  type ServicePackage,
+  type InsertServicePackage,
   petTypes,
   PetType,
   InsertPetType,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, sql, count } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, count, or, inArray } from "drizzle-orm";
 import { hashPassword } from "./auth";
 
 export interface IStorage {
@@ -144,6 +153,27 @@ export interface IStorage {
     netProfit: string;
     serviceBreakdown: any[];
   }>;
+
+  // Teacher Portal operations
+  getTodayAppointmentsByTeacher(teacherId: string): Promise<any[]>;
+  getAssignedDogsByTeacher(teacherId: string): Promise<any[]>;
+  getRecentNotesByTeacher(teacherId: string): Promise<InternalNote[]>;
+  getTeacherStats(teacherId: string): Promise<{
+    monthlySessions: number;
+    weeklyGrowth: number;
+  }>;
+
+  // Teacher Assignment operations
+  createTeacherAssignment(assignment: InsertTeacherAssignment): Promise<TeacherAssignment>;
+  getAllTeacherAssignments(): Promise<any[]>;
+  updateTeacherAssignment(id: string, assignment: Partial<InsertTeacherAssignment>): Promise<TeacherAssignment>;
+  getTeacherAssignmentsByTeacher(teacherId: string): Promise<any[]>;
+  
+  // Internal Notes operations
+  createInternalNote(note: InsertInternalNote): Promise<InternalNote>;
+  getInternalNotesByTarget(targetType: string, targetId: string): Promise<InternalNote[]>;
+  updateInternalNote(id: string, note: Partial<InsertInternalNote>): Promise<InternalNote>;
+  markNoteAsRead(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -953,8 +983,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Evidence operations
-  async createEvidence(evidence: InsertEvidence): Promise<Evidence> {
-    const [newEvidence] = await db.insert(evidence).values(evidence).returning();
+  async createEvidence(evidenceData: InsertEvidence): Promise<Evidence> {
+    const [newEvidence] = await db.insert(evidence).values(evidenceData).returning();
     return newEvidence;
   }
 
@@ -1006,6 +1036,277 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  // Teacher Portal operations
+  async getTodayAppointmentsByTeacher(teacherId: string): Promise<any[]> {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    return await db
+      .select({
+        id: appointments.id,
+        appointmentDate: appointments.appointmentDate,
+        status: appointments.status,
+        notes: appointments.notes,
+        price: appointments.price,
+        dog: {
+          id: dogs.id,
+          name: dogs.name,
+          breed: dogs.breed,
+        },
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+        service: {
+          id: services.id,
+          name: services.name,
+          type: services.type,
+        },
+      })
+      .from(appointments)
+      .innerJoin(dogs, eq(appointments.dogId, dogs.id))
+      .innerJoin(clients, eq(appointments.clientId, clients.id))
+      .innerJoin(services, eq(appointments.serviceId, services.id))
+      .where(
+        and(
+          eq(appointments.teacherId, teacherId),
+          gte(appointments.appointmentDate, startOfDay),
+          lte(appointments.appointmentDate, endOfDay)
+        )
+      )
+      .orderBy(appointments.appointmentDate);
+  }
+
+  async getAssignedDogsByTeacher(teacherId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: dogs.id,
+        name: dogs.name,
+        breed: dogs.breed,
+        age: dogs.age,
+        imageUrl: dogs.imageUrl,
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+        assignmentNotes: teacherAssignments.notes,
+        assignedDate: teacherAssignments.assignedDate,
+      })
+      .from(teacherAssignments)
+      .innerJoin(dogs, eq(teacherAssignments.dogId, dogs.id))
+      .innerJoin(clients, eq(dogs.clientId, clients.id))
+      .where(
+        and(
+          eq(teacherAssignments.teacherId, teacherId),
+          eq(teacherAssignments.isActive, true)
+        )
+      )
+      .orderBy(desc(teacherAssignments.assignedDate));
+  }
+
+  async getRecentNotesByTeacher(teacherId: string): Promise<InternalNote[]> {
+    // Get notes authored by teacher or related to their assigned dogs
+    const teacherDogs = await db
+      .select({ dogId: teacherAssignments.dogId })
+      .from(teacherAssignments)
+      .where(
+        and(
+          eq(teacherAssignments.teacherId, teacherId),
+          eq(teacherAssignments.isActive, true)
+        )
+      );
+
+    const dogIds = teacherDogs.map(td => td.dogId);
+
+    return await db
+      .select()
+      .from(internalNotes)
+      .where(
+        // Notes authored by teacher OR notes about their assigned dogs
+        or(
+          eq(internalNotes.authorId, teacherId),
+          and(
+            eq(internalNotes.targetType, 'dog'),
+            inArray(internalNotes.targetId, dogIds.length > 0 ? dogIds : [''])
+          )
+        )
+      )
+      .orderBy(desc(internalNotes.createdAt))
+      .limit(20);
+  }
+
+  async getTeacherStats(teacherId: string): Promise<{ monthlySessions: number; weeklyGrowth: number; }> {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const startOfThisWeek = new Date(now.getTime());
+
+    // Monthly sessions count
+    const [monthlyResult] = await db
+      .select({ count: count() })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.teacherId, teacherId),
+          gte(appointments.appointmentDate, startOfMonth),
+          eq(appointments.status, 'completed')
+        )
+      );
+
+    // Weekly growth calculation (comparing this week vs last week)
+    const [thisWeekResult] = await db
+      .select({ count: count() })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.teacherId, teacherId),
+          gte(appointments.appointmentDate, startOfThisWeek),
+          eq(appointments.status, 'completed')
+        )
+      );
+
+    const [lastWeekResult] = await db
+      .select({ count: count() })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.teacherId, teacherId),
+          gte(appointments.appointmentDate, startOfLastWeek),
+          lte(appointments.appointmentDate, startOfThisWeek),
+          eq(appointments.status, 'completed')
+        )
+      );
+
+    const thisWeekCount = thisWeekResult?.count || 0;
+    const lastWeekCount = lastWeekResult?.count || 0;
+    const weeklyGrowth = lastWeekCount > 0 
+      ? Math.round(((thisWeekCount - lastWeekCount) / lastWeekCount) * 100)
+      : 0;
+
+    return {
+      monthlySessions: monthlyResult?.count || 0,
+      weeklyGrowth: weeklyGrowth,
+    };
+  }
+
+  // Teacher Assignment operations
+  async createTeacherAssignment(assignmentData: InsertTeacherAssignment): Promise<TeacherAssignment> {
+    const [assignment] = await db
+      .insert(teacherAssignments)
+      .values(assignmentData)
+      .returning();
+    return assignment;
+  }
+
+  async getAllTeacherAssignments(): Promise<any[]> {
+    return await db
+      .select({
+        id: teacherAssignments.id,
+        assignedDate: teacherAssignments.assignedDate,
+        isActive: teacherAssignments.isActive,
+        notes: teacherAssignments.notes,
+        teacher: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+        dog: {
+          id: dogs.id,
+          name: dogs.name,
+          breed: dogs.breed,
+        },
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+        },
+      })
+      .from(teacherAssignments)
+      .innerJoin(users, eq(teacherAssignments.teacherId, users.id))
+      .innerJoin(dogs, eq(teacherAssignments.dogId, dogs.id))
+      .innerJoin(clients, eq(dogs.clientId, clients.id))
+      .orderBy(desc(teacherAssignments.assignedDate));
+  }
+
+  async updateTeacherAssignment(id: string, assignmentData: Partial<InsertTeacherAssignment>): Promise<TeacherAssignment> {
+    const [assignment] = await db
+      .update(teacherAssignments)
+      .set({ ...assignmentData, updatedAt: new Date() })
+      .where(eq(teacherAssignments.id, id))
+      .returning();
+    return assignment;
+  }
+
+  async getTeacherAssignmentsByTeacher(teacherId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: teacherAssignments.id,
+        assignedDate: teacherAssignments.assignedDate,
+        isActive: teacherAssignments.isActive,
+        notes: teacherAssignments.notes,
+        dog: {
+          id: dogs.id,
+          name: dogs.name,
+          breed: dogs.breed,
+        },
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+        },
+      })
+      .from(teacherAssignments)
+      .innerJoin(dogs, eq(teacherAssignments.dogId, dogs.id))
+      .innerJoin(clients, eq(dogs.clientId, clients.id))
+      .where(eq(teacherAssignments.teacherId, teacherId))
+      .orderBy(desc(teacherAssignments.assignedDate));
+  }
+
+  // Internal Notes operations
+  async createInternalNote(noteData: InsertInternalNote): Promise<InternalNote> {
+    const [note] = await db
+      .insert(internalNotes)
+      .values(noteData)
+      .returning();
+    return note;
+  }
+
+  async getInternalNotesByTarget(targetType: string, targetId: string): Promise<InternalNote[]> {
+    return await db
+      .select()
+      .from(internalNotes)
+      .where(
+        and(
+          eq(internalNotes.targetType, targetType),
+          eq(internalNotes.targetId, targetId)
+        )
+      )
+      .orderBy(desc(internalNotes.createdAt));
+  }
+
+  async updateInternalNote(id: string, noteData: Partial<InsertInternalNote>): Promise<InternalNote> {
+    const [note] = await db
+      .update(internalNotes)
+      .set(noteData)
+      .where(eq(internalNotes.id, id))
+      .returning();
+    return note;
+  }
+
+  async markNoteAsRead(id: string): Promise<void> {
+    await db
+      .update(internalNotes)
+      .set({ isRead: true })
+      .where(eq(internalNotes.id, id));
+  }
+
+  // Method that should be in the class
   async getAppointmentsByDogId(dogId: string): Promise<any[]> {
     return await db
       .select({
