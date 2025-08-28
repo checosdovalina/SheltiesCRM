@@ -970,6 +970,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get training sessions for teacher's assigned dogs
+  app.get('/api/teacher/training-sessions', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'teacher') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Get assigned dogs and then their training sessions
+      const assignedDogs = await storage.getAssignedDogsByTeacher(userId);
+      const dogIds = assignedDogs.map(dog => dog.id);
+      
+      if (dogIds.length === 0) {
+        return res.json([]);
+      }
+
+      // Get training sessions for all assigned dogs
+      const sessionsPromises = dogIds.map(dogId => storage.getTrainingSessionsByDogId(dogId));
+      const sessionsArrays = await Promise.all(sessionsPromises);
+      const allSessions = sessionsArrays.flat();
+      
+      // Sort by session date descending
+      const sortedSessions = allSessions.sort((a, b) => 
+        new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime()
+      );
+      
+      res.json(sortedSessions);
+    } catch (error) {
+      console.error("Error fetching teacher training sessions:", error);
+      res.status(500).json({ message: "Failed to fetch training sessions" });
+    }
+  });
+
+  // Object Storage endpoints for evidence files
+  app.post('/api/teacher/evidence/upload-url', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'teacher') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // For now, return a placeholder - will implement object storage integration
+      const uploadURL = `https://placeholder-upload-url.com/evidence/${Date.now()}`;
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ message: "Failed to generate upload URL" });
+    }
+  });
+
   // Create teacher assignment
   app.post('/api/teacher/assignments', isAuthenticated, isAdmin, async (req, res) => {
     try {

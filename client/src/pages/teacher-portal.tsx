@@ -16,11 +16,16 @@ import {
   Bell,
   BookOpen,
   Target,
-  AlertTriangle
+  AlertTriangle,
+  Plus,
+  Award,
+  Edit
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { Appointment, Dog as DogType, Client, Service, InternalNote } from "@shared/schema";
+import { useState } from "react";
+import type { Appointment, Dog as DogType, Client, Service, InternalNote, TrainingSession } from "@shared/schema";
+import TrainingSessionModal from "@/components/training-session-modal";
 
 // Types for the teacher portal
 interface AppointmentWithRelations extends Appointment {
@@ -40,6 +45,8 @@ interface TeacherStats {
 
 export default function TeacherPortal() {
   const { user, isLoading: authLoading } = useAuth();
+  const [sessionModalOpen, setSessionModalOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
 
   // Today's appointments query
   const { data: todayAppointments = [], isLoading: appointmentsLoading } = useQuery<AppointmentWithRelations[]>({
@@ -62,6 +69,12 @@ export default function TeacherPortal() {
   // Personal stats
   const { data: teacherStats = { monthlySessions: 0, weeklyGrowth: 0 }, isLoading: statsLoading } = useQuery<TeacherStats>({
     queryKey: ["/api/teacher/stats"],
+    enabled: !!user && user.role === 'teacher',
+  });
+
+  // Training sessions for assigned dogs
+  const { data: recentSessions = [], isLoading: sessionsLoading } = useQuery<TrainingSession[]>({
+    queryKey: ["/api/teacher/training-sessions"],
     enabled: !!user && user.role === 'teacher',
   });
 
@@ -332,14 +345,162 @@ export default function TeacherPortal() {
           </Card>
         </TabsContent>
 
-        {/* Other tabs placeholder */}
-        <TabsContent value="progress">
-          <Card>
-            <CardHeader>
-              <CardTitle>Registro de Avances</CardTitle>
-              <CardDescription>En desarrollo - Próximamente disponible</CardDescription>
-            </CardHeader>
-          </Card>
+        {/* Progress Tab */}
+        <TabsContent value="progress" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Registro de Avances</h3>
+              <p className="text-sm text-muted-foreground">Documenta el progreso de entrenamiento con sesiones y evidencias</p>
+            </div>
+            <Button 
+              onClick={() => {
+                setSelectedSession(null);
+                setSessionModalOpen(true);
+              }}
+              data-testid="button-new-session"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nueva Sesión
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Training Sessions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Award className="w-5 h-5 mr-2" />
+                  Sesiones Recientes
+                </CardTitle>
+                <CardDescription>
+                  Últimas sesiones de entrenamiento registradas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {sessionsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-20 bg-muted rounded-lg"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : recentSessions.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentSessions.slice(0, 5).map((session: any) => (
+                      <div key={session.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <h4 className="font-medium">{session.objective}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {session.dog?.name} • {format(new Date(session.sessionDate), "dd/MM/yyyy HH:mm")}
+                            </p>
+                            <div className="flex items-center space-x-2">
+                              <Badge variant={session.rating >= 8 ? "default" : session.rating >= 6 ? "secondary" : "destructive"}>
+                                {session.rating}/10
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {session.duration}min
+                              </span>
+                            </div>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedSession(session);
+                              setSessionModalOpen(true);
+                            }}
+                            data-testid={`button-edit-session-${session.id}`}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Award className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h4 className="text-sm font-medium mb-2">No hay sesiones registradas</h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Comienza registrando tu primera sesión de entrenamiento
+                    </p>
+                    <Button 
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedSession(null);
+                        setSessionModalOpen(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Crear Primera Sesión
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions & Stats */}
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Target className="w-5 h-5 mr-2" />
+                    Resumen de Progreso
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Sesiones este mes</span>
+                      <Badge variant="outline">{teacherStats.monthlySessions || 0}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Perros en entrenamiento</span>
+                      <Badge variant="outline">{assignedDogs.length}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Promedio de calificación</span>
+                      <Badge variant="outline">
+                        {recentSessions.length > 0 
+                          ? (recentSessions.reduce((acc: number, session: any) => acc + (session.rating || 0), 0) / recentSessions.length).toFixed(1)
+                          : "0.0"
+                        }/10
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Acciones Rápidas</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setSelectedSession(null);
+                      setSessionModalOpen(true);
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Registrar Nueva Sesión
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Ver Historial Completo
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    Generar Reporte
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="communication">
@@ -369,6 +530,14 @@ export default function TeacherPortal() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Training Session Modal */}
+      <TrainingSessionModal 
+        open={sessionModalOpen}
+        onOpenChange={setSessionModalOpen}
+        session={selectedSession}
+        assignedDogs={assignedDogs}
+      />
     </div>
   );
 }
