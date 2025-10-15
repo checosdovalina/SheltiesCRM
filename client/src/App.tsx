@@ -38,8 +38,8 @@ function Router() {
   if (!isAuthenticated) {
     return (
       <Switch>
-        <Route path="/" component={Login} />
-        <Route path="/landing" component={Landing} />
+        <Route path="/" component={Landing} />
+        <Route path="/login" component={Login} />
         <Route component={NotFound} />
       </Switch>
     );
