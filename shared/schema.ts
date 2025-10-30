@@ -606,6 +606,55 @@ export const servicePackages = pgTable("service_packages", {
 export type ServicePackage = typeof servicePackages.$inferSelect;
 export type InsertServicePackage = typeof servicePackages.$inferInsert;
 
+// Tasks for teacher assignments (general tasks, classes, meetings)
+export const taskTypeEnum = pgEnum("task_type", [
+  "class",
+  "training",
+  "meeting",
+  "administrative",
+  "other"
+]);
+
+export const taskStatusEnum = pgEnum("task_status", [
+  "pending",
+  "in_progress",
+  "completed",
+  "cancelled"
+]);
+
+export const taskPriorityEnum = pgEnum("task_priority", [
+  "low",
+  "medium",
+  "high",
+  "urgent"
+]);
+
+export const tasks = pgTable("tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  type: taskTypeEnum("type").notNull(),
+  assignedTo: varchar("assigned_to").references(() => users.id).notNull(), // Teacher ID
+  createdBy: varchar("created_by").references(() => users.id).notNull(), // Admin ID
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  status: taskStatusEnum("status").default("pending"),
+  priority: taskPriorityEnum("priority").default("medium"),
+  isRead: boolean("is_read").default(false), // Has the teacher seen this?
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = typeof tasks.$inferInsert;
+
+export const insertTaskSchema = createInsertSchema(tasks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Relations for new tables
 export const teacherAssignmentsRelations = relations(teacherAssignments, ({ one }) => ({
   teacher: one(users, {
@@ -652,5 +701,16 @@ export const servicePackagesRelations = relations(servicePackages, ({ one }) => 
   service: one(services, {
     fields: [servicePackages.serviceId],
     references: [services.id],
+  }),
+}));
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  assignedTeacher: one(users, {
+    fields: [tasks.assignedTo],
+    references: [users.id],
+  }),
+  creator: one(users, {
+    fields: [tasks.createdBy],
+    references: [users.id],
   }),
 }));
