@@ -5,16 +5,19 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ChevronLeft, ChevronRight, Plus, Clock } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Plus, Clock, CheckSquare } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import AppointmentModal from "@/components/appointment-modal";
+import TaskModal from "@/components/task-modal";
 
 export default function CalendarPage() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const isAdmin = user?.role === 'admin';
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -39,6 +42,22 @@ export default function CalendarPage() {
     queryFn: async () => {
       const response = await fetch(
         `/api/appointments/range?startDate=${startOfMonth.toISOString()}&endDate=${endOfMonth.toISOString()}`,
+        { credentials: "include" }
+      );
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  const { data: tasks, isLoading: tasksLoading } = useQuery({
+    queryKey: ["/api/tasks/range", startOfMonth.toISOString(), endOfMonth.toISOString()],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/tasks/range?startDate=${startOfMonth.toISOString()}&endDate=${endOfMonth.toISOString()}`,
         { credentials: "include" }
       );
       if (!response.ok) {
@@ -100,12 +119,34 @@ export default function CalendarPage() {
     });
   };
 
+  const getTasksForDate = (date: Date) => {
+    if (!tasks) return [];
+    return tasks.filter((task: any) => {
+      const taskDate = new Date(task.startDate);
+      return (
+        taskDate.getDate() === date.getDate() &&
+        taskDate.getMonth() === date.getMonth() &&
+        taskDate.getFullYear() === date.getFullYear()
+      );
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return 'bg-accent/20 text-accent';
       case 'pending': return 'bg-chart-4/20 text-chart-4';
       case 'completed': return 'bg-chart-2/20 text-chart-2';
       case 'cancelled': return 'bg-destructive/20 text-destructive';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getTaskColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'bg-destructive/20 text-destructive';
+      case 'high': return 'bg-orange-500/20 text-orange-600';
+      case 'medium': return 'bg-yellow-500/20 text-yellow-600';
+      case 'low': return 'bg-blue-500/20 text-blue-600';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -129,15 +170,27 @@ export default function CalendarPage() {
           <h2 className="text-3xl font-bold text-foreground" data-testid="text-calendar-title">
             Calendario
           </h2>
-          <p className="text-muted-foreground">Visualiza y gestiona todas las citas programadas</p>
+          <p className="text-muted-foreground">Visualiza y gestiona citas y tareas programadas</p>
         </div>
-        <Button 
-          onClick={() => setShowAppointmentModal(true)}
-          data-testid="button-add-appointment"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nueva Cita
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowAppointmentModal(true)}
+            data-testid="button-add-appointment"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nueva Cita
+          </Button>
+          {isAdmin && (
+            <Button 
+              onClick={() => setShowTaskModal(true)}
+              variant="secondary"
+              data-testid="button-add-task"
+            >
+              <CheckSquare className="w-4 h-4 mr-2" />
+              Nueva Tarea
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -185,6 +238,8 @@ export default function CalendarPage() {
                   }
                   
                   const dayAppointments = getAppointmentsForDate(day);
+                  const dayTasks = getTasksForDate(day);
+                  const totalItems = dayAppointments.length + dayTasks.length;
                   const isToday = day.toDateString() === today.toDateString();
                   const isSelected = selectedDate?.toDateString() === day.toDateString();
                   
@@ -203,7 +258,7 @@ export default function CalendarPage() {
                         {day.getDate()}
                       </div>
                       <div className="space-y-1">
-                        {dayAppointments.slice(0, 2).map((apt: any) => (
+                        {dayAppointments.slice(0, 1).map((apt: any) => (
                           <div
                             key={apt.id}
                             className={`text-xs px-1 py-0.5 rounded truncate ${getStatusColor(apt.status)}`}
@@ -215,9 +270,22 @@ export default function CalendarPage() {
                             })} {apt.client?.firstName}
                           </div>
                         ))}
-                        {dayAppointments.length > 2 && (
+                        {dayTasks.slice(0, totalItems > 1 ? 1 : 2).map((task: any) => (
+                          <div
+                            key={task.id}
+                            className={`text-xs px-1 py-0.5 rounded truncate flex items-center gap-1 ${getTaskColor(task.priority)}`}
+                            title={`${task.title} - ${task.assignedTeacher?.firstName} ${task.assignedTeacher?.lastName}`}
+                          >
+                            <CheckSquare className="w-3 h-3" />
+                            {new Date(task.startDate).toLocaleTimeString('es-ES', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })} {task.title.substring(0, 8)}
+                          </div>
+                        ))}
+                        {totalItems > 2 && (
                           <div className="text-xs text-muted-foreground">
-                            +{dayAppointments.length - 2} más
+                            +{totalItems - 2} más
                           </div>
                         )}
                       </div>
@@ -363,6 +431,13 @@ export default function CalendarPage() {
       <AppointmentModal 
         open={showAppointmentModal} 
         onOpenChange={setShowAppointmentModal}
+        selectedDate={selectedDate}
+      />
+
+      {/* Task Modal */}
+      <TaskModal 
+        open={showTaskModal} 
+        onOpenChange={setShowTaskModal}
         selectedDate={selectedDate}
       />
     </div>

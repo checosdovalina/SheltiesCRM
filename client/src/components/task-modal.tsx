@@ -44,14 +44,14 @@ export default function TaskModal({
     defaultValues: {
       title: "",
       description: "",
-      type: "general",
+      type: "other",
       assignedTo: "",
       startDate: "",
       startTime: "",
       endDate: "",
       endTime: "",
       status: "pending",
-      priority: "media",
+      priority: "medium",
       notes: "",
     },
   });
@@ -68,14 +68,14 @@ export default function TaskModal({
         form.reset({
           title: task.title || "",
           description: task.description || "",
-          type: task.type || "general",
+          type: task.type || "other",
           assignedTo: task.assignedTeacher?.id || "",
           startDate: startDate.toISOString().split('T')[0],
           startTime: startTimeString,
           endDate: endDate ? endDate.toISOString().split('T')[0] : "",
           endTime: endTimeString,
           status: task.status || "pending",
-          priority: task.priority || "media",
+          priority: task.priority || "medium",
           notes: task.notes || "",
         });
       } else {
@@ -83,14 +83,14 @@ export default function TaskModal({
         form.reset({
           title: "",
           description: "",
-          type: "general",
+          type: "other",
           assignedTo: "",
           startDate: defaultDate.toISOString().split('T')[0],
           startTime: "09:00",
           endDate: "",
           endTime: "",
           status: "pending",
-          priority: "media",
+          priority: "medium",
           notes: "",
         });
       }
@@ -248,6 +248,7 @@ export default function TaskModal({
                   <FormControl>
                     <Textarea 
                       {...field} 
+                      value={field.value || ""}
                       placeholder="Descripción detallada de la tarea"
                       rows={3}
                       data-testid="input-description"
@@ -275,9 +276,11 @@ export default function TaskModal({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="clase">Clase</SelectItem>
-                        <SelectItem value="evaluacion">Evaluación</SelectItem>
-                        <SelectItem value="general">General</SelectItem>
+                        <SelectItem value="class">Clase</SelectItem>
+                        <SelectItem value="training">Entrenamiento</SelectItem>
+                        <SelectItem value="meeting">Reunión</SelectItem>
+                        <SelectItem value="administrative">Administrativo</SelectItem>
+                        <SelectItem value="other">Otro</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -302,7 +305,7 @@ export default function TaskModal({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {teachers?.map((teacher: any) => (
+                        {(teachers || []).map((teacher: any) => (
                           <SelectItem key={teacher.id} value={teacher.id}>
                             {teacher.firstName} {teacher.lastName}
                           </SelectItem>
@@ -400,7 +403,7 @@ export default function TaskModal({
                     <FormLabel>Estado *</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      value={field.value}
+                      value={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger data-testid="select-status">
@@ -409,7 +412,7 @@ export default function TaskModal({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="in-progress">En Progreso</SelectItem>
+                        <SelectItem value="in_progress">En Progreso</SelectItem>
                         <SelectItem value="completed">Completada</SelectItem>
                         <SelectItem value="cancelled">Cancelada</SelectItem>
                       </SelectContent>
@@ -427,7 +430,7 @@ export default function TaskModal({
                     <FormLabel>Prioridad *</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      value={field.value}
+                      value={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger data-testid="select-priority">
@@ -435,9 +438,10 @@ export default function TaskModal({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="baja">Baja</SelectItem>
-                        <SelectItem value="media">Media</SelectItem>
-                        <SelectItem value="alta">Alta</SelectItem>
+                        <SelectItem value="low">Baja</SelectItem>
+                        <SelectItem value="medium">Media</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="urgent">Urgente</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -455,6 +459,7 @@ export default function TaskModal({
                   <FormControl>
                     <Textarea 
                       {...field} 
+                      value={field.value || ""}
                       placeholder="Notas o instrucciones adicionales"
                       rows={2}
                       data-testid="input-notes"
