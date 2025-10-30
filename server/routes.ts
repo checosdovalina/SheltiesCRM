@@ -12,6 +12,7 @@ import {
   insertExpenseSchema,
   insertProgressEntrySchema,
   insertPetTypeSchema,
+  insertTaskSchema,
   createUserSchema,
   loginSchema,
   registerSchema,
@@ -1064,6 +1065,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating teacher assignment:", error);
       res.status(500).json({ message: "Failed to update assignment" });
+    }
+  });
+
+  // Task endpoints
+  // Create task (admin only)
+  app.post('/api/tasks', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const taskData = insertTaskSchema.parse(req.body);
+      const task = await storage.createTask({
+        ...taskData,
+        createdBy: req.user.id,
+      });
+      res.json(task);
+    } catch (error) {
+      console.error("Error creating task:", error);
+      res.status(400).json({ message: "Failed to create task" });
+    }
+  });
+
+  // Get all tasks (admin only)
+  app.get('/api/tasks', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const tasks = await storage.getAllTasks();
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  // Get tasks by date range (for calendar view)
+  app.get('/api/tasks/range', isAuthenticated, async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: "Start and end dates are required" });
+      }
+      const tasks = await storage.getTasksByDateRange(
+        new Date(startDate as string),
+        new Date(endDate as string)
+      );
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks by range:", error);
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  // Get tasks for logged-in teacher
+  app.get('/api/teacher/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'teacher') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      const tasks = await storage.getTasksByTeacher(req.user.id);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching teacher tasks:", error);
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  // Get unread tasks count for logged-in teacher
+  app.get('/api/teacher/tasks/unread', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'teacher') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      const count = await storage.getUnreadTasksByTeacher(req.user.id);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread tasks count:", error);
+      res.status(500).json({ message: "Failed to fetch unread tasks count" });
+    }
+  });
+
+  // Get single task
+  app.get('/api/tasks/:id', isAuthenticated, async (req, res) => {
+    try {
+      const task = await storage.getTask(req.params.id);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      res.json(task);
+    } catch (error) {
+      console.error("Error fetching task:", error);
+      res.status(500).json({ message: "Failed to fetch task" });
+    }
+  });
+
+  // Update task
+  app.put('/api/tasks/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const task = await storage.getTask(req.params.id);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // Only admin or assigned teacher can update
+      if (req.user.role !== 'admin' && task.assignedTeacher.id !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedTask = await storage.updateTask(req.params.id, req.body);
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error updating task:", error);
+      res.status(400).json({ message: "Failed to update task" });
+    }
+  });
+
+  // Mark task as read
+  app.put('/api/tasks/:id/read', isAuthenticated, async (req: any, res) => {
+    try {
+      const task = await storage.getTask(req.params.id);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // Only assigned teacher can mark as read
+      if (task.assignedTeacher.id !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.markTaskAsRead(req.params.id);
+      res.json({ message: "Task marked as read" });
+    } catch (error) {
+      console.error("Error marking task as read:", error);
+      res.status(500).json({ message: "Failed to mark task as read" });
+    }
+  });
+
+  // Delete task (admin only)
+  app.delete('/api/tasks/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteTask(req.params.id);
+      res.json({ message: "Task deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      res.status(500).json({ message: "Failed to delete task" });
     }
   });
 
