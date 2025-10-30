@@ -14,6 +14,7 @@ import {
   teacherAssignments,
   internalNotes,
   servicePackages,
+  tasks,
   type User,
   type UpsertUser,
   type Client,
@@ -44,6 +45,8 @@ import {
   type InsertInternalNote,
   type ServicePackage,
   type InsertServicePackage,
+  type Task,
+  type InsertTask,
   petTypes,
   PetType,
   InsertPetType,
@@ -174,6 +177,17 @@ export interface IStorage {
   getInternalNotesByTarget(targetType: string, targetId: string): Promise<InternalNote[]>;
   updateInternalNote(id: string, note: Partial<InsertInternalNote>): Promise<InternalNote>;
   markNoteAsRead(id: string): Promise<void>;
+
+  // Task operations
+  createTask(task: InsertTask): Promise<Task>;
+  getTasksByTeacher(teacherId: string): Promise<any[]>;
+  getAllTasks(): Promise<any[]>;
+  getTasksByDateRange(startDate: Date, endDate: Date): Promise<any[]>;
+  getTask(id: string): Promise<any | undefined>;
+  updateTask(id: string, task: Partial<InsertTask>): Promise<Task>;
+  deleteTask(id: string): Promise<void>;
+  getUnreadTasksByTeacher(teacherId: string): Promise<number>;
+  markTaskAsRead(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1325,6 +1339,161 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(services, eq(appointments.serviceId, services.id))
       .where(eq(appointments.dogId, dogId))
       .orderBy(desc(appointments.appointmentDate));
+  }
+
+  // Task operations
+  async createTask(taskData: InsertTask): Promise<Task> {
+    const [task] = await db
+      .insert(tasks)
+      .values(taskData)
+      .returning();
+    return task;
+  }
+
+  async getTasksByTeacher(teacherId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        description: tasks.description,
+        type: tasks.type,
+        startDate: tasks.startDate,
+        endDate: tasks.endDate,
+        status: tasks.status,
+        priority: tasks.priority,
+        isRead: tasks.isRead,
+        notes: tasks.notes,
+        createdAt: tasks.createdAt,
+        assignedTeacher: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+      })
+      .from(tasks)
+      .innerJoin(users, eq(tasks.assignedTo, users.id))
+      .where(eq(tasks.assignedTo, teacherId))
+      .orderBy(desc(tasks.startDate));
+  }
+
+  async getAllTasks(): Promise<any[]> {
+    return await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        description: tasks.description,
+        type: tasks.type,
+        startDate: tasks.startDate,
+        endDate: tasks.endDate,
+        status: tasks.status,
+        priority: tasks.priority,
+        isRead: tasks.isRead,
+        notes: tasks.notes,
+        createdAt: tasks.createdAt,
+        assignedTeacher: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+      })
+      .from(tasks)
+      .innerJoin(users, eq(tasks.assignedTo, users.id))
+      .orderBy(desc(tasks.startDate));
+  }
+
+  async getTasksByDateRange(startDate: Date, endDate: Date): Promise<any[]> {
+    return await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        description: tasks.description,
+        type: tasks.type,
+        startDate: tasks.startDate,
+        endDate: tasks.endDate,
+        status: tasks.status,
+        priority: tasks.priority,
+        isRead: tasks.isRead,
+        notes: tasks.notes,
+        createdAt: tasks.createdAt,
+        assignedTeacher: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+      })
+      .from(tasks)
+      .innerJoin(users, eq(tasks.assignedTo, users.id))
+      .where(
+        and(
+          gte(tasks.startDate, startDate),
+          lte(tasks.startDate, endDate)
+        )
+      )
+      .orderBy(tasks.startDate);
+  }
+
+  async getTask(id: string): Promise<any | undefined> {
+    const [task] = await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        description: tasks.description,
+        type: tasks.type,
+        startDate: tasks.startDate,
+        endDate: tasks.endDate,
+        status: tasks.status,
+        priority: tasks.priority,
+        isRead: tasks.isRead,
+        notes: tasks.notes,
+        createdAt: tasks.createdAt,
+        assignedTeacher: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+      })
+      .from(tasks)
+      .innerJoin(users, eq(tasks.assignedTo, users.id))
+      .where(eq(tasks.id, id));
+    return task;
+  }
+
+  async updateTask(id: string, taskData: Partial<InsertTask>): Promise<Task> {
+    const [task] = await db
+      .update(tasks)
+      .set({ ...taskData, updatedAt: new Date() })
+      .where(eq(tasks.id, id))
+      .returning();
+    return task;
+  }
+
+  async deleteTask(id: string): Promise<void> {
+    await db.delete(tasks).where(eq(tasks.id, id));
+  }
+
+  async getUnreadTasksByTeacher(teacherId: string): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.assignedTo, teacherId),
+          eq(tasks.isRead, false),
+          eq(tasks.status, 'pending')
+        )
+      );
+    return result[0]?.count || 0;
+  }
+
+  async markTaskAsRead(id: string): Promise<void> {
+    await db
+      .update(tasks)
+      .set({ isRead: true })
+      .where(eq(tasks.id, id));
   }
 }
 
