@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { 
   BarChart3, 
   Calendar, 
+  CalendarDays,
   CreditCard, 
   Home, 
   Users, 
@@ -46,6 +47,7 @@ export default function Navigation() {
     { path: "/clients", label: "Clientes", icon: Users, mobileLabel: "Clientes" },
     { path: "/services", label: "Servicios", icon: Wrench, mobileLabel: "Servicios" },
     { path: "/appointments", label: "Citas", icon: Calendar, mobileLabel: "Citas" },
+    { path: "/calendar", label: "Calendario", icon: CalendarDays, mobileLabel: "Calendario" },
     { path: "/records", label: "Expedientes", icon: FileText, mobileLabel: "Expedientes" },
     { path: "/billing", label: "Facturación", icon: CreditCard, mobileLabel: "Facturas" },
     { path: "/reports", label: "Reportes", icon: BarChart3, mobileLabel: "Reportes" },

@@ -77,3 +77,29 @@ Preferred communication style: Simple, everyday language.
 - **Date-fns**: Date manipulation and formatting utilities
 - **Class Variance Authority**: Utility for managing CSS class variations
 - **CLSX**: Conditional CSS class utility
+
+## Recent Changes
+
+### October 30, 2025 - Calendar Enhancements and Navigation Fix
+
+#### Calendar Features Added
+- **Teacher Filter**: Admin-only teacher dropdown to view individual teacher schedules
+- **Task Integration**: Calendar now displays both appointments and tasks for selected teachers
+- **Availability View**: Shows free time slots for selected teacher on selected date (8:00-19:00 working hours)
+- **Teacher-specific Filtering**: Both appointments and tasks are filtered by selected teacher
+- **API Endpoint**: Added `/api/teachers` endpoint to fetch list of teachers for calendar filter
+
+#### Navigation Enhancement
+- **Calendar Link Added**: Added "Calendario" link to main navigation menu using CalendarDays icon
+- **Route**: Accessible at `/calendar` path for all authenticated users
+- **Mobile Navigation**: Calendar now appears in mobile navigation as well
+
+#### Bug Fixes
+- **Records Page Fix**: Fixed Array.isArray validation in Records page to prevent flatMap errors when data is not yet loaded
+- **Type Safety**: Added proper TypeScript types to useQuery hooks to prevent runtime errors
+
+#### Technical Details
+- Calendar defaults to "all teachers" view to preserve non-admin experience
+- Working hours currently hardcoded to 8:00-19:00 (configurable in future)
+- Teacher filter only visible to admin users
+- Both appointments and tasks count toward occupied time slots in availability view

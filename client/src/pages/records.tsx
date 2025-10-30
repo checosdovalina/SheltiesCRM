@@ -21,23 +21,25 @@ export default function Records() {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Get all clients with their dogs
-  const { data: clients, isLoading: clientsLoading } = useQuery({
+  const { data: clients, isLoading: clientsLoading } = useQuery<any[]>({
     queryKey: ["/api/clients-with-dogs"],
   });
 
   // Filter dogs based on search term
-  const filteredDogs = (clients || []).flatMap((client: any) => 
-    (client.dogs || []).map((dog: any) => ({
-      ...dog,
-      clientName: `${client.firstName} ${client.lastName}`,
-      clientEmail: client.email,
-      clientPhone: client.phone,
-    }))
-  ).filter((dog: any) => 
-    dog.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dog.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dog.breed?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDogs = Array.isArray(clients) 
+    ? clients.flatMap((client: any) => 
+        (Array.isArray(client.dogs) ? client.dogs : []).map((dog: any) => ({
+          ...dog,
+          clientName: `${client.firstName} ${client.lastName}`,
+          clientEmail: client.email,
+          clientPhone: client.phone,
+        }))
+      ).filter((dog: any) => 
+        dog.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        dog.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        dog.breed?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   if (clientsLoading) {
     return (
