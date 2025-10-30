@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   Plus,
   Award,
-  Edit
+  Edit,
+  CheckSquare
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -78,6 +79,20 @@ export default function TeacherPortal() {
     enabled: !!user && user.role === 'teacher',
   });
 
+  // Teacher's assigned tasks
+  const { data: teacherTasks = [], isLoading: tasksLoading } = useQuery<any[]>({
+    queryKey: ["/api/teacher/tasks"],
+    enabled: !!user && user.role === 'teacher',
+  });
+
+  // Unread tasks count
+  const { data: unreadTasksData } = useQuery<{ count: number }>({
+    queryKey: ["/api/teacher/tasks/unread"],
+    enabled: !!user && user.role === 'teacher',
+  });
+  
+  const unreadTasksCount = unreadTasksData?.count || 0;
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -127,7 +142,7 @@ export default function TeacherPortal() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Citas Hoy</CardTitle>
@@ -139,6 +154,21 @@ export default function TeacherPortal() {
             </div>
             <p className="text-xs text-muted-foreground">
               {todayAppointments.filter(app => app.status === 'confirmed').length} confirmadas
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tareas Nuevas</CardTitle>
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600" data-testid="text-unread-tasks">
+              {unreadTasksCount}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {tasksLoading ? "..." : teacherTasks.filter((t: any) => t.status === 'pending').length} pendientes total
             </p>
           </CardContent>
         </Card>
@@ -191,10 +221,19 @@ export default function TeacherPortal() {
 
       {/* Main Content */}
       <Tabs defaultValue="agenda" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="agenda" data-testid="tab-agenda">
             <Calendar className="w-4 h-4 mr-2" />
             Agenda
+          </TabsTrigger>
+          <TabsTrigger value="tasks" data-testid="tab-tasks">
+            <CheckSquare className="w-4 h-4 mr-2" />
+            Tareas
+            {unreadTasksCount > 0 && (
+              <Badge variant="destructive" className="ml-2 px-1.5 py-0 text-xs">
+                {unreadTasksCount}
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="dogs" data-testid="tab-dogs">
             <Users className="w-4 h-4 mr-2" />
@@ -271,6 +310,177 @@ export default function TeacherPortal() {
                 <div className="text-center py-8 text-muted-foreground">
                   <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No tienes citas programadas para hoy</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tasks Tab */}
+        <TabsContent value="tasks" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <CheckSquare className="w-5 h-5 mr-2" />
+                Mis Tareas Asignadas
+              </CardTitle>
+              <CardDescription>
+                Tareas y asignaciones pendientes del administrador
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {tasksLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-20 bg-muted rounded-lg"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : teacherTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {teacherTasks.map((task: any) => {
+                    const getPriorityColor = (priority: string) => {
+                      switch (priority) {
+                        case 'urgent': return 'bg-destructive text-destructive-foreground';
+                        case 'high': return 'bg-orange-500 text-white';
+                        case 'medium': return 'bg-yellow-500 text-white';
+                        case 'low': return 'bg-blue-500 text-white';
+                        default: return 'bg-muted text-muted-foreground';
+                      }
+                    };
+
+                    const getStatusColor = (status: string) => {
+                      switch (status) {
+                        case 'pending': return 'bg-chart-4/20 text-chart-4';
+                        case 'in_progress': return 'bg-blue-500/20 text-blue-600';
+                        case 'completed': return 'bg-chart-2/20 text-chart-2';
+                        case 'cancelled': return 'bg-destructive/20 text-destructive';
+                        default: return 'bg-muted text-muted-foreground';
+                      }
+                    };
+
+                    const getTypeLabel = (type: string) => {
+                      switch (type) {
+                        case 'class': return 'Clase';
+                        case 'training': return 'Entrenamiento';
+                        case 'meeting': return 'Reunión';
+                        case 'administrative': return 'Administrativo';
+                        default: return 'Otro';
+                      }
+                    };
+
+                    return (
+                      <div 
+                        key={task.id} 
+                        className={`p-4 border rounded-lg ${!task.isRead ? 'bg-blue-50/50 border-blue-200' : ''}`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-medium text-foreground">{task.title}</h3>
+                              {!task.isRead && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Nuevo
+                                </Badge>
+                              )}
+                            </div>
+                            {task.description && (
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {task.description}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                              <Badge className={getPriorityColor(task.priority)}>
+                                {task.priority === 'urgent' ? 'Urgente' : 
+                                 task.priority === 'high' ? 'Alta' :
+                                 task.priority === 'medium' ? 'Media' : 'Baja'}
+                              </Badge>
+                              <Badge variant="outline" className={getStatusColor(task.status)}>
+                                {task.status === 'pending' ? 'Pendiente' :
+                                 task.status === 'in_progress' ? 'En Progreso' :
+                                 task.status === 'completed' ? 'Completada' : 'Cancelada'}
+                              </Badge>
+                              <Badge variant="outline">
+                                {getTypeLabel(task.type)}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3 inline mr-1" />
+                                {format(new Date(task.startDate), "dd/MM/yyyy HH:mm")}
+                              </span>
+                              {task.endDate && (
+                                <span className="text-xs text-muted-foreground">
+                                  → {format(new Date(task.endDate), "dd/MM/yyyy HH:mm")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 ml-4">
+                            {task.status === 'pending' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  await fetch(`/api/tasks/${task.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({ status: 'in_progress' }),
+                                  });
+                                  window.location.reload();
+                                }}
+                              >
+                                Iniciar
+                              </Button>
+                            )}
+                            {task.status === 'in_progress' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  await fetch(`/api/tasks/${task.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({ status: 'completed' }),
+                                  });
+                                  window.location.reload();
+                                }}
+                              >
+                                Completar
+                              </Button>
+                            )}
+                            {!task.isRead && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={async () => {
+                                  await fetch(`/api/tasks/${task.id}/read`, {
+                                    method: 'PUT',
+                                    credentials: 'include',
+                                  });
+                                  window.location.reload();
+                                }}
+                              >
+                                Marcar leída
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {task.notes && (
+                          <div className="mt-3 p-3 bg-muted/50 rounded text-sm">
+                            <strong className="text-xs text-muted-foreground">Notas:</strong>
+                            <p className="mt-1">{task.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No tienes tareas asignadas</p>
                 </div>
               )}
             </CardContent>
