@@ -511,6 +511,7 @@ export class DatabaseStorage implements IStorage {
         status: appointments.status,
         notes: appointments.notes,
         price: appointments.price,
+        teacherId: appointments.teacherId,
         client: {
           id: clients.id,
           firstName: clients.firstName,
@@ -526,11 +527,17 @@ export class DatabaseStorage implements IStorage {
           name: services.name,
           type: services.type,
         },
+        teacher: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
       })
       .from(appointments)
       .leftJoin(clients, eq(appointments.clientId, clients.id))
       .leftJoin(dogs, eq(appointments.dogId, dogs.id))
       .leftJoin(services, eq(appointments.serviceId, services.id))
+      .leftJoin(users, eq(appointments.teacherId, users.id))
       .where(
         and(
           gte(appointments.appointmentDate, startDate),
@@ -1417,6 +1424,7 @@ export class DatabaseStorage implements IStorage {
         isRead: tasks.isRead,
         notes: tasks.notes,
         createdAt: tasks.createdAt,
+        assignedTo: tasks.assignedTo,
         assignedTeacher: {
           id: users.id,
           firstName: users.firstName,
