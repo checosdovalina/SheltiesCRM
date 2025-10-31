@@ -18,21 +18,6 @@ interface ImageUploaderProps {
   children: ReactNode;
 }
 
-/**
- * A image upload component that renders as a button and provides a modal interface for
- * image management.
- * 
- * Features:
- * - Renders as a customizable button that opens a image upload modal
- * - Provides a modal interface for:
- *   - Image selection
- *   - Image preview
- *   - Upload progress tracking
- *   - Upload status display
- * 
- * The component uses Uppy under the hood to handle all image upload functionality.
- * All image management features are automatically handled by the Uppy dashboard modal.
- */
 export function ImageUploader({
   onGetUploadParameters,
   onComplete,
@@ -44,7 +29,7 @@ export function ImageUploader({
     new Uppy({
       restrictions: {
         maxNumberOfFiles: 1,
-        maxFileSize: 5242880, // 5MB default for images
+        maxFileSize: 5242880,
         allowedFileTypes: ['image/*'],
       },
       autoProceed: false,
@@ -62,11 +47,12 @@ export function ImageUploader({
   return (
     <div>
       <Button 
-        onClick={() => setShowModal(true)} 
+        onClick={(e) => {
+          e.preventDefault();
+          setShowModal(true);
+        }} 
         className={buttonClassName} 
         type="button"
-        tabIndex={-1}
-        onFocus={(e) => e.currentTarget.blur()}
       >
         {children}
       </Button>

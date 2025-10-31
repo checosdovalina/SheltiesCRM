@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { insertDogSchema, Dog } from "@shared/schema";
+import { insertDogSchema } from "@shared/schema";
 import { PetTypeSelector } from "./PetTypeSelector";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -42,25 +42,27 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
   const queryClient = useQueryClient();
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
 
+  const defaultValues = useMemo(() => ({
+    clientId: clientId,
+    petTypeId: "",
+    name: "",
+    breed: "",
+    age: undefined as number | undefined,
+    weight: "",
+    notes: "",
+    imageUrl: "",
+  }), [clientId]);
+
   const form = useForm<z.infer<typeof insertDogSchema>>({
     resolver: zodResolver(insertDogSchema),
-    defaultValues: {
-      clientId: clientId,
-      petTypeId: "",
-      name: "",
-      breed: "",
-      age: undefined,
-      weight: "",
-      notes: "",
-      imageUrl: "",
-    },
+    defaultValues,
+    mode: "onChange",
   });
 
-  // Reset form when dog changes or modal opens/closes
   useEffect(() => {
     if (open) {
       if (dog) {
-        form.reset({
+        const dogValues = {
           clientId: clientId,
           petTypeId: dog.petTypeId || "",
           name: dog.name || "",
@@ -69,28 +71,18 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
           weight: dog.weight || "",
           notes: dog.notes || "",
           imageUrl: dog.imageUrl || "",
-        });
+        };
+        form.reset(dogValues);
         setUploadedImageUrl(dog.imageUrl || "");
       } else {
-        form.reset({
-          clientId: clientId,
-          petTypeId: "",
-          name: "",
-          breed: "",
-          age: undefined,
-          weight: "",
-          notes: "",
-          imageUrl: "",
-        });
+        form.reset(defaultValues);
         setUploadedImageUrl("");
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dog, open, clientId]);
+  }, [open, dog, clientId, defaultValues, form]);
 
-  const handleImageUpload = async () => {
+  const handleImageUpload = useCallback(async () => {
     try {
-      console.log("Requesting upload URL...");
       const response = await fetch("/api/dogs/upload-image", {
         method: "POST",
         credentials: "include",
@@ -99,23 +91,18 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
         }
       });
       
-      console.log("Upload URL response:", response.status, response.statusText);
-      
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Upload URL error:", errorData);
         throw new Error(`Failed to get upload URL: ${errorData.message || response.statusText}`);
       }
       
       const { uploadURL } = await response.json();
-      console.log("Received upload URL:", uploadURL);
       
       return {
         method: "PUT" as const,
         url: uploadURL,
       };
     } catch (error) {
-      console.error("Upload preparation error:", error);
       toast({
         title: "Error",
         description: `No se pudo preparar la subida de imagen: ${error instanceof Error ? error.message : 'Error desconocido'}`,
@@ -123,33 +110,26 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
       });
       throw error;
     }
-  };
+  }, [toast]);
 
-  const handleImageComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+  const handleImageComplete = useCallback(async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       if (uploadedFile.uploadURL) {
         try {
-          // Extract the image path from the upload URL to create the serving URL
           const url = new URL(uploadedFile.uploadURL);
           const pathParts = url.pathname.split('/');
-          const bucketName = pathParts[1];
           const imagePath = pathParts.slice(2).join('/');
-          
-          // Create the serving URL using our API endpoint
           const imageUrl = `/objects/uploads/${imagePath}`;
           
-          console.log("Image uploaded successfully:", { uploadURL: uploadedFile.uploadURL, imageUrl });
-          
           setUploadedImageUrl(imageUrl);
-          form.setValue("imageUrl", imageUrl);
+          form.setValue("imageUrl", imageUrl, { shouldValidate: false, shouldDirty: true });
           
           toast({
             title: "Imagen subida",
             description: "La foto de la mascota se ha subido correctamente",
           });
         } catch (error) {
-          console.error("Error processing uploaded image:", error);
           toast({
             title: "Error",
             description: "Hubo un problema al procesar la imagen subida",
@@ -158,19 +138,18 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
         }
       }
     } else {
-      console.log("Upload result:", result);
       toast({
         title: "Error de subida",
         description: "No se pudo subir la imagen. Inténtalo de nuevo.",
         variant: "destructive",
       });
     }
-  };
+  }, [form, toast]);
 
-  const removeImage = () => {
+  const removeImage = useCallback(() => {
     setUploadedImageUrl("");
-    form.setValue("imageUrl", "");
-  };
+    form.setValue("imageUrl", "", { shouldValidate: false, shouldDirty: true });
+  }, [form]);
 
   const createDogMutation = useMutation({
     mutationFn: async (data: z.infer<typeof insertDogSchema>) => {
@@ -193,7 +172,6 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
       });
       
       onOpenChange(false);
-      form.reset();
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -215,22 +193,15 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     },
   });
 
-  function onSubmit(data: z.infer<typeof insertDogSchema>) {
-    console.log("Form submission data:", data);
-    console.log("Current imageUrl in form:", form.getValues("imageUrl"));
-    console.log("Current uploadedImageUrl state:", uploadedImageUrl);
+  const onSubmit = useCallback((data: z.infer<typeof insertDogSchema>) => {
     createDogMutation.mutate(data);
-  }
+  }, [createDogMutation]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-md max-h-[90vh] overflow-y-auto" 
-        data-testid="dialog-dog-modal" 
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onCloseAutoFocus={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
+        data-testid="dialog-dog-modal"
       >
         <DialogHeader>
           <DialogTitle data-testid="text-dog-modal-title">
@@ -361,7 +332,6 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
               )}
             />
 
-            {/* Image Upload Section */}
             <FormField
               control={form.control}
               name="imageUrl"
