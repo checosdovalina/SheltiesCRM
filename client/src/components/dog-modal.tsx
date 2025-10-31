@@ -223,7 +223,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="dialog-dog-modal">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="dialog-dog-modal" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle data-testid="text-dog-modal-title">
             {dog ? "Editar Mascota" : `Agregar Mascota a ${clientName}`}
@@ -298,11 +298,12 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
                       <Input 
                         type="number" 
                         placeholder="Ej: 3"
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? undefined : parseInt(value, 10));
+                        }}
                         data-testid="input-dog-age"
                       />
                     </FormControl>
