@@ -85,7 +85,8 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
         setUploadedImageUrl("");
       }
     }
-  }, [dog, open, form, clientId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dog, open, clientId]);
 
   const handleImageUpload = async () => {
     try {
