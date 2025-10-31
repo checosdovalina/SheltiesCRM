@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PetType } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -20,7 +20,11 @@ interface PetTypeSelectorProps {
   placeholder?: string;
 }
 
-export function PetTypeSelector({ value, onValueChange, placeholder = "Selecciona tipo de mascota" }: PetTypeSelectorProps) {
+export const PetTypeSelector = memo(function PetTypeSelector({ 
+  value, 
+  onValueChange, 
+  placeholder = "Selecciona tipo de mascota" 
+}: PetTypeSelectorProps) {
   const [showAddNew, setShowAddNew] = useState(false);
   const [newTypeName, setNewTypeName] = useState("");
   const { toast } = useToast();
@@ -54,11 +58,20 @@ export function PetTypeSelector({ value, onValueChange, placeholder = "Seleccion
     },
   });
 
-  const handleAddNewType = () => {
+  const handleAddNewType = useCallback(() => {
     if (newTypeName.trim()) {
       createPetTypeMutation.mutate(newTypeName.trim());
     }
-  };
+  }, [newTypeName, createPetTypeMutation]);
+
+  const handleShowAddNew = useCallback(() => {
+    setShowAddNew(true);
+  }, []);
+
+  const handleCancelAddNew = useCallback(() => {
+    setShowAddNew(false);
+    setNewTypeName("");
+  }, []);
 
   if (isLoading) {
     return (
@@ -88,7 +101,7 @@ export function PetTypeSelector({ value, onValueChange, placeholder = "Seleccion
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => setShowAddNew(true)}
+          onClick={handleShowAddNew}
           className="w-full"
           data-testid="button-add-new-type"
         >
@@ -102,6 +115,12 @@ export function PetTypeSelector({ value, onValueChange, placeholder = "Seleccion
             onChange={(e) => setNewTypeName(e.target.value)}
             placeholder="Nombre del nuevo tipo"
             data-testid="input-new-pet-type-name"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddNewType();
+              }
+            }}
           />
           <Button
             type="button"
@@ -116,10 +135,7 @@ export function PetTypeSelector({ value, onValueChange, placeholder = "Seleccion
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => {
-              setShowAddNew(false);
-              setNewTypeName("");
-            }}
+            onClick={handleCancelAddNew}
             data-testid="button-cancel-new-type"
           >
             <X className="h-4 w-4" />
@@ -128,4 +144,4 @@ export function PetTypeSelector({ value, onValueChange, placeholder = "Seleccion
       )}
     </div>
   );
-}
+});
