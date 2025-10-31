@@ -61,7 +61,13 @@ export function ImageUploader({
 
   return (
     <div>
-      <Button onClick={() => setShowModal(true)} className={buttonClassName} type="button">
+      <Button 
+        onClick={() => setShowModal(true)} 
+        className={buttonClassName} 
+        type="button"
+        tabIndex={-1}
+        onFocus={(e) => e.currentTarget.blur()}
+      >
         {children}
       </Button>
 

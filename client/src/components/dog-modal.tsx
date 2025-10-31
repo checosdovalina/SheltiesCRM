@@ -223,8 +223,15 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="dialog-dog-modal" onOpenAutoFocus={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogContent 
+        className="max-w-md max-h-[90vh] overflow-y-auto" 
+        data-testid="dialog-dog-modal" 
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle data-testid="text-dog-modal-title">
             {dog ? "Editar Mascota" : `Agregar Mascota a ${clientName}`}
