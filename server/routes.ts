@@ -390,13 +390,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/appointments/range', isAuthenticated, async (req, res) => {
     try {
       const { startDate, endDate } = req.query;
+      console.log("[DEBUG] Appointments range query - startDate:", startDate, "endDate:", endDate);
       if (!startDate || !endDate) {
         return res.status(400).json({ message: "Start date and end date are required" });
       }
-      const appointments = await storage.getAppointmentsByDateRange(
-        new Date(startDate as string),
-        new Date(endDate as string)
-      );
+      const start = new Date(startDate as string);
+      const end = new Date(endDate as string);
+      console.log("[DEBUG] Parsed dates - start:", start, "end:", end);
+      const appointments = await storage.getAppointmentsByDateRange(start, end);
+      console.log("[DEBUG] Found appointments:", appointments.length);
       res.json(appointments);
     } catch (error) {
       console.error("Error fetching appointments by date range:", error);
