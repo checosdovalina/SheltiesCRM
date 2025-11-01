@@ -25,9 +25,8 @@ import { insertDogSchema } from "@shared/schema";
 import { PetTypeSelector } from "./PetTypeSelector";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { ImageUploader } from "@/components/ImageUploader";
-import { Camera, X } from "lucide-react";
-import type { UploadResult } from "@uppy/core";
+import { SimpleImageUploader } from "@/components/SimpleImageUploader";
+import { X } from "lucide-react";
 
 interface DogModalProps {
   open: boolean;
@@ -41,6 +40,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const defaultValues = useMemo(() => ({
     clientId: clientId,
@@ -81,70 +81,10 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     }
   }, [open, dog, clientId, defaultValues, form]);
 
-  const handleImageUpload = useCallback(async () => {
-    try {
-      const response = await fetch("/api/dogs/upload-image", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to get upload URL: ${errorData.message || response.statusText}`);
-      }
-      
-      const { uploadURL } = await response.json();
-      
-      return {
-        method: "PUT" as const,
-        url: uploadURL,
-      };
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: `No se pudo preparar la subida de imagen: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [toast]);
-
-  const handleImageComplete = useCallback(async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    if (result.successful && result.successful.length > 0) {
-      const uploadedFile = result.successful[0];
-      if (uploadedFile.uploadURL) {
-        try {
-          const url = new URL(uploadedFile.uploadURL);
-          const pathParts = url.pathname.split('/');
-          const imagePath = pathParts.slice(2).join('/');
-          const imageUrl = `/objects/uploads/${imagePath}`;
-          
-          setUploadedImageUrl(imageUrl);
-          form.setValue("imageUrl", imageUrl, { shouldValidate: false, shouldDirty: true });
-          
-          toast({
-            title: "Imagen subida",
-            description: "La foto de la mascota se ha subido correctamente",
-          });
-        } catch (error) {
-          toast({
-            title: "Error",
-            description: "Hubo un problema al procesar la imagen subida",
-            variant: "destructive",
-          });
-        }
-      }
-    } else {
-      toast({
-        title: "Error de subida",
-        description: "No se pudo subir la imagen. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    }
-  }, [form, toast]);
+  const handleImageUploaded = useCallback((imageUrl: string) => {
+    setUploadedImageUrl(imageUrl);
+    form.setValue("imageUrl", imageUrl, { shouldValidate: false, shouldDirty: true });
+  }, [form]);
 
   const removeImage = useCallback(() => {
     setUploadedImageUrl("");
@@ -359,14 +299,12 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
                         </Button>
                       </div>
                     ) : (
-                      <ImageUploader
-                        onGetUploadParameters={handleImageUpload}
-                        onComplete={handleImageComplete}
+                      <SimpleImageUploader
+                        onImageUploaded={handleImageUploaded}
                         buttonClassName="w-full"
-                      >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Subir Foto
-                      </ImageUploader>
+                        isUploading={isUploading}
+                        onUploadingChange={setIsUploading}
+                      />
                     )}
                   </div>
                   <FormMessage />
