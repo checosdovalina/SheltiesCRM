@@ -138,6 +138,44 @@ Preferred communication style: Simple, everyday language.
 - **Immediate Updates**: New records appear instantly without page refresh
 - **Mobile Optimization**: Compact layout for smaller screens while maintaining functionality
 
+### November 1, 2025 - Observaciones Tab Reorganization
+
+#### Schema Enhancements
+- **New Field**: Added `coat` (pelaje) field to capture dog coat information
+- **Leash Behavior with Others**: Added 4 new fields to track leash behavior with other handlers:
+  - `leashComfortOther`: Text field for comfort level with other person
+  - `leashPullingOther`: Boolean for pulling behavior
+  - `leashReactiveOther`: Boolean for reactive behavior
+  - `leashAggressiveOther`: Boolean for aggressive behavior
+
+#### UI/UX Improvements
+- **Dog Modal Reorganization**: Completely reorganized the Observaciones tab into 7 logical sections matching PDF structure:
+  1. **Características Físicas**: Pelaje, peso, temperatura, ojos, dientes, olor, tensión muscular, reactividad al tacto, salivación, patas sudando, muda de pelo
+  2. **Movimiento**: Equilibrio, marcha (normal/cojea), rapidez, coordinación
+  3. **Correa - Con el Dueño**: Seguridad, jala, reactivo, agresivo
+  4. **Correa - Con Otra Persona**: Seguridad, jala, reactivo, agresivo
+  5. **Reacciones durante Evaluación**: Reacciones en diferentes momentos + comportamientos (esconderse, rigidez, sentarse, quedarse inmóvil)
+  6. **Señales de Calma**: 6 señales (bostezar, lamerse, estirarse, girar cabeza, parpadear, olfatear)
+  7. **Postura Detallada**: Posiciones (cola, cabeza, orejas, ojos), simetría, respiración, revuelo, agacharse
+
+- **Expediente Detail Reorganization**: Updated the Observaciones tab to mirror the modal structure with color-coded cards:
+  - Green border: Características Físicas
+  - Indigo border: Movimiento
+  - Cyan border: Correa - Con el Dueño
+  - Teal border: Correa - Con Otra Persona
+  - Amber border: Reacciones durante Evaluación
+  - Blue border: Señales de Calma
+  - Purple border: Postura Detallada
+
+#### Data Persistence
+- **Form Data Flow**: All new fields properly integrated into modal's `defaultValues` and `form.reset` to ensure data persists when editing existing records
+- **Database Migration**: Successfully migrated database with new observation fields using `npm run db:push --force`
+
+#### Technical Implementation
+- Maintained consistent field ordering between modal edit view and expediente read view
+- All fields properly typed with TypeScript and validated with Zod
+- Professional, PDF-style formatting maintained throughout
+
 ### November 1, 2025 - Pet Form Focus Issue Fix
 
 #### Critical Bug Fix
