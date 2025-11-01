@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -17,7 +19,12 @@ import {
   Activity,
   Camera,
   FileText,
+  Plus,
 } from "lucide-react";
+import MedicalRecordModal from "@/components/medical-record-modal";
+import TrainingModal from "@/components/training-modal";
+import EvidenceModal from "@/components/evidence-modal";
+import { format } from "date-fns";
 
 interface DogWithClient {
   id: string;
@@ -30,26 +37,17 @@ interface DogWithClient {
   clientId: string;
   petTypeId: string;
   
-  // Objetivos
   problemDescription?: string;
   trainingObjectives?: string;
-  
-  // Antecedentes
   acquisitionSource?: string;
   arrivalAge?: string;
   canineFamily?: string;
-  
-  // Rutina
   dailyRoutine?: string;
   feedingSchedule?: string;
-  
-  // Salud
   veterinarian?: string;
   vaccines?: string;
   diseases?: string;
   diseasePredisposition?: string;
-  
-  // Comportamiento
   fears?: string;
   aggression?: string;
   hyperactivity?: string;
@@ -58,8 +56,6 @@ interface DogWithClient {
   anxiety?: string;
   hypersensitivity?: string;
   otherBehaviors?: string;
-  
-  // Observaciones
   posture?: string;
   eyeShape?: string;
   bodyMovement?: string;
@@ -71,24 +67,17 @@ interface DogWithClient {
   salivating?: boolean;
   sweatingPaws?: boolean;
   shedding?: boolean;
-  
-  // Movimiento
   balance?: string;
   gait?: string;
   speed?: string;
   coordination?: string;
-  
-  // Correa
   leashComfort?: string;
   leashPulling?: boolean;
   leashReactive?: boolean;
   leashAggressive?: boolean;
-  
-  // Interacción
   calmingSignals?: string;
   reactionToStrangers?: string;
   reactionToOtherDogs?: string;
-  
   ownerDisposition?: string;
   
   client: {
@@ -99,6 +88,39 @@ interface DogWithClient {
     phone?: string;
     address?: string;
   };
+}
+
+interface MedicalRecord {
+  id: string;
+  recordDate: Date;
+  recordType: string;
+  title: string;
+  veterinarian?: string;
+  description?: string;
+  medications?: string;
+  notes?: string;
+}
+
+interface TrainingSession {
+  id: string;
+  sessionDate: Date;
+  trainer?: string;
+  objective: string;
+  activities?: string;
+  progress?: string;
+  behaviorNotes?: string;
+  nextSteps?: string;
+  rating?: number;
+  duration?: number;
+}
+
+interface Evidence {
+  id: string;
+  type: string;
+  title: string;
+  description?: string;
+  fileUrl?: string;
+  createdAt: Date;
 }
 
 const InfoField = ({ label, value }: { label: string; value?: string | number | boolean }) => {
@@ -114,11 +136,15 @@ const InfoField = ({ label, value }: { label: string; value?: string | number | 
   );
 };
 
-const EmptyState = ({ icon: Icon, title, description }: { icon: any; title: string; description: string }) => (
+const EmptyState = ({ icon: Icon, title, description, onAdd }: { icon: any; title: string; description: string; onAdd: () => void }) => (
   <div className="flex flex-col items-center justify-center py-12 text-center">
     <Icon className="h-12 w-12 text-muted-foreground mb-4" />
     <h3 className="font-semibold text-lg mb-2">{title}</h3>
-    <p className="text-sm text-muted-foreground max-w-md">{description}</p>
+    <p className="text-sm text-muted-foreground max-w-md mb-4">{description}</p>
+    <Button onClick={onAdd} size="sm" data-testid="button-add-first">
+      <Plus className="h-4 w-4 mr-2" />
+      Agregar Primero
+    </Button>
   </div>
 );
 
@@ -126,8 +152,27 @@ export default function ExpedienteDetail() {
   const [, params] = useRoute("/expediente/:id");
   const dogId = params?.id;
 
+  const [medicalModalOpen, setMedicalModalOpen] = useState(false);
+  const [trainingModalOpen, setTrainingModalOpen] = useState(false);
+  const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
+
   const { data: dog, isLoading } = useQuery<DogWithClient>({
     queryKey: ["/api/dogs", dogId],
+    enabled: !!dogId,
+  });
+
+  const { data: medicalRecords = [] } = useQuery<MedicalRecord[]>({
+    queryKey: ["/api/dogs", dogId, "medical-records"],
+    enabled: !!dogId,
+  });
+
+  const { data: trainingSessions = [] } = useQuery<TrainingSession[]>({
+    queryKey: ["/api/dogs", dogId, "training-sessions"],
+    enabled: !!dogId,
+  });
+
+  const { data: evidence = [] } = useQuery<Evidence[]>({
+    queryKey: ["/api/dogs", dogId, "evidence"],
     enabled: !!dogId,
   });
 
@@ -163,36 +208,27 @@ export default function ExpedienteDetail() {
   }
 
   const hasResumenData = dog.problemDescription || dog.trainingObjectives || dog.notes;
-  const hasMedicoData = dog.veterinarian || dog.vaccines || dog.diseases || dog.diseasePredisposition ||
-    dog.fears || dog.aggression || dog.hyperactivity || dog.destruction || dog.reactivity ||
-    dog.anxiety || dog.hypersensitivity || dog.otherBehaviors || dog.posture || dog.eyeShape ||
-    dog.bodyMovement || dog.physicalTemp || dog.teethCondition || dog.smell || dog.muscleTension ||
-    dog.touchReactive || dog.salivating || dog.sweatingPaws || dog.shedding || dog.balance ||
-    dog.gait || dog.speed || dog.coordination || dog.leashComfort || dog.leashPulling ||
-    dog.leashReactive || dog.leashAggressive || dog.calmingSignals || dog.reactionToStrangers ||
-    dog.reactionToOtherDogs || dog.acquisitionSource || dog.arrivalAge || dog.canineFamily ||
-    dog.dailyRoutine || dog.feedingSchedule || dog.ownerDisposition;
 
   return (
-    <div className="space-y-6" data-testid="page-expediente-detail">
+    <div className="space-y-6 pb-8" data-testid="page-expediente-detail">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <Link href="/records">
           <Button variant="ghost" size="sm" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold" data-testid="text-expediente-title">
+        <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-expediente-title">
           Expediente de {dog.name}
         </h1>
       </div>
 
-      {/* Two Column Layout */}
+      {/* Two Column Layout - Responsive */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Datos Generales */}
         <div className="lg:col-span-1">
-          <Card data-testid="card-datos-generales">
+          <Card data-testid="card-datos-generales" className="sticky top-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Dog className="h-5 w-5" />
@@ -231,11 +267,6 @@ export default function ExpedienteDetail() {
                   <Weight className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Peso:</span>
                   <span className="font-medium">{dog.weight}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Registrado:</span>
-                  <span className="font-medium">26/6/2025</span>
                 </div>
               </div>
 
@@ -276,29 +307,33 @@ export default function ExpedienteDetail() {
         {/* Right Column - Tabbed Content */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="resumen" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-4">
-              <TabsTrigger value="resumen" data-testid="tab-resumen">
-                <FileText className="h-4 w-4 mr-2" />
-                Resumen
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 h-auto">
+              <TabsTrigger value="resumen" data-testid="tab-resumen" className="text-xs sm:text-sm">
+                <FileText className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Resumen</span>
+                <span className="sm:hidden">Info</span>
               </TabsTrigger>
-              <TabsTrigger value="medico" data-testid="tab-medico">
-                <Stethoscope className="h-4 w-4 mr-2" />
-                Médico
+              <TabsTrigger value="medico" data-testid="tab-medico" className="text-xs sm:text-sm">
+                <Stethoscope className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Médico</span>
+                <span className="sm:hidden">Salud</span>
               </TabsTrigger>
-              <TabsTrigger value="entrenamientos" data-testid="tab-entrenamientos">
-                <Activity className="h-4 w-4 mr-2" />
-                Entrenamientos
+              <TabsTrigger value="entrenamientos" data-testid="tab-entrenamientos" className="text-xs sm:text-sm">
+                <Activity className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Entrenamientos</span>
+                <span className="sm:hidden">Entreno</span>
               </TabsTrigger>
-              <TabsTrigger value="evidencias" data-testid="tab-evidencias">
-                <Camera className="h-4 w-4 mr-2" />
-                Evidencias
+              <TabsTrigger value="evidencias" data-testid="tab-evidencias" className="text-xs sm:text-sm">
+                <Camera className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Evidencias</span>
+                <span className="sm:hidden">Media</span>
               </TabsTrigger>
             </TabsList>
 
             {/* Resumen Tab */}
             <TabsContent value="resumen" data-testid="content-resumen">
               <Card>
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   {hasResumenData ? (
                     <div className="space-y-6">
                       <InfoField label="Descripción del Problema" value={dog.problemDescription} />
@@ -306,11 +341,13 @@ export default function ExpedienteDetail() {
                       <InfoField label="Notas Generales" value={dog.notes} />
                     </div>
                   ) : (
-                    <EmptyState
-                      icon={FileText}
-                      title="No hay información de resumen"
-                      description="Agrega objetivos y descripción del problema para comenzar el expediente"
-                    />
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="font-semibold text-lg mb-2">No hay información de resumen</h3>
+                      <p className="text-sm text-muted-foreground max-w-md">
+                        Edita el perfil de la mascota para agregar objetivos y descripción del problema
+                      </p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -319,126 +356,61 @@ export default function ExpedienteDetail() {
             {/* Médico Tab */}
             <TabsContent value="medico" data-testid="content-medico">
               <Card>
-                <CardContent className="p-6">
-                  {hasMedicoData ? (
-                    <div className="space-y-8">
-                      {/* Salud */}
-                      {(dog.veterinarian || dog.vaccines || dog.diseases || dog.diseasePredisposition) && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Información de Salud</h3>
-                          <div className="grid grid-cols-2 gap-6">
-                            <InfoField label="Veterinario" value={dog.veterinarian} />
-                            <InfoField label="Vacunas" value={dog.vaccines} />
-                            <InfoField label="Enfermedades" value={dog.diseases} />
-                            <InfoField label="Predisposición a Enfermedades" value={dog.diseasePredisposition} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Comportamiento */}
-                      {(dog.fears || dog.aggression || dog.hyperactivity || dog.destruction || dog.reactivity || dog.anxiety || dog.hypersensitivity || dog.otherBehaviors) && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Comportamiento</h3>
-                          <div className="grid grid-cols-2 gap-6">
-                            <InfoField label="Miedos" value={dog.fears} />
-                            <InfoField label="Agresión" value={dog.aggression} />
-                            <InfoField label="Hiperactividad" value={dog.hyperactivity} />
-                            <InfoField label="Destrucción" value={dog.destruction} />
-                            <InfoField label="Reactividad" value={dog.reactivity} />
-                            <InfoField label="Ansiedad" value={dog.anxiety} />
-                            <InfoField label="Hipersensibilidad" value={dog.hypersensitivity} />
-                            <div className="col-span-2">
-                              <InfoField label="Otros Comportamientos" value={dog.otherBehaviors} />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <CardTitle>Registros Médicos</CardTitle>
+                  <Button size="sm" onClick={() => setMedicalModalOpen(true)} data-testid="button-add-medical">
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Agregar Registro</span>
+                    <span className="sm:hidden">Agregar</span>
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6">
+                  {medicalRecords.length > 0 ? (
+                    <div className="space-y-4">
+                      {medicalRecords.map((record) => (
+                        <Card key={record.id} className="border-l-4 border-l-primary">
+                          <CardContent className="p-4">
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
+                              <div>
+                                <h4 className="font-semibold text-lg">{record.title}</h4>
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                  <Badge variant="outline">{record.recordType}</Badge>
+                                  <span className="text-sm text-muted-foreground">
+                                    {format(new Date(record.recordDate), 'dd/MM/yyyy')}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Observaciones Físicas */}
-                      {(dog.posture || dog.eyeShape || dog.bodyMovement || dog.physicalTemp || dog.teethCondition || dog.smell || dog.muscleTension || dog.touchReactive || dog.salivating || dog.sweatingPaws || dog.shedding) && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Observaciones Físicas</h3>
-                          <div className="grid grid-cols-2 gap-6">
-                            <InfoField label="Postura" value={dog.posture} />
-                            <InfoField label="Forma de los Ojos" value={dog.eyeShape} />
-                            <InfoField label="Movimiento del Cuerpo" value={dog.bodyMovement} />
-                            <InfoField label="Temperatura" value={dog.physicalTemp} />
-                            <InfoField label="Condición de Dientes" value={dog.teethCondition} />
-                            <InfoField label="Olor" value={dog.smell} />
-                            <InfoField label="Tensión Muscular" value={dog.muscleTension} />
-                            <InfoField label="Reactivo al Tacto" value={dog.touchReactive} />
-                            <InfoField label="Salivando" value={dog.salivating} />
-                            <InfoField label="Sudoración en Patas" value={dog.sweatingPaws} />
-                            <InfoField label="Muda de Pelo" value={dog.shedding} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Movimiento */}
-                      {(dog.balance || dog.gait || dog.speed || dog.coordination || dog.leashComfort || dog.leashPulling || dog.leashReactive || dog.leashAggressive) && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Evaluación de Movimiento</h3>
-                          <div className="grid grid-cols-2 gap-6">
-                            <InfoField label="Equilibrio" value={dog.balance} />
-                            <InfoField label="Marcha" value={dog.gait} />
-                            <InfoField label="Velocidad" value={dog.speed} />
-                            <InfoField label="Coordinación" value={dog.coordination} />
-                            <InfoField label="Comodidad con Correa" value={dog.leashComfort} />
-                            <InfoField label="Jala la Correa" value={dog.leashPulling} />
-                            <InfoField label="Reactivo con Correa" value={dog.leashReactive} />
-                            <InfoField label="Agresivo con Correa" value={dog.leashAggressive} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Interacción Social */}
-                      {(dog.calmingSignals || dog.reactionToStrangers || dog.reactionToOtherDogs) && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Interacción Social</h3>
-                          <div className="grid grid-cols-2 gap-6">
-                            <InfoField label="Señales de Calma" value={dog.calmingSignals} />
-                            <InfoField label="Reacción con Extraños" value={dog.reactionToStrangers} />
-                            <InfoField label="Reacción con Otros Perros" value={dog.reactionToOtherDogs} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Historia */}
-                      {(dog.acquisitionSource || dog.arrivalAge || dog.canineFamily) && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Antecedentes</h3>
-                          <div className="grid grid-cols-2 gap-6">
-                            <InfoField label="Fuente de Adquisición" value={dog.acquisitionSource} />
-                            <InfoField label="Edad de Llegada" value={dog.arrivalAge} />
-                            <InfoField label="Familia Canina" value={dog.canineFamily} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Rutina */}
-                      {(dog.dailyRoutine || dog.feedingSchedule) && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Rutina</h3>
-                          <div className="grid grid-cols-2 gap-6">
-                            <InfoField label="Rutina Diaria" value={dog.dailyRoutine} />
-                            <InfoField label="Horario de Alimentación" value={dog.feedingSchedule} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Disposición del Dueño */}
-                      {dog.ownerDisposition && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Disposición del Dueño</h3>
-                          <InfoField label="" value={dog.ownerDisposition} />
-                        </div>
-                      )}
+                            {record.veterinarian && (
+                              <p className="text-sm mb-2">
+                                <span className="font-medium">Veterinario:</span> {record.veterinarian}
+                              </p>
+                            )}
+                            {record.description && (
+                              <p className="text-sm mb-2">
+                                <span className="font-medium">Descripción:</span> {record.description}
+                              </p>
+                            )}
+                            {record.medications && (
+                              <p className="text-sm mb-2">
+                                <span className="font-medium">Medicamentos:</span> {record.medications}
+                              </p>
+                            )}
+                            {record.notes && (
+                              <p className="text-sm text-muted-foreground">
+                                <span className="font-medium">Notas:</span> {record.notes}
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
                   ) : (
                     <EmptyState
                       icon={Stethoscope}
                       title="No hay registros médicos"
                       description="Comienza agregando el primer registro médico"
+                      onAdd={() => setMedicalModalOpen(true)}
                     />
                   )}
                 </CardContent>
@@ -448,12 +420,73 @@ export default function ExpedienteDetail() {
             {/* Entrenamientos Tab */}
             <TabsContent value="entrenamientos" data-testid="content-entrenamientos">
               <Card>
-                <CardContent className="p-6">
-                  <EmptyState
-                    icon={Activity}
-                    title="No hay sesiones de entrenamiento"
-                    description="Comienza registrando la primera sesión de entrenamiento"
-                  />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <CardTitle>Sesiones de Entrenamiento</CardTitle>
+                  <Button size="sm" onClick={() => setTrainingModalOpen(true)} data-testid="button-add-training">
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Nueva Sesión</span>
+                    <span className="sm:hidden">Nueva</span>
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6">
+                  {trainingSessions.length > 0 ? (
+                    <div className="space-y-4">
+                      {trainingSessions.map((session) => (
+                        <Card key={session.id} className="border-l-4 border-l-green-500">
+                          <CardContent className="p-4">
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
+                              <div>
+                                <h4 className="font-semibold text-lg">{session.objective}</h4>
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                  <span className="text-sm text-muted-foreground">
+                                    {format(new Date(session.sessionDate), 'dd/MM/yyyy HH:mm')}
+                                  </span>
+                                  {session.duration && (
+                                    <Badge variant="outline">{session.duration} min</Badge>
+                                  )}
+                                  {session.rating && (
+                                    <Badge>⭐ {session.rating}/10</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {session.trainer && (
+                              <p className="text-sm mb-2">
+                                <span className="font-medium">Entrenador:</span> {session.trainer}
+                              </p>
+                            )}
+                            {session.activities && (
+                              <p className="text-sm mb-2">
+                                <span className="font-medium">Actividades:</span> {session.activities}
+                              </p>
+                            )}
+                            {session.progress && (
+                              <p className="text-sm mb-2">
+                                <span className="font-medium">Progreso:</span> {session.progress}
+                              </p>
+                            )}
+                            {session.behaviorNotes && (
+                              <p className="text-sm mb-2">
+                                <span className="font-medium">Comportamiento:</span> {session.behaviorNotes}
+                              </p>
+                            )}
+                            {session.nextSteps && (
+                              <p className="text-sm text-muted-foreground">
+                                <span className="font-medium">Próximos Pasos:</span> {session.nextSteps}
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState
+                      icon={Activity}
+                      title="No hay sesiones de entrenamiento"
+                      description="Comienza registrando la primera sesión de entrenamiento"
+                      onAdd={() => setTrainingModalOpen(true)}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -461,18 +494,91 @@ export default function ExpedienteDetail() {
             {/* Evidencias Tab */}
             <TabsContent value="evidencias" data-testid="content-evidencias">
               <Card>
-                <CardContent className="p-6">
-                  <EmptyState
-                    icon={Camera}
-                    title="No hay evidencias"
-                    description="Sube fotos, videos o documentos relacionados con esta mascota"
-                  />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <CardTitle>Evidencias</CardTitle>
+                  <Button size="sm" onClick={() => setEvidenceModalOpen(true)} data-testid="button-add-evidence">
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Agregar Evidencia</span>
+                    <span className="sm:hidden">Agregar</span>
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6">
+                  {evidence.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {evidence.map((item) => (
+                        <Card key={item.id}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0">
+                                {item.type === 'photo' && <Camera className="h-8 w-8 text-primary" />}
+                                {item.type === 'video' && <Activity className="h-8 w-8 text-primary" />}
+                                {item.type === 'document' && <FileText className="h-8 w-8 text-primary" />}
+                                {item.type === 'note' && <FileText className="h-8 w-8 text-primary" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold truncate">{item.title}</h4>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {format(new Date(item.createdAt), 'dd/MM/yyyy')}
+                                </p>
+                                {item.description && (
+                                  <p className="text-sm mt-2 line-clamp-2">{item.description}</p>
+                                )}
+                                {item.fileUrl && (
+                                  <a
+                                    href={item.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-primary hover:underline mt-2 inline-block"
+                                  >
+                                    Ver archivo →
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState
+                      icon={Camera}
+                      title="No hay evidencias"
+                      description="Sube fotos, videos o documentos relacionados con esta mascota"
+                      onAdd={() => setEvidenceModalOpen(true)}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {/* Modals */}
+      {medicalModalOpen && (
+        <MedicalRecordModal
+          open={medicalModalOpen}
+          onOpenChange={setMedicalModalOpen}
+          dogId={dog.id}
+          dogName={dog.name}
+        />
+      )}
+      {trainingModalOpen && (
+        <TrainingModal
+          open={trainingModalOpen}
+          onOpenChange={setTrainingModalOpen}
+          dogId={dog.id}
+          dogName={dog.name}
+        />
+      )}
+      {evidenceModalOpen && (
+        <EvidenceModal
+          open={evidenceModalOpen}
+          onOpenChange={setEvidenceModalOpen}
+          dogId={dog.id}
+          dogName={dog.name}
+        />
+      )}
     </div>
   );
 }

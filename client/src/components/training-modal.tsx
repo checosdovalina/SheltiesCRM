@@ -1,0 +1,329 @@
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { insertTrainingSessionSchema } from "@shared/schema";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { apiRequest } from "@/lib/queryClient";
+
+interface TrainingModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  dogId: string;
+  dogName: string;
+}
+
+export default function TrainingModal({ 
+  open, 
+  onOpenChange, 
+  dogId, 
+  dogName 
+}: TrainingModalProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const form = useForm<z.infer<typeof insertTrainingSessionSchema>>({
+    resolver: zodResolver(insertTrainingSessionSchema),
+    defaultValues: {
+      dogId: dogId,
+      sessionDate: new Date(),
+      trainer: "",
+      objective: "",
+      activities: "",
+      progress: "",
+      behaviorNotes: "",
+      nextSteps: "",
+      rating: undefined,
+      duration: undefined,
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        dogId: dogId,
+        sessionDate: new Date(),
+        trainer: "",
+        objective: "",
+        activities: "",
+        progress: "",
+        behaviorNotes: "",
+        nextSteps: "",
+        rating: undefined,
+        duration: undefined,
+      });
+    }
+  }, [open, dogId, form]);
+
+  const createMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof insertTrainingSessionSchema>) => {
+      const response = await apiRequest("POST", "/api/training-sessions", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dogs", dogId, "training-sessions"] });
+      
+      toast({
+        title: "Sesión de entrenamiento agregada",
+        description: "La sesión ha sido registrada exitosamente.",
+      });
+      
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "No autorizado",
+          description: "Has sido desconectado. Iniciando sesión nuevamente...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "No se pudo agregar la sesión de entrenamiento.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof insertTrainingSessionSchema>) => {
+    createMutation.mutate(data);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-training">
+        <DialogHeader>
+          <DialogTitle>Nueva Sesión de Entrenamiento - {dogName}</DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="sessionDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha de la Sesión</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="datetime-local"
+                        data-testid="input-session-date"
+                        value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+                        onChange={(e) => field.onChange(new Date(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="duration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duración (minutos)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="60"
+                        data-testid="input-duration"
+                        {...field}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="trainer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Entrenador (Opcional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Nombre del entrenador"
+                      data-testid="input-trainer"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="objective"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Objetivo de la Sesión</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ej: Entrenamiento básico de obediencia, etc."
+                      data-testid="input-objective"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="activities"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Actividades Realizadas (Opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Describe las actividades y ejercicios realizados..."
+                      rows={3}
+                      data-testid="textarea-activities"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="progress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Progreso Observado (Opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Describe el progreso y mejoras observadas..."
+                      rows={3}
+                      data-testid="textarea-progress"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="behaviorNotes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notas de Comportamiento (Opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Observaciones sobre comportamiento durante la sesión..."
+                      rows={3}
+                      data-testid="textarea-behavior"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="nextSteps"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Próximos Pasos (Opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Recomendaciones y próximos pasos a trabajar..."
+                      rows={3}
+                      data-testid="textarea-next-steps"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="rating"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Calificación de la Sesión (1-10)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="10"
+                      placeholder="8"
+                      data-testid="input-rating"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                data-testid="button-cancel"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={createMutation.isPending}
+                data-testid="button-save"
+              >
+                {createMutation.isPending ? "Guardando..." : "Guardar Sesión"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
