@@ -134,6 +134,69 @@ export const dogs = pgTable("dogs", {
   weight: decimal("weight"),
   notes: text("notes"),
   imageUrl: varchar("image_url"), // URL to the dog's photo in object storage
+  
+  // Expediente - Objetivos
+  problemDescription: text("problem_description"),
+  trainingObjectives: text("training_objectives"),
+  
+  // Expediente - Antecedentes
+  acquisitionSource: text("acquisition_source"), // De dónde se adquirió
+  arrivalAge: varchar("arrival_age"), // Edad de llegada
+  canineFamily: text("canine_family"), // Familia canina
+  
+  // Expediente - Rutina
+  dailyRoutine: text("daily_routine"), // Día a día
+  feedingSchedule: text("feeding_schedule"), // Comida
+  
+  // Expediente - Salud
+  veterinarian: varchar("veterinarian"), // Médico
+  vaccines: text("vaccines"), // Vacunas
+  diseases: text("diseases"), // Enfermedades
+  diseasePredisposition: text("disease_predisposition"), // Predisposición a enfermedades
+  
+  // Expediente - Comportamiento
+  fears: text("fears"), // Miedos
+  aggression: text("aggression"), // Agresión
+  hyperactivity: text("hyperactivity"), // Hiperactividad
+  destruction: text("destruction"), // Destrucción
+  reactivity: text("reactivity"), // Reactividad
+  anxiety: text("anxiety"), // Ansiedad
+  hypersensitivity: text("hypersensitivity"), // Hipersensibilidad
+  otherBehaviors: text("other_behaviors"), // Otros
+  
+  // Expediente - Observaciones del Perro
+  posture: text("posture"), // Postura
+  eyeShape: text("eye_shape"), // Forma de ojos
+  bodyMovement: text("body_movement"), // Movimiento del cuerpo
+  physicalTemp: text("physical_temp"), // Temperatura
+  teethCondition: text("teeth_condition"), // Dientes
+  smell: text("smell"), // Olor
+  muscleTension: text("muscle_tension"), // Tensión muscular
+  touchReactive: text("touch_reactive"), // Reactivo al tocar
+  salivating: boolean("salivating"), // Salivando
+  sweatingPaws: boolean("sweating_paws"), // Patas sudando
+  shedding: boolean("shedding"), // Muda de pelo
+  
+  // Movimiento
+  balance: text("balance"), // Equilibrio
+  gait: text("gait"), // Normal/cojea
+  speed: text("speed"), // Rapidez
+  coordination: text("coordination"), // Coordinación
+  
+  // Correa
+  leashComfort: text("leash_comfort"), // Se siente seguro con correa
+  leashPulling: boolean("leash_pulling"), // Jala
+  leashReactive: boolean("leash_reactive"), // Se pone reactivo
+  leashAggressive: boolean("leash_aggressive"), // Agresivo
+  
+  // Interacción y Señales de Calma
+  calmingSignals: text("calming_signals"), // Señales de calma observadas
+  reactionToStrangers: text("reaction_to_strangers"), // Reacción con personas desconocidas
+  reactionToOtherDogs: text("reaction_to_other_dogs"), // Reacción con otros perros
+  
+  // Observaciones adicionales
+  ownerDisposition: text("owner_disposition"), // Disposición del dueño
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
