@@ -197,6 +197,33 @@ export const dogs = pgTable("dogs", {
   // Observaciones adicionales
   ownerDisposition: text("owner_disposition"), // Disposición del dueño
   
+  // Observaciones - Reacciones durante evaluación
+  hidesBehindOwner: boolean("hides_behind_owner").default(false), // Se esconde detrás del dueño
+  getsRigid: boolean("gets_rigid").default(false), // Se pone rígido
+  sits: boolean("sits").default(false), // Se sienta
+  staysImmobile: boolean("stays_immobile").default(false), // Se queda inmóvil
+  reactionOnArrival: text("reaction_on_arrival"), // Reacción al llegar
+  reactionDuringAnamnesis: text("reaction_during_anamnesis"), // Reacción durante anamnesis
+  reactionDuringEvaluation: text("reaction_during_evaluation"), // Reacción durante evaluación directa
+  
+  // Observaciones - Señales de Calma específicas
+  yawning: boolean("yawning").default(false), // Bostezar
+  licking: boolean("licking").default(false), // Lamerse
+  stretching: boolean("stretching").default(false), // Estirarse
+  turnHeadAway: boolean("turn_head_away").default(false), // Girar la cabeza
+  blinking: boolean("blinking").default(false), // Parpadear
+  sniffing: boolean("sniffing").default(false), // Olfatear
+  
+  // Observaciones - Postura detallada
+  tailPosition: text("tail_position"), // Posición de la cola
+  headPosition: text("head_position"), // Posición de la cabeza
+  earPosition: text("ear_position"), // Posición de orejas
+  eyePosition: text("eye_position"), // Posición de ojos
+  symmetry: text("symmetry"), // Simetría
+  breathing: text("breathing"), // Respiración
+  rolling: boolean("rolling").default(false), // Se revuelca
+  crouching: boolean("crouching").default(false), // Se agacha
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
