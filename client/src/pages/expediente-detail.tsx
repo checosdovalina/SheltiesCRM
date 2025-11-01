@@ -81,6 +81,12 @@ interface DogWithClient {
   reactionToOtherDogs?: string;
   ownerDisposition?: string;
   
+  coat?: string;
+  leashComfortOther?: string;
+  leashPullingOther?: boolean;
+  leashReactiveOther?: boolean;
+  leashAggressiveOther?: boolean;
+  
   hidesBehindOwner?: boolean;
   getsRigid?: boolean;
   sits?: boolean;
@@ -384,6 +390,75 @@ export default function ExpedienteDetail() {
             {/* Observaciones Tab */}
             <TabsContent value="observaciones" data-testid="content-observaciones">
               <div className="space-y-4">
+                {/* Características Físicas */}
+                <Card className="border-l-4 border-l-green-500">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Características Físicas</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InfoField label="Pelaje" value={dog.coat} />
+                      <InfoField label="Temperatura" value={dog.physicalTemp} />
+                      <InfoField label="Ojos" value={dog.eyeShape} />
+                      <InfoField label="Dientes" value={dog.teethCondition} />
+                      <InfoField label="Peso" value={dog.weight} />
+                      <InfoField label="Olor" value={dog.smell} />
+                      <InfoField label="Tensión Muscular" value={dog.muscleTension} />
+                      <InfoField label="Reactivo al Tocar" value={dog.touchReactive} />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <InfoField label="Salivando" value={dog.salivating} />
+                      <InfoField label="Patas Sudando" value={dog.sweatingPaws} />
+                      <InfoField label="Muda de Pelo" value={dog.shedding} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Movimiento */}
+                <Card className="border-l-4 border-l-indigo-500">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Movimiento</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InfoField label="Equilibrio" value={dog.balance} />
+                      <InfoField label="Normal/Cojea" value={dog.gait} />
+                      <InfoField label="Rapidez" value={dog.speed} />
+                      <InfoField label="Coordinación" value={dog.coordination} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Correa - Con el Dueño */}
+                <Card className="border-l-4 border-l-cyan-500">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Correa - Con el Dueño</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <InfoField label="¿Se siente seguro?" value={dog.leashComfort} />
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <InfoField label="¿Jala?" value={dog.leashPulling} />
+                      <InfoField label="¿Se pone reactivo?" value={dog.leashReactive} />
+                      <InfoField label="¿Agresivo?" value={dog.leashAggressive} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Correa - Con Otra Persona */}
+                <Card className="border-l-4 border-l-teal-500">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Correa - Con Otra Persona</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <InfoField label="¿Se siente seguro?" value={dog.leashComfortOther} />
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <InfoField label="¿Jala?" value={dog.leashPullingOther} />
+                      <InfoField label="¿Se pone reactivo?" value={dog.leashReactiveOther} />
+                      <InfoField label="¿Agresivo?" value={dog.leashAggressiveOther} />
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Reacciones durante Evaluación */}
                 <Card className="border-l-4 border-l-amber-500">
                   <CardHeader>
@@ -438,30 +513,6 @@ export default function ExpedienteDetail() {
                     <div className="grid grid-cols-2 gap-3">
                       <InfoField label="Se revuelca" value={dog.rolling} />
                       <InfoField label="Se agacha" value={dog.crouching} />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Observaciones Físicas Existentes */}
-                <Card className="border-l-4 border-l-green-500">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Observaciones Físicas</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <InfoField label="Postura" value={dog.posture} />
-                      <InfoField label="Forma de Ojos" value={dog.eyeShape} />
-                      <InfoField label="Movimiento del Cuerpo" value={dog.bodyMovement} />
-                      <InfoField label="Temperatura" value={dog.physicalTemp} />
-                      <InfoField label="Condición de Dientes" value={dog.teethCondition} />
-                      <InfoField label="Olor" value={dog.smell} />
-                      <InfoField label="Tensión Muscular" value={dog.muscleTension} />
-                      <InfoField label="Reactivo al Tocar" value={dog.touchReactive} />
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <InfoField label="Salivando" value={dog.salivating} />
-                      <InfoField label="Patas Sudando" value={dog.sweatingPaws} />
-                      <InfoField label="Muda de Pelo" value={dog.shedding} />
                     </div>
                   </CardContent>
                 </Card>

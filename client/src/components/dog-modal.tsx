@@ -79,6 +79,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     hypersensitivity: "",
     otherBehaviors: "",
     // Observaciones Físicas
+    coat: "",
     posture: "",
     eyeShape: "",
     bodyMovement: "",
@@ -95,11 +96,16 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     gait: "",
     speed: "",
     coordination: "",
-    // Correa
+    // Correa - Con el dueño
     leashComfort: "",
     leashPulling: false,
     leashReactive: false,
     leashAggressive: false,
+    // Correa - Con otra persona
+    leashComfortOther: "",
+    leashPullingOther: false,
+    leashReactiveOther: false,
+    leashAggressiveOther: false,
     // Interacción
     calmingSignals: "",
     reactionToStrangers: "",
@@ -168,6 +174,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
           anxiety: dog.anxiety || "",
           hypersensitivity: dog.hypersensitivity || "",
           otherBehaviors: dog.otherBehaviors || "",
+          coat: dog.coat || "",
           posture: dog.posture || "",
           eyeShape: dog.eyeShape || "",
           bodyMovement: dog.bodyMovement || "",
@@ -187,6 +194,10 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
           leashPulling: dog.leashPulling || false,
           leashReactive: dog.leashReactive || false,
           leashAggressive: dog.leashAggressive || false,
+          leashComfortOther: dog.leashComfortOther || "",
+          leashPullingOther: dog.leashPullingOther || false,
+          leashReactiveOther: dog.leashReactiveOther || false,
+          leashAggressiveOther: dog.leashAggressiveOther || false,
           calmingSignals: dog.calmingSignals || "",
           reactionToStrangers: dog.reactionToStrangers || "",
           reactionToOtherDogs: dog.reactionToOtherDogs || "",
@@ -865,154 +876,136 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
 
               {/* Tab: Observaciones Físicas */}
               <TabsContent value="observaciones" className="space-y-4 mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="posture"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Postura</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Descripción de la postura"
-                            {...field}
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {/* Características Físicas */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold">Características Físicas</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="coat"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Pelaje</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Descripción del pelaje"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="eyeShape"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Forma de Ojos</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Redondos, tensos, relajados..."
-                            {...field}
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="physicalTemp"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Temperatura</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Normal, elevada..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="bodyMovement"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Movimiento del Cuerpo</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Relajado, tenso, agachado..."
-                            {...field}
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="eyeShape"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ojos</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Redondos, tensos, relajados..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="physicalTemp"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Temperatura</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Normal, elevada..."
-                            {...field}
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="teethCondition"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dientes</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Estado de los dientes"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="teethCondition"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Condición de Dientes</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Estado de los dientes"
-                            {...field}
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="smell"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Olor</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Normal, fuerte, particular..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="smell"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Olor</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Normal, fuerte, particular..."
-                            {...field}
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="muscleTension"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tensión Muscular</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Relajado, tenso..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="muscleTension"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tensión Muscular</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Relajado, tenso..."
-                            {...field}
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="touchReactive"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Reactivo al Tocar</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Reacción al contacto físico"
-                            {...field}
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <p className="text-sm font-medium">Indicadores Físicos:</p>
+                    <FormField
+                      control={form.control}
+                      name="touchReactive"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Reactivo al Tocar</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Reacción al contacto físico"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
@@ -1063,6 +1056,242 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
                           </FormControl>
                           <div className="space-y-1 leading-none">
                             <FormLabel>Muda de Pelo</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Movimiento */}
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-sm font-semibold">Movimiento</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="balance"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Equilibrio</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Bueno, deficiente..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="gait"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Normal/Cojea</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Normal, cojea..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="speed"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Rapidez</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Rápido, lento, moderado..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="coordination"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Coordinación</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Buena, deficiente..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Correa - Con el Dueño */}
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-sm font-semibold">Correa - Con el Dueño</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="leashComfort"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>¿Se siente seguro?</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Sí, no, a veces..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="leashPulling"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>¿Jala?</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="leashReactive"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>¿Se pone reactivo?</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="leashAggressive"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>¿Agresivo?</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Correa - Con Otra Persona */}
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-sm font-semibold">Correa - Con Otra Persona</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="leashComfortOther"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>¿Se siente seguro?</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Sí, no, a veces..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="leashPullingOther"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>¿Jala?</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="leashReactiveOther"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>¿Se pone reactivo?</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="leashAggressiveOther"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>¿Agresivo?</FormLabel>
                           </div>
                         </FormItem>
                       )}
