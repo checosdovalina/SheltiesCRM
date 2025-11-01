@@ -165,6 +165,7 @@ export const dogs = pgTable("dogs", {
   otherBehaviors: text("other_behaviors"), // Otros
   
   // Expediente - Observaciones del Perro
+  coat: text("coat"), // Pelaje
   posture: text("posture"), // Postura
   eyeShape: text("eye_shape"), // Forma de ojos
   bodyMovement: text("body_movement"), // Movimiento del cuerpo
@@ -183,11 +184,17 @@ export const dogs = pgTable("dogs", {
   speed: text("speed"), // Rapidez
   coordination: text("coordination"), // Coordinación
   
-  // Correa
+  // Correa - Con el dueño
   leashComfort: text("leash_comfort"), // Se siente seguro con correa
   leashPulling: boolean("leash_pulling").default(false), // Jala
   leashReactive: boolean("leash_reactive").default(false), // Se pone reactivo
   leashAggressive: boolean("leash_aggressive").default(false), // Agresivo
+  
+  // Correa - Con otra persona
+  leashComfortOther: text("leash_comfort_other"), // Se siente seguro con otra persona
+  leashPullingOther: boolean("leash_pulling_other").default(false), // Jala con otra persona
+  leashReactiveOther: boolean("leash_reactive_other").default(false), // Se pone reactivo con otra persona
+  leashAggressiveOther: boolean("leash_aggressive_other").default(false), // Agresivo con otra persona
   
   // Interacción y Señales de Calma
   calmingSignals: text("calming_signals"), // Señales de calma observadas
