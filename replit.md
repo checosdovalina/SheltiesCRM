@@ -80,10 +80,11 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### November 1, 2025 - Complete Expediente System Implementation
+### November 1, 2025 - Complete Expediente System with Medical Records, Training & Evidence
 
-#### Major Feature: Comprehensive Pet Medical/Training Records
+#### Major Feature: Full Expediente System with CRUD Operations
 - **Database Schema Extended**: Added 40+ new fields to `dogs` table for complete expediente (medical/behavioral record) tracking
+- **New Data Models**: Medical records, training sessions, and evidence tables with proper relations to dogs
 - **Expediente Fields Include**:
   - **Objetivos**: Problem description, training objectives
   - **Antecedentes**: Acquisition source, arrival age, canine family
@@ -97,21 +98,45 @@ Preferred communication style: Simple, everyday language.
   - **Owner Disposition**: Owner's commitment and disposition
 
 #### New Pages and Components
-- **Expediente Detail Page** (`/expediente/:id`): Professional display of complete pet record with color-coded sections
+- **Expediente Detail Page** (`/expediente/:id`): Professional two-column layout with:
+  - Left sidebar: General pet information (always visible)
+  - Right side: Four tabs (Resumen, Médico, Entrenamientos, Evidencias)
+  - PDF-style formatting with color-coded cards, badges, and professional layout
+  - Fully responsive for desktop, iPad, and iPhone Pro Max 15
+- **Medical Record Modal** (`medical-record-modal.tsx`): Add medical records with date, type, veterinarian, diagnosis, treatment, and notes
+- **Training Session Modal** (`training-modal.tsx`): Record training sessions with date, duration, trainer, exercises, progress, and observations
+- **Evidence Modal** (`evidence-modal.tsx`): Upload evidence with type, date, description, and file URL
 - **Enhanced Dog Modal**: Tabbed interface with 8 sections (Básico, Objetivos, Historia, Rutina, Salud, Comportamiento, Observaciones, Movimiento)
 - **Routes Updated**: Added `/expediente/:id` and `/expedientes` routes
+
+#### API Endpoints
+- **GET `/api/dogs/:id/medical-records`**: Fetch all medical records for a dog
+- **POST `/api/medical-records`**: Create new medical record
+- **GET `/api/dogs/:id/training-sessions`**: Fetch all training sessions for a dog
+- **POST `/api/training-sessions`**: Create new training session
+- **GET `/api/dogs/:id/evidence`**: Fetch all evidence for a dog
+- **POST `/api/evidence`**: Create new evidence entry
+- **GET `/api/dogs/:id`**: Enhanced to include client information for full expediente display
 
 #### Technical Improvements
 - **Boolean Fields**: Added default values (false) to all boolean fields to prevent null-related errors
 - **Data Migration**: Existing pet records updated to have false defaults for new boolean fields
 - **Type Safety**: All new fields properly typed with Zod validation
-- **API Enhancement**: `/api/dogs/:id` endpoint now includes client information for complete expediente display
+- **Cache Invalidation**: Fixed critical bug where query keys were misaligned - now records appear immediately after creation without page refresh
+- **Responsive Design**: Mobile-first approach with adaptive layouts for all screen sizes
+- **Professional UI**: PDF-style formatting with color-coded sections matching provided templates
 
 #### User Experience
-- **For Professors/Admins**: Can now complete comprehensive behavioral assessment when registering new pets
-- **Tab Organization**: Information organized into logical sections for easier data entry
-- **Professional Display**: Expediente page shows all information in clean, color-coded cards similar to provided PDF templates
-- **Flexible Form**: All fields optional except basic information (name, pet type)
+- **For Professors/Admins**: Can now:
+  - Complete comprehensive behavioral assessment when registering pets
+  - Add medical records with detailed information
+  - Record training sessions with progress tracking
+  - Upload evidence (photos, videos, documents)
+  - View complete expediente in professional format
+- **Tab Organization**: Information organized into logical sections for easier navigation
+- **Professional Display**: Expediente shows all information in clean, color-coded cards
+- **Immediate Updates**: New records appear instantly without page refresh
+- **Mobile Optimization**: Compact layout for smaller screens while maintaining functionality
 
 ### November 1, 2025 - Pet Form Focus Issue Fix
 
