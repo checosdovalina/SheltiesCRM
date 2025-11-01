@@ -173,9 +173,9 @@ export const dogs = pgTable("dogs", {
   smell: text("smell"), // Olor
   muscleTension: text("muscle_tension"), // Tensión muscular
   touchReactive: text("touch_reactive"), // Reactivo al tocar
-  salivating: boolean("salivating"), // Salivando
-  sweatingPaws: boolean("sweating_paws"), // Patas sudando
-  shedding: boolean("shedding"), // Muda de pelo
+  salivating: boolean("salivating").default(false), // Salivando
+  sweatingPaws: boolean("sweating_paws").default(false), // Patas sudando
+  shedding: boolean("shedding").default(false), // Muda de pelo
   
   // Movimiento
   balance: text("balance"), // Equilibrio
@@ -185,9 +185,9 @@ export const dogs = pgTable("dogs", {
   
   // Correa
   leashComfort: text("leash_comfort"), // Se siente seguro con correa
-  leashPulling: boolean("leash_pulling"), // Jala
-  leashReactive: boolean("leash_reactive"), // Se pone reactivo
-  leashAggressive: boolean("leash_aggressive"), // Agresivo
+  leashPulling: boolean("leash_pulling").default(false), // Jala
+  leashReactive: boolean("leash_reactive").default(false), // Se pone reactivo
+  leashAggressive: boolean("leash_aggressive").default(false), // Agresivo
   
   // Interacción y Señales de Calma
   calmingSignals: text("calming_signals"), // Señales de calma observadas

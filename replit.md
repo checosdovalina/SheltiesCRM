@@ -80,6 +80,39 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 1, 2025 - Complete Expediente System Implementation
+
+#### Major Feature: Comprehensive Pet Medical/Training Records
+- **Database Schema Extended**: Added 40+ new fields to `dogs` table for complete expediente (medical/behavioral record) tracking
+- **Expediente Fields Include**:
+  - **Objetivos**: Problem description, training objectives
+  - **Antecedentes**: Acquisition source, arrival age, canine family
+  - **Rutina**: Daily routine, feeding schedule
+  - **Salud**: Veterinarian, vaccines, diseases, disease predisposition
+  - **Comportamiento**: Fears, aggression, hyperactivity, destruction, reactivity, anxiety, hypersensitivity, other behaviors
+  - **Observaciones Físicas**: Posture, eye shape, body movement, physical temp, teeth condition, smell, muscle tension, touch reactive, salivating, sweating paws, shedding
+  - **Movimiento**: Balance, gait, speed, coordination
+  - **Correa**: Leash comfort, leash pulling, leash reactive, leash aggressive
+  - **Interacción Social**: Calming signals, reaction to strangers, reaction to other dogs
+  - **Owner Disposition**: Owner's commitment and disposition
+
+#### New Pages and Components
+- **Expediente Detail Page** (`/expediente/:id`): Professional display of complete pet record with color-coded sections
+- **Enhanced Dog Modal**: Tabbed interface with 8 sections (Básico, Objetivos, Historia, Rutina, Salud, Comportamiento, Observaciones, Movimiento)
+- **Routes Updated**: Added `/expediente/:id` and `/expedientes` routes
+
+#### Technical Improvements
+- **Boolean Fields**: Added default values (false) to all boolean fields to prevent null-related errors
+- **Data Migration**: Existing pet records updated to have false defaults for new boolean fields
+- **Type Safety**: All new fields properly typed with Zod validation
+- **API Enhancement**: `/api/dogs/:id` endpoint now includes client information for complete expediente display
+
+#### User Experience
+- **For Professors/Admins**: Can now complete comprehensive behavioral assessment when registering new pets
+- **Tab Organization**: Information organized into logical sections for easier data entry
+- **Professional Display**: Expediente page shows all information in clean, color-coded cards similar to provided PDF templates
+- **Flexible Form**: All fields optional except basic information (name, pet type)
+
 ### November 1, 2025 - Pet Form Focus Issue Fix
 
 #### Critical Bug Fix

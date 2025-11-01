@@ -17,16 +17,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { insertDogSchema } from "@shared/schema";
 import { PetTypeSelector } from "./PetTypeSelector";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { SimpleImageUploader } from "@/components/SimpleImageUploader";
-import { X } from "lucide-react";
+import { X, FileText, Activity, Calendar, Heart, Stethoscope, Brain, Eye, Accessibility } from "lucide-react";
 
 interface DogModalProps {
   open: boolean;
@@ -51,6 +54,57 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     weight: "",
     notes: "",
     imageUrl: "",
+    // Objetivos
+    problemDescription: "",
+    trainingObjectives: "",
+    // Antecedentes
+    acquisitionSource: "",
+    arrivalAge: "",
+    canineFamily: "",
+    // Rutina
+    dailyRoutine: "",
+    feedingSchedule: "",
+    // Salud
+    veterinarian: "",
+    vaccines: "",
+    diseases: "",
+    diseasePredisposition: "",
+    // Comportamiento
+    fears: "",
+    aggression: "",
+    hyperactivity: "",
+    destruction: "",
+    reactivity: "",
+    anxiety: "",
+    hypersensitivity: "",
+    otherBehaviors: "",
+    // Observaciones Físicas
+    posture: "",
+    eyeShape: "",
+    bodyMovement: "",
+    physicalTemp: "",
+    teethCondition: "",
+    smell: "",
+    muscleTension: "",
+    touchReactive: "",
+    salivating: false,
+    sweatingPaws: false,
+    shedding: false,
+    // Movimiento
+    balance: "",
+    gait: "",
+    speed: "",
+    coordination: "",
+    // Correa
+    leashComfort: "",
+    leashPulling: false,
+    leashReactive: false,
+    leashAggressive: false,
+    // Interacción
+    calmingSignals: "",
+    reactionToStrangers: "",
+    reactionToOtherDogs: "",
+    ownerDisposition: "",
   }), [clientId]);
 
   const form = useForm<z.infer<typeof insertDogSchema>>({
@@ -62,7 +116,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
   useEffect(() => {
     if (open) {
       if (dog) {
-        const dogValues = {
+        form.reset({
           clientId: clientId,
           petTypeId: dog.petTypeId || "",
           name: dog.name || "",
@@ -71,8 +125,49 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
           weight: dog.weight || "",
           notes: dog.notes || "",
           imageUrl: dog.imageUrl || "",
-        };
-        form.reset(dogValues);
+          problemDescription: dog.problemDescription || "",
+          trainingObjectives: dog.trainingObjectives || "",
+          acquisitionSource: dog.acquisitionSource || "",
+          arrivalAge: dog.arrivalAge || "",
+          canineFamily: dog.canineFamily || "",
+          dailyRoutine: dog.dailyRoutine || "",
+          feedingSchedule: dog.feedingSchedule || "",
+          veterinarian: dog.veterinarian || "",
+          vaccines: dog.vaccines || "",
+          diseases: dog.diseases || "",
+          diseasePredisposition: dog.diseasePredisposition || "",
+          fears: dog.fears || "",
+          aggression: dog.aggression || "",
+          hyperactivity: dog.hyperactivity || "",
+          destruction: dog.destruction || "",
+          reactivity: dog.reactivity || "",
+          anxiety: dog.anxiety || "",
+          hypersensitivity: dog.hypersensitivity || "",
+          otherBehaviors: dog.otherBehaviors || "",
+          posture: dog.posture || "",
+          eyeShape: dog.eyeShape || "",
+          bodyMovement: dog.bodyMovement || "",
+          physicalTemp: dog.physicalTemp || "",
+          teethCondition: dog.teethCondition || "",
+          smell: dog.smell || "",
+          muscleTension: dog.muscleTension || "",
+          touchReactive: dog.touchReactive || "",
+          salivating: dog.salivating || false,
+          sweatingPaws: dog.sweatingPaws || false,
+          shedding: dog.shedding || false,
+          balance: dog.balance || "",
+          gait: dog.gait || "",
+          speed: dog.speed || "",
+          coordination: dog.coordination || "",
+          leashComfort: dog.leashComfort || "",
+          leashPulling: dog.leashPulling || false,
+          leashReactive: dog.leashReactive || false,
+          leashAggressive: dog.leashAggressive || false,
+          calmingSignals: dog.calmingSignals || "",
+          reactionToStrangers: dog.reactionToStrangers || "",
+          reactionToOtherDogs: dog.reactionToOtherDogs || "",
+          ownerDisposition: dog.ownerDisposition || "",
+        });
         setUploadedImageUrl(dog.imageUrl || "");
       } else {
         form.reset(defaultValues);
@@ -140,179 +235,1062 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-md max-h-[90vh] overflow-y-auto" 
+        className="max-w-4xl max-h-[90vh] overflow-y-auto" 
         data-testid="dialog-dog-modal"
       >
         <DialogHeader>
           <DialogTitle data-testid="text-dog-modal-title">
-            {dog ? "Editar Mascota" : `Agregar Mascota a ${clientName}`}
+            {dog ? "Editar Expediente" : `Nuevo Expediente - ${clientName}`}
           </DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nombre de la mascota</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Ej: Buddy, Luna, Max..." 
-                      {...field}
-                      data-testid="input-dog-name"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <Tabs defaultValue="basico" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+                <TabsTrigger value="basico" className="text-xs">
+                  <FileText className="w-3 h-3 mr-1" />
+                  Básico
+                </TabsTrigger>
+                <TabsTrigger value="objetivos" className="text-xs">
+                  <Activity className="w-3 h-3 mr-1" />
+                  Objetivos
+                </TabsTrigger>
+                <TabsTrigger value="antecedentes" className="text-xs">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  Historia
+                </TabsTrigger>
+                <TabsTrigger value="rutina" className="text-xs">
+                  <Heart className="w-3 h-3 mr-1" />
+                  Rutina
+                </TabsTrigger>
+                <TabsTrigger value="salud" className="text-xs">
+                  <Stethoscope className="w-3 h-3 mr-1" />
+                  Salud
+                </TabsTrigger>
+                <TabsTrigger value="comportamiento" className="text-xs">
+                  <Brain className="w-3 h-3 mr-1" />
+                  Comporta.
+                </TabsTrigger>
+                <TabsTrigger value="observaciones" className="text-xs">
+                  <Eye className="w-3 h-3 mr-1" />
+                  Observ.
+                </TabsTrigger>
+                <TabsTrigger value="movimiento" className="text-xs">
+                  <Accessibility className="w-3 h-3 mr-1" />
+                  Movim.
+                </TabsTrigger>
+              </TabsList>
 
-            <FormField
-              control={form.control}
-              name="petTypeId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo de Mascota</FormLabel>
-                  <FormControl>
-                    <PetTypeSelector
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Selecciona el tipo de mascota"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="breed"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Raza (opcional)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Ej: Labrador, Golden Retriever, Mestizo..." 
-                      {...field}
-                      value={field.value || ""}
-                      data-testid="input-dog-breed"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="age"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Edad (años)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Ej: 3"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? undefined : parseInt(value, 10));
-                        }}
-                        data-testid="input-dog-age"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="weight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Peso (kg)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Ej: 25.5"
-                        {...field}
-                        value={field.value || ""}
-                        data-testid="input-dog-weight"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notas adicionales (opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Información adicional sobre la mascota, comportamiento, alergias, etc..."
-                      className="resize-none"
-                      rows={3}
-                      {...field}
-                      value={field.value || ""}
-                      data-testid="input-dog-notes"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Foto de la mascota (opcional)</FormLabel>
-                  <div className="space-y-4">
-                    {uploadedImageUrl ? (
-                      <div className="relative inline-block">
-                        <img
-                          src={uploadedImageUrl}
-                          alt="Foto de la mascota"
-                          className="w-32 h-32 object-cover rounded-lg border-2 border-border"
-                          data-testid="dog-image-preview"
+              {/* Tab: Datos Básicos */}
+              <TabsContent value="basico" className="space-y-4 mt-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre de la mascota *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Ej: Buddy, Luna, Max..." 
+                          {...field}
+                          data-testid="input-dog-name"
                         />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                          onClick={removeImage}
-                          data-testid="button-remove-image"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <SimpleImageUploader
-                        onImageUploaded={handleImageUploaded}
-                        buttonClassName="w-full"
-                        isUploading={isUploading}
-                        onUploadingChange={setIsUploading}
-                      />
-                    )}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="flex justify-end space-x-2 pt-4">
+                <FormField
+                  control={form.control}
+                  name="petTypeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Mascota *</FormLabel>
+                      <FormControl>
+                        <PetTypeSelector
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Selecciona el tipo de mascota"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="breed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Raza</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Ej: Labrador, Golden Retriever, Mestizo..." 
+                          {...field}
+                          value={field.value || ""}
+                          data-testid="input-dog-breed"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Edad (años)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="Ej: 3"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(value === "" ? undefined : parseInt(value, 10));
+                            }}
+                            data-testid="input-dog-age"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="weight"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Peso (kg)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Ej: 25.5"
+                            {...field}
+                            value={field.value || ""}
+                            data-testid="input-dog-weight"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Foto de la mascota</FormLabel>
+                      <div className="space-y-4">
+                        {uploadedImageUrl ? (
+                          <div className="relative inline-block">
+                            <img
+                              src={uploadedImageUrl}
+                              alt="Foto de la mascota"
+                              className="w-32 h-32 object-cover rounded-lg border-2 border-border"
+                              data-testid="dog-image-preview"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                              onClick={removeImage}
+                              data-testid="button-remove-image"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <SimpleImageUploader
+                            onImageUploaded={handleImageUploaded}
+                            buttonClassName="w-full"
+                            isUploading={isUploading}
+                            onUploadingChange={setIsUploading}
+                          />
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+
+              {/* Tab: Objetivos */}
+              <TabsContent value="objetivos" className="space-y-4 mt-4">
+                <FormField
+                  control={form.control}
+                  name="problemDescription"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción del Problema</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe el motivo de la consulta o los problemas observados..."
+                          className="resize-none"
+                          rows={4}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="trainingObjectives"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Objetivos a Tratar</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="¿Qué objetivos se quieren lograr con el entrenamiento?..."
+                          className="resize-none"
+                          rows={4}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+
+              {/* Tab: Antecedentes */}
+              <TabsContent value="antecedentes" className="space-y-4 mt-4">
+                <FormField
+                  control={form.control}
+                  name="acquisitionSource"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Adquisición</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="¿De dónde se adquirió? (criador, refugio, regalo, etc.)"
+                          className="resize-none"
+                          rows={2}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="arrivalAge"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Edad de Llegada</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Ej: 2 meses, 1 año..."
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="canineFamily"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Familia Canina</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="¿Convive con otros perros? ¿Cuántos? Edades, razas..."
+                          className="resize-none"
+                          rows={3}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+
+              {/* Tab: Rutina */}
+              <TabsContent value="rutina" className="space-y-4 mt-4">
+                <FormField
+                  control={form.control}
+                  name="dailyRoutine"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Día a Día</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe la rutina diaria: horarios de paseo, juegos, descanso..."
+                          className="resize-none"
+                          rows={4}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="feedingSchedule"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Alimentación</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Horarios de comida, tipo de alimento, cantidades..."
+                          className="resize-none"
+                          rows={3}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+
+              {/* Tab: Salud */}
+              <TabsContent value="salud" className="space-y-4 mt-4">
+                <FormField
+                  control={form.control}
+                  name="veterinarian"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Médico Veterinario</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Nombre del veterinario o clínica"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="vaccines"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vacunas</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Lista de vacunas aplicadas y fechas..."
+                          className="resize-none"
+                          rows={3}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="diseases"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Enfermedades</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enfermedades actuales o pasadas..."
+                          className="resize-none"
+                          rows={2}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="diseasePredisposition"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Predisposición a Enfermedades</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Predisposición genética o de raza a enfermedades..."
+                          className="resize-none"
+                          rows={2}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+
+              {/* Tab: Comportamiento */}
+              <TabsContent value="comportamiento" className="space-y-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="fears"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Miedos</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="¿A qué le tiene miedo?"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="aggression"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Agresión</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Observaciones sobre agresividad"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="hyperactivity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hiperactividad</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Niveles de energía y actividad"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="destruction"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Destrucción</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Comportamiento destructivo"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="reactivity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reactividad</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Reacciones ante estímulos"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="anxiety"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ansiedad</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Signos de ansiedad observados"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="hypersensitivity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hipersensibilidad</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Sensibilidad a ruidos, tacto, etc."
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="otherBehaviors"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Otros Comportamientos</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Otros comportamientos relevantes"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+
+              {/* Tab: Observaciones Físicas */}
+              <TabsContent value="observaciones" className="space-y-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="posture"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Postura</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Descripción de la postura"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="eyeShape"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Forma de Ojos</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Redondos, tensos, relajados..."
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="bodyMovement"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Movimiento del Cuerpo</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Relajado, tenso, agachado..."
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="physicalTemp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Temperatura</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Normal, elevada..."
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="teethCondition"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Condición de Dientes</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Estado de los dientes"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="smell"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Olor</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Normal, fuerte, particular..."
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="muscleTension"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tensión Muscular</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Relajado, tenso..."
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="touchReactive"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reactivo al Tocar</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Reacción al contacto físico"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-medium">Indicadores Físicos:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="salivating"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Salivando</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="sweatingPaws"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Patas Sudando</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="shedding"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Muda de Pelo</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Tab: Movimiento e Interacción */}
+              <TabsContent value="movimiento" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold">Movimiento</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="balance"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Equilibrio</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Bueno, deficiente..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="gait"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Marcha</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Normal, cojea..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="speed"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Rapidez</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Lento, normal, rápido..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="coordination"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Coordinación</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Buena, deficiente..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold">Comportamiento con Correa</h3>
+                  <FormField
+                    control={form.control}
+                    name="leashComfort"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Seguridad con Correa</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="¿Se siente seguro con la correa?"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="leashPulling"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Jala la Correa</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="leashReactive"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Reactivo</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="leashAggressive"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Agresivo</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold">Interacción Social</h3>
+                  <FormField
+                    control={form.control}
+                    name="calmingSignals"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Señales de Calma</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Bostezar, lamerse, estirarse, girar la cabeza, parpadear, olfatear..."
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="reactionToStrangers"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reacción con Personas Desconocidas</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="¿Cómo reacciona ante personas desconocidas?"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="reactionToOtherDogs"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reacción con Otros Perros</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="¿Cómo reacciona ante otros perros?"
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="ownerDisposition"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Disposición del Dueño</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Disposición y compromiso del dueño con el entrenamiento..."
+                            className="resize-none"
+                            rows={2}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notas Generales</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Cualquier otra observación relevante..."
+                            className="resize-none"
+                            rows={3}
+                            {...field}
+                            value={field.value || ""}
+                            data-testid="input-dog-notes"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-end space-x-2 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
@@ -329,8 +1307,8 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
                 {createDogMutation.isPending
                   ? "Guardando..." 
                   : dog 
-                    ? "Actualizar" 
-                    : "Agregar Mascota"
+                    ? "Actualizar Expediente" 
+                    : "Crear Expediente"
                 }
               </Button>
             </div>

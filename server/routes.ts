@@ -276,7 +276,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!dog) {
         return res.status(404).json({ message: "Dog not found" });
       }
-      res.json(dog);
+      
+      // Get client information
+      const client = await storage.getClient(dog.clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      // Return dog with client information
+      res.json({
+        ...dog,
+        client
+      });
     } catch (error) {
       console.error("Error fetching dog:", error);
       res.status(500).json({ message: "Failed to fetch dog" });

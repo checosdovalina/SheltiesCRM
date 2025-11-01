@@ -218,7 +218,7 @@ export default function Records() {
 
                 {/* Actions */}
                 <div className="flex flex-col gap-2">
-                  <Link href={`/records/${dog.id}`}>
+                  <Link href={`/expediente/${dog.id}`}>
                     <Button className="w-full" size="sm" data-testid={`button-view-record-${dog.id}`}>
                       <FileText className="w-4 h-4 mr-2" />
                       Ver Expediente
@@ -226,13 +226,13 @@ export default function Records() {
                   </Link>
                   
                   <div className="grid grid-cols-2 gap-2">
-                    <Link href={`/records/${dog.id}?tab=medical`}>
+                    <Link href={`/expediente/${dog.id}`}>
                       <Button variant="outline" size="sm" className="w-full text-xs">
                         <Stethoscope className="w-3 h-3 mr-1" />
                         Médico
                       </Button>
                     </Link>
-                    <Link href={`/records/${dog.id}?tab=training`}>
+                    <Link href={`/expediente/${dog.id}`}>
                       <Button variant="outline" size="sm" className="w-full text-xs">
                         <BookOpen className="w-3 h-3 mr-1" />
                         Entrenamiento
