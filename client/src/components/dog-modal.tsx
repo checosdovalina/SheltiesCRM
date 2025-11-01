@@ -105,6 +105,30 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     reactionToStrangers: "",
     reactionToOtherDogs: "",
     ownerDisposition: "",
+    // Observaciones - Reacciones
+    hidesBehindOwner: false,
+    getsRigid: false,
+    sits: false,
+    staysImmobile: false,
+    reactionOnArrival: "",
+    reactionDuringAnamnesis: "",
+    reactionDuringEvaluation: "",
+    // Observaciones - Señales de Calma
+    yawning: false,
+    licking: false,
+    stretching: false,
+    turnHeadAway: false,
+    blinking: false,
+    sniffing: false,
+    // Observaciones - Postura Detallada
+    tailPosition: "",
+    headPosition: "",
+    earPosition: "",
+    eyePosition: "",
+    symmetry: "",
+    breathing: "",
+    rolling: false,
+    crouching: false,
   }), [clientId]);
 
   const form = useForm<z.infer<typeof insertDogSchema>>({
@@ -167,6 +191,27 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
           reactionToStrangers: dog.reactionToStrangers || "",
           reactionToOtherDogs: dog.reactionToOtherDogs || "",
           ownerDisposition: dog.ownerDisposition || "",
+          hidesBehindOwner: dog.hidesBehindOwner || false,
+          getsRigid: dog.getsRigid || false,
+          sits: dog.sits || false,
+          staysImmobile: dog.staysImmobile || false,
+          reactionOnArrival: dog.reactionOnArrival || "",
+          reactionDuringAnamnesis: dog.reactionDuringAnamnesis || "",
+          reactionDuringEvaluation: dog.reactionDuringEvaluation || "",
+          yawning: dog.yawning || false,
+          licking: dog.licking || false,
+          stretching: dog.stretching || false,
+          turnHeadAway: dog.turnHeadAway || false,
+          blinking: dog.blinking || false,
+          sniffing: dog.sniffing || false,
+          tailPosition: dog.tailPosition || "",
+          headPosition: dog.headPosition || "",
+          earPosition: dog.earPosition || "",
+          eyePosition: dog.eyePosition || "",
+          symmetry: dog.symmetry || "",
+          breathing: dog.breathing || "",
+          rolling: dog.rolling || false,
+          crouching: dog.crouching || false,
         });
         setUploadedImageUrl(dog.imageUrl || "");
       } else {
@@ -1018,6 +1063,409 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
                           </FormControl>
                           <div className="space-y-1 leading-none">
                             <FormLabel>Muda de Pelo</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-4">
+                  <h3 className="text-sm font-semibold">Reacciones durante Evaluación</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="reactionOnArrival"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Reacción al Llegar</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Cómo reacciona al llegar..."
+                              className="resize-none"
+                              rows={2}
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="reactionDuringAnamnesis"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Reacción durante Anamnesis</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Comportamiento durante la conversación..."
+                              className="resize-none"
+                              rows={2}
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="reactionDuringEvaluation"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Reacción durante Evaluación Directa</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Comportamiento durante evaluación directa..."
+                              className="resize-none"
+                              rows={2}
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="hidesBehindOwner"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Se esconde detrás del dueño</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="getsRigid"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Se pone rígido</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="sits"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Se sienta</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="staysImmobile"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Se queda inmóvil</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-4">
+                  <h3 className="text-sm font-semibold">Señales de Calma</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="yawning"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Bostezar</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="licking"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Lamerse</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="stretching"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Estirarse</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="turnHeadAway"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Girar la cabeza</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="blinking"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Parpadear</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="sniffing"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Olfatear</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-4">
+                  <h3 className="text-sm font-semibold">Postura Detallada</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="tailPosition"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Posición de la Cola</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Alta, baja, entre las piernas..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="headPosition"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Posición de la Cabeza</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Levantada, baja, normal..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="earPosition"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Posición de Orejas</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Erectas, caídas, hacia atrás..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="eyePosition"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Posición de Ojos</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Relajados, muy abiertos, entrecerrados..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="symmetry"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Simetría</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Simétrico, asimétrico..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="breathing"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Respiración</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Normal, agitada, jadeante..."
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="rolling"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Se revuelca</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="crouching"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Se agacha</FormLabel>
                           </div>
                         </FormItem>
                       )}

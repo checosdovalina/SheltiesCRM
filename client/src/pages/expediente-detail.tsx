@@ -20,6 +20,7 @@ import {
   Camera,
   FileText,
   Plus,
+  Eye,
 } from "lucide-react";
 import MedicalRecordModal from "@/components/medical-record-modal";
 import TrainingModal from "@/components/training-modal";
@@ -79,6 +80,28 @@ interface DogWithClient {
   reactionToStrangers?: string;
   reactionToOtherDogs?: string;
   ownerDisposition?: string;
+  
+  hidesBehindOwner?: boolean;
+  getsRigid?: boolean;
+  sits?: boolean;
+  staysImmobile?: boolean;
+  reactionOnArrival?: string;
+  reactionDuringAnamnesis?: string;
+  reactionDuringEvaluation?: string;
+  yawning?: boolean;
+  licking?: boolean;
+  stretching?: boolean;
+  turnHeadAway?: boolean;
+  blinking?: boolean;
+  sniffing?: boolean;
+  tailPosition?: string;
+  headPosition?: string;
+  earPosition?: string;
+  eyePosition?: string;
+  symmetry?: string;
+  breathing?: string;
+  rolling?: boolean;
+  crouching?: boolean;
   
   client: {
     id: string;
@@ -307,11 +330,16 @@ export default function ExpedienteDetail() {
         {/* Right Column - Tabbed Content */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="resumen" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 h-auto">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 mb-4 h-auto">
               <TabsTrigger value="resumen" data-testid="tab-resumen" className="text-xs sm:text-sm">
                 <FileText className="h-4 w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Resumen</span>
                 <span className="sm:hidden">Info</span>
+              </TabsTrigger>
+              <TabsTrigger value="observaciones" data-testid="tab-observaciones" className="text-xs sm:text-sm">
+                <Eye className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Observaciones</span>
+                <span className="sm:hidden">Obs.</span>
               </TabsTrigger>
               <TabsTrigger value="medico" data-testid="tab-medico" className="text-xs sm:text-sm">
                 <Stethoscope className="h-4 w-4 mr-1 sm:mr-2" />
@@ -351,6 +379,93 @@ export default function ExpedienteDetail() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Observaciones Tab */}
+            <TabsContent value="observaciones" data-testid="content-observaciones">
+              <div className="space-y-4">
+                {/* Reacciones durante Evaluación */}
+                <Card className="border-l-4 border-l-amber-500">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Reacciones durante Evaluación</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InfoField label="Reacción al Llegar" value={dog.reactionOnArrival} />
+                      <InfoField label="Durante Anamnesis" value={dog.reactionDuringAnamnesis} />
+                      <InfoField label="Durante Evaluación Directa" value={dog.reactionDuringEvaluation} />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <InfoField label="Se esconde detrás del dueño" value={dog.hidesBehindOwner} />
+                      <InfoField label="Se pone rígido" value={dog.getsRigid} />
+                      <InfoField label="Se sienta" value={dog.sits} />
+                      <InfoField label="Se queda inmóvil" value={dog.staysImmobile} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Señales de Calma */}
+                <Card className="border-l-4 border-l-blue-500">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Señales de Calma</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <InfoField label="Bostezar" value={dog.yawning} />
+                      <InfoField label="Lamerse" value={dog.licking} />
+                      <InfoField label="Estirarse" value={dog.stretching} />
+                      <InfoField label="Girar la cabeza" value={dog.turnHeadAway} />
+                      <InfoField label="Parpadear" value={dog.blinking} />
+                      <InfoField label="Olfatear" value={dog.sniffing} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Postura Detallada */}
+                <Card className="border-l-4 border-l-purple-500">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Postura Detallada</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InfoField label="Posición de la Cola" value={dog.tailPosition} />
+                      <InfoField label="Posición de la Cabeza" value={dog.headPosition} />
+                      <InfoField label="Posición de Orejas" value={dog.earPosition} />
+                      <InfoField label="Posición de Ojos" value={dog.eyePosition} />
+                      <InfoField label="Simetría" value={dog.symmetry} />
+                      <InfoField label="Respiración" value={dog.breathing} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <InfoField label="Se revuelca" value={dog.rolling} />
+                      <InfoField label="Se agacha" value={dog.crouching} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Observaciones Físicas Existentes */}
+                <Card className="border-l-4 border-l-green-500">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Observaciones Físicas</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InfoField label="Postura" value={dog.posture} />
+                      <InfoField label="Forma de Ojos" value={dog.eyeShape} />
+                      <InfoField label="Movimiento del Cuerpo" value={dog.bodyMovement} />
+                      <InfoField label="Temperatura" value={dog.physicalTemp} />
+                      <InfoField label="Condición de Dientes" value={dog.teethCondition} />
+                      <InfoField label="Olor" value={dog.smell} />
+                      <InfoField label="Tensión Muscular" value={dog.muscleTension} />
+                      <InfoField label="Reactivo al Tocar" value={dog.touchReactive} />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <InfoField label="Salivando" value={dog.salivating} />
+                      <InfoField label="Patas Sudando" value={dog.sweatingPaws} />
+                      <InfoField label="Muda de Pelo" value={dog.shedding} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
             {/* Médico Tab */}
