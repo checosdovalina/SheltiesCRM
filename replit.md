@@ -80,6 +80,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 1, 2025 - Pet Form Focus Issue Fix
+
+#### Critical Bug Fix
+- **Input Focus Problem**: Fixed critical issue where users could only type one character in form fields before focus jumped
+- **Root Cause**: Uppy Dashboard Modal (from @uppy/react) was capturing focus and conflicting with Radix UI Dialog
+- **Solution**: Replaced Uppy-based ImageUploader with SimpleImageUploader using native HTML file input
+
+#### Component Changes
+- **SimpleImageUploader**: New component created using native file input with manual fetch to upload endpoint
+- **PetTypeSelector**: Memoized component to prevent unnecessary re-renders
+- **DogModal**: Optimized with useCallback and useMemo to minimize re-renders
+
+#### Known Limitations
+- **Object Storage**: Image upload will show errors if Replit object storage sidecar is unavailable (port 1106)
+- **Error Handling**: Image upload errors are now gracefully handled and displayed to user via toast notifications
+
 ### October 30, 2025 - Calendar Enhancements and Navigation Fix
 
 #### Calendar Features Added
