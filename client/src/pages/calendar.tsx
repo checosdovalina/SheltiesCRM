@@ -39,10 +39,10 @@ export default function CalendarPage() {
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
-  // Fetch teachers if admin
+  // Fetch teachers
   const { data: teachers = [] } = useQuery<any[]>({
     queryKey: ["/api/teachers"],
-    enabled: isAuthenticated && isAdmin,
+    enabled: isAuthenticated,
     retry: false,
   });
 

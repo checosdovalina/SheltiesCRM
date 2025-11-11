@@ -99,7 +99,7 @@ export default function TaskModal({
 
   const { data: teachers, isLoading: teachersLoading } = useQuery({
     queryKey: ["/api/teachers"],
-    enabled: open && isAdmin,
+    enabled: open,
     retry: false,
   });
 

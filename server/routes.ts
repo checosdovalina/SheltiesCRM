@@ -138,10 +138,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get teachers for appointment assignment
-  app.get('/api/teachers', isAuthenticated, isAdmin, async (req, res) => {
+  app.get('/api/teachers', isAuthenticated, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
-      const teachers = users.filter(user => user.role === 'teacher');
+      const teachers = users
+        .filter(user => user.role === 'teacher')
+        .map(({ password, ...teacher }) => teacher);
       res.json(teachers);
     } catch (error) {
       console.error("Error fetching teachers:", error);
