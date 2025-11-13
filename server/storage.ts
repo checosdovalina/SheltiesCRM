@@ -3,6 +3,7 @@ import {
   clients,
   dogs,
   services,
+  protocols,
   appointments,
   invoices,
   invoiceItems,
@@ -23,6 +24,8 @@ import {
   type InsertDog,
   type Service,
   type InsertService,
+  type Protocol,
+  type InsertProtocol,
   type Appointment,
   type InsertAppointment,
   type Invoice,
@@ -105,6 +108,14 @@ export interface IStorage {
   updateService(id: string, service: Partial<InsertService>): Promise<Service>;
   deleteService(id: string): Promise<void>;
 
+  // Protocol operations
+  createProtocol(protocol: InsertProtocol): Promise<Protocol>;
+  getProtocols(): Promise<Protocol[]>;
+  getProtocol(id: string): Promise<Protocol | undefined>;
+  getActiveProtocols(): Promise<Protocol[]>;
+  updateProtocol(id: string, protocol: Partial<InsertProtocol>): Promise<Protocol>;
+  deleteProtocol(id: string): Promise<void>;
+
   // Appointment operations
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   getAppointments(): Promise<any[]>;
@@ -112,6 +123,8 @@ export interface IStorage {
   getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<any[]>;
   getAppointment(id: string): Promise<any | undefined>;
   updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment>;
+  updateAppointmentProtocol(appointmentId: string, protocolId: string): Promise<Appointment>;
+  updateAppointmentProgress(appointmentId: string, data: { progressState: string, progressSummary?: string }): Promise<Appointment>;
   deleteAppointment(id: string): Promise<void>;
 
   // Invoice operations
@@ -137,6 +150,7 @@ export interface IStorage {
   // Progress entry operations
   createProgressEntry(entry: InsertProgressEntry): Promise<ProgressEntry>;
   getProgressEntriesByDogId(dogId: string): Promise<any[]>;
+  getProgressEntriesByAppointmentId(appointmentId: string): Promise<ProgressEntry[]>;
   getProgressEntry(id: string): Promise<any | undefined>;
   updateProgressEntry(id: string, entry: Partial<InsertProgressEntry>): Promise<ProgressEntry>;
   deleteProgressEntry(id: string): Promise<void>;
@@ -440,6 +454,42 @@ export class DatabaseStorage implements IStorage {
     await db.update(services).set({ isActive: false }).where(eq(services.id, id));
   }
 
+  // Protocol operations
+  async createProtocol(protocol: InsertProtocol): Promise<Protocol> {
+    const [newProtocol] = await db.insert(protocols).values(protocol).returning();
+    return newProtocol;
+  }
+
+  async getProtocols(): Promise<Protocol[]> {
+    return await db.select().from(protocols).orderBy(desc(protocols.createdAt));
+  }
+
+  async getProtocol(id: string): Promise<Protocol | undefined> {
+    const [protocol] = await db.select().from(protocols).where(eq(protocols.id, id));
+    return protocol;
+  }
+
+  async getActiveProtocols(): Promise<Protocol[]> {
+    return await db
+      .select()
+      .from(protocols)
+      .where(eq(protocols.isActive, true))
+      .orderBy(desc(protocols.createdAt));
+  }
+
+  async updateProtocol(id: string, protocol: Partial<InsertProtocol>): Promise<Protocol> {
+    const [updatedProtocol] = await db
+      .update(protocols)
+      .set({ ...protocol, updatedAt: new Date() })
+      .where(eq(protocols.id, id))
+      .returning();
+    return updatedProtocol;
+  }
+
+  async deleteProtocol(id: string): Promise<void> {
+    await db.update(protocols).set({ isActive: false }).where(eq(protocols.id, id));
+  }
+
   // Appointment operations
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
     const [newAppointment] = await db.insert(appointments).values(appointment).returning();
@@ -584,6 +634,31 @@ export class DatabaseStorage implements IStorage {
       .update(appointments)
       .set({ ...appointmentData, updatedAt: new Date() })
       .where(eq(appointments.id, id))
+      .returning();
+    return appointment;
+  }
+
+  async updateAppointmentProtocol(appointmentId: string, protocolId: string): Promise<Appointment> {
+    const [appointment] = await db
+      .update(appointments)
+      .set({ plannedProtocolId: protocolId, updatedAt: new Date() })
+      .where(eq(appointments.id, appointmentId))
+      .returning();
+    return appointment;
+  }
+
+  async updateAppointmentProgress(
+    appointmentId: string, 
+    data: { progressState: string, progressSummary?: string }
+  ): Promise<Appointment> {
+    const [appointment] = await db
+      .update(appointments)
+      .set({ 
+        progressState: data.progressState as any,
+        progressSummary: data.progressSummary,
+        updatedAt: new Date() 
+      })
+      .where(eq(appointments.id, appointmentId))
       .returning();
     return appointment;
   }
@@ -764,6 +839,14 @@ export class DatabaseStorage implements IStorage {
       .from(progressEntries)
       .leftJoin(appointments, eq(progressEntries.appointmentId, appointments.id))
       .where(eq(progressEntries.dogId, dogId))
+      .orderBy(desc(progressEntries.createdAt));
+  }
+
+  async getProgressEntriesByAppointmentId(appointmentId: string): Promise<ProgressEntry[]> {
+    return await db
+      .select()
+      .from(progressEntries)
+      .where(eq(progressEntries.appointmentId, appointmentId))
       .orderBy(desc(progressEntries.createdAt));
   }
 

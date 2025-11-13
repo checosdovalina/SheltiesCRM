@@ -273,6 +273,44 @@ export const insertServiceSchema = createInsertSchema(services).omit({
   updatedAt: true,
 });
 
+// Protocols - Training methodologies/templates
+export const protocolCategoryEnum = pgEnum("protocol_category", [
+  "obediencia_basica",
+  "comportamiento", 
+  "socializacion",
+  "agilidad",
+  "terapia",
+  "rescate",
+  "otro"
+]);
+
+export const protocols = pgTable("protocols", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  category: protocolCategoryEnum("category").notNull(),
+  objectives: text("objectives"), // Objetivos del protocolo
+  description: text("description"), // Descripción detallada
+  steps: jsonb("steps"), // Pasos estructurados como array [{step: 1, title: "...", description: "..."}]
+  duration: integer("duration"), // Duración estimada en minutos
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type Protocol = typeof protocols.$inferSelect;
+export type InsertProtocol = typeof protocols.$inferInsert;
+
+export const insertProtocolSchema = createInsertSchema(protocols).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const protocolsRelations = relations(protocols, ({ many }) => ({
+  plannedAppointments: many(appointments),
+  trainingSessions: many(trainingSessions),
+}));
+
 // Appointment status
 export const appointmentStatusEnum = pgEnum("appointment_status", [
   "pending",
@@ -282,14 +320,25 @@ export const appointmentStatusEnum = pgEnum("appointment_status", [
   "no_show"
 ]);
 
+// Progress state for appointments
+export const progressStateEnum = pgEnum("progress_state", [
+  "not_started",
+  "in_progress",
+  "completed",
+  "blocked"
+]);
+
 export const appointments = pgTable("appointments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").references(() => clients.id).notNull(),
   dogId: varchar("dog_id").references(() => dogs.id).notNull(),
   serviceId: varchar("service_id").references(() => services.id).notNull(),
   teacherId: varchar("teacher_id").references(() => users.id), // Assigned teacher
+  plannedProtocolId: varchar("planned_protocol_id").references(() => protocols.id), // Protocolo planeado para esta cita
   appointmentDate: timestamp("appointment_date").notNull(),
   status: appointmentStatusEnum("status").default("pending"),
+  progressState: progressStateEnum("progress_state").default("not_started"), // Estado de avance
+  progressSummary: text("progress_summary"), // Resumen del progreso
   notes: text("notes"),
   price: decimal("price", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
@@ -303,6 +352,17 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+// Schema for updating appointment protocol
+export const updateAppointmentProtocolSchema = z.object({
+  protocolId: z.string().min(1, "Protocol ID es requerido"),
+});
+
+// Schema for updating appointment progress
+export const updateAppointmentProgressSchema = z.object({
+  progressState: z.enum(["not_started", "in_progress", "completed", "blocked"]),
+  progressSummary: z.string().optional(),
 });
 
 // Invoices
@@ -388,6 +448,8 @@ export const progressEntries = pgTable("progress_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   dogId: varchar("dog_id").references(() => dogs.id).notNull(),
   appointmentId: varchar("appointment_id").references(() => appointments.id),
+  createdById: varchar("created_by_id").references(() => users.id), // Quién registró este progreso
+  status: progressStateEnum("status"), // Estado del progreso en este momento
   title: varchar("title").notNull(),
   description: text("description"),
   photos: text("photos").array(), // Array of photo URLs/paths
@@ -461,6 +523,10 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
     fields: [appointments.teacherId],
     references: [users.id],
   }),
+  plannedProtocol: one(protocols, {
+    fields: [appointments.plannedProtocolId],
+    references: [protocols.id],
+  }),
   invoiceItems: many(invoiceItems),
   progressEntries: many(progressEntries),
   attendance: many(attendance),
@@ -498,6 +564,10 @@ export const progressEntriesRelations = relations(progressEntries, ({ one }) => 
     fields: [progressEntries.appointmentId],
     references: [appointments.id],
   }),
+  createdBy: one(users, {
+    fields: [progressEntries.createdById],
+    references: [users.id],
+  }),
 }));
 
 // Medical Records (Expediente Médico)
@@ -529,6 +599,8 @@ export const trainingSessions = pgTable("training_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   dogId: varchar("dog_id").references(() => dogs.id).notNull(),
   appointmentId: varchar("appointment_id").references(() => appointments.id),
+  protocolId: varchar("protocol_id").references(() => protocols.id), // Protocolo aplicado en esta sesión
+  protocolSnapshot: jsonb("protocol_snapshot"), // Copia del protocolo al momento de aplicación
   sessionDate: timestamp("session_date").defaultNow(),
   trainer: varchar("trainer"),
   objective: varchar("objective").notNull(),
@@ -600,6 +672,10 @@ export const trainingSessionsRelations = relations(trainingSessions, ({ one, man
   appointment: one(appointments, {
     fields: [trainingSessions.appointmentId],
     references: [appointments.id],
+  }),
+  protocol: one(protocols, {
+    fields: [trainingSessions.protocolId],
+    references: [protocols.id],
   }),
   evidence: many(evidence),
 }));

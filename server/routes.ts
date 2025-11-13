@@ -7,7 +7,10 @@ import {
   insertClientSchema,
   insertDogSchema,
   insertServiceSchema,
+  insertProtocolSchema,
   insertAppointmentSchema,
+  updateAppointmentProtocolSchema,
+  updateAppointmentProgressSchema,
   insertInvoiceSchema,
   insertExpenseSchema,
   insertProgressEntrySchema,
@@ -350,6 +353,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Protocol routes
+  app.get('/api/protocols', isAuthenticated, async (req, res) => {
+    try {
+      const protocols = req.query.active === 'true' 
+        ? await storage.getActiveProtocols()
+        : await storage.getProtocols();
+      res.json(protocols);
+    } catch (error) {
+      console.error("Error fetching protocols:", error);
+      res.status(500).json({ message: "Failed to fetch protocols" });
+    }
+  });
+
+  app.post('/api/protocols', isAuthenticated, async (req, res) => {
+    try {
+      const protocolData = insertProtocolSchema.parse(req.body);
+      const protocol = await storage.createProtocol(protocolData);
+      res.json(protocol);
+    } catch (error) {
+      console.error("Error creating protocol:", error);
+      res.status(400).json({ message: "Failed to create protocol" });
+    }
+  });
+
+  app.put('/api/protocols/:id', isAuthenticated, async (req, res) => {
+    try {
+      const protocolData = insertProtocolSchema.partial().parse(req.body);
+      const protocol = await storage.updateProtocol(req.params.id, protocolData);
+      res.json(protocol);
+    } catch (error) {
+      console.error("Error updating protocol:", error);
+      res.status(400).json({ message: "Failed to update protocol" });
+    }
+  });
+
+  app.delete('/api/protocols/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteProtocol(req.params.id);
+      res.json({ message: "Protocol deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting protocol:", error);
+      res.status(500).json({ message: "Failed to delete protocol" });
+    }
+  });
+
   // Appointment routes
   app.post('/api/appointments', isAuthenticated, async (req, res) => {
     try {
@@ -447,6 +495,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating appointment:", error);
       res.status(400).json({ message: "Failed to update appointment" });
+    }
+  });
+
+  app.put('/api/appointments/:id/protocol', isAuthenticated, async (req, res) => {
+    try {
+      const { protocolId } = updateAppointmentProtocolSchema.parse(req.body);
+      const appointment = await storage.updateAppointmentProtocol(req.params.id, protocolId);
+      res.json(appointment);
+    } catch (error) {
+      console.error("Error updating appointment protocol:", error);
+      res.status(400).json({ message: "Failed to update appointment protocol" });
+    }
+  });
+
+  app.put('/api/appointments/:id/progress', isAuthenticated, async (req, res) => {
+    try {
+      const data = updateAppointmentProgressSchema.parse(req.body);
+      const appointment = await storage.updateAppointmentProgress(req.params.id, data);
+      res.json(appointment);
+    } catch (error) {
+      console.error("Error updating appointment progress:", error);
+      res.status(400).json({ message: "Failed to update appointment progress" });
     }
   });
 
