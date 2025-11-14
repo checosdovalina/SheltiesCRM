@@ -204,14 +204,14 @@ export default function TrainingModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Protocolo Aplicado (Opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                  <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} value={field.value || "none"}>
                     <FormControl>
                       <SelectTrigger data-testid="select-protocol">
                         <SelectValue placeholder={plannedProtocolId ? "Protocolo de la cita seleccionado" : "Seleccionar protocolo..."} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Sin protocolo</SelectItem>
+                      <SelectItem value="none">Sin protocolo</SelectItem>
                       {protocolsLoading ? (
                         <SelectItem value="loading" disabled>Cargando protocolos...</SelectItem>
                       ) : Array.isArray(protocols) && protocols
