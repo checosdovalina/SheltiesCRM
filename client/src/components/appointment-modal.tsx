@@ -22,6 +22,7 @@ const appointmentFormSchema = insertAppointmentSchema.extend({
   dogId: z.string().min(1, "Debe seleccionar una mascota"),
   serviceId: z.string().min(1, "Debe seleccionar un servicio"),
   teacherId: z.string().optional(),
+  plannedProtocolId: z.string().optional(),
 });
 
 interface AppointmentModalProps {
@@ -54,6 +55,7 @@ export default function AppointmentModal({
       notes: "",
       price: "",
       teacherId: "",
+      plannedProtocolId: "",
     },
   });
 
@@ -68,6 +70,7 @@ export default function AppointmentModal({
         const dogId = appointment.dogId || appointment.dog?.id || "";
         const serviceId = appointment.serviceId || appointment.service?.id || "";
         const teacherId = appointment.teacherId || appointment.teacher?.id || "";
+        const plannedProtocolId = appointment.plannedProtocolId || "";
         
         // Extract time directly from ISO string to avoid timezone conversion issues
         const isoString = appointment.appointmentDate;
@@ -83,6 +86,7 @@ export default function AppointmentModal({
           notes: appointment.notes || "",
           price: appointment.price?.toString() || "",
           teacherId,
+          plannedProtocolId,
         };
         form.reset(formData);
       } else {
@@ -97,6 +101,7 @@ export default function AppointmentModal({
           notes: "",
           price: "",
           teacherId: "",
+          plannedProtocolId: "",
         });
       }
     }
@@ -116,6 +121,12 @@ export default function AppointmentModal({
 
   const { data: teachers, isLoading: teachersLoading } = useQuery({
     queryKey: ["/api/teachers"],
+    enabled: open,
+    retry: false,
+  });
+
+  const { data: protocols, isLoading: protocolsLoading } = useQuery({
+    queryKey: ["/api/protocols"],
     enabled: open,
     retry: false,
   });
@@ -150,7 +161,7 @@ export default function AppointmentModal({
 
   const createAppointmentMutation = useMutation({
     mutationFn: async (data: z.infer<typeof appointmentFormSchema>) => {
-      const { appointmentDate, appointmentTime, price, teacherId, ...rest } = data;
+      const { appointmentDate, appointmentTime, price, teacherId, plannedProtocolId, ...rest } = data;
       const combinedDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
       
       const appointmentData = {
@@ -158,6 +169,7 @@ export default function AppointmentModal({
         appointmentDate: combinedDateTime.toISOString(), // Send as ISO string
         price: price && price.trim() !== "" ? price : null, // Keep as string
         teacherId: teacherId && teacherId !== "unassigned" ? teacherId : null,
+        plannedProtocolId: plannedProtocolId && plannedProtocolId !== "none" ? plannedProtocolId : null,
       };
 
       const url = appointment ? `/api/appointments/${appointment.id}` : "/api/appointments";
@@ -309,35 +321,67 @@ export default function AppointmentModal({
             />
 
             {isAdmin && (
-              <FormField
-                control={form.control}
-                name="teacherId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Profesor/Entrenador (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-teacher">
-                          <SelectValue placeholder="Seleccionar profesor..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Sin asignar</SelectItem>
-                        {teachersLoading ? (
-                          <SelectItem value="loading" disabled>Cargando profesores...</SelectItem>
-                        ) : Array.isArray(teachers) && teachers
-                          .filter(teacher => teacher.id && teacher.id.trim() !== '')
-                          .map((teacher: any) => (
-                            <SelectItem key={teacher.id} value={teacher.id}>
-                              {teacher.firstName} {teacher.lastName}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <>
+                <FormField
+                  control={form.control}
+                  name="teacherId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Profesor/Entrenador (Opcional)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-teacher">
+                            <SelectValue placeholder="Seleccionar profesor..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="unassigned">Sin asignar</SelectItem>
+                          {teachersLoading ? (
+                            <SelectItem value="loading" disabled>Cargando profesores...</SelectItem>
+                          ) : Array.isArray(teachers) && teachers
+                            .filter(teacher => teacher.id && teacher.id.trim() !== '')
+                            .map((teacher: any) => (
+                              <SelectItem key={teacher.id} value={teacher.id}>
+                                {teacher.firstName} {teacher.lastName}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="plannedProtocolId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Protocolo Planificado (Opcional)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-protocol">
+                            <SelectValue placeholder="Seleccionar protocolo..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Sin protocolo</SelectItem>
+                          {protocolsLoading ? (
+                            <SelectItem value="loading" disabled>Cargando protocolos...</SelectItem>
+                          ) : Array.isArray(protocols) && protocols
+                            .filter((protocol: any) => protocol.id && protocol.id.trim() !== '' && protocol.isActive)
+                            .map((protocol: any) => (
+                              <SelectItem key={protocol.id} value={protocol.id}>
+                                {protocol.name} ({protocol.category})
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             )}
 
             <div className="grid grid-cols-2 gap-4">

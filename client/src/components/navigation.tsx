@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Settings,
   Wrench,
-  FileText
+  FileText,
+  ClipboardList
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -46,6 +47,7 @@ export default function Navigation() {
     { path: "/", label: "Dashboard", icon: Home, mobileLabel: "Inicio" },
     { path: "/clients", label: "Clientes", icon: Users, mobileLabel: "Clientes" },
     { path: "/services", label: "Servicios", icon: Wrench, mobileLabel: "Servicios" },
+    { path: "/protocolos", label: "Protocolos", icon: ClipboardList, mobileLabel: "Protocolos" },
     { path: "/appointments", label: "Citas", icon: Calendar, mobileLabel: "Citas" },
     { path: "/calendar", label: "Calendario", icon: CalendarDays, mobileLabel: "Calendario" },
     { path: "/records", label: "Expedientes", icon: FileText, mobileLabel: "Expedientes" },
