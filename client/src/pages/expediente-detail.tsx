@@ -735,6 +735,8 @@ export default function ExpedienteDetail() {
           onOpenChange={setTrainingModalOpen}
           dogId={dog.id}
           dogName={dog.name}
+          plannedProtocolId={null}
+          appointmentId={null}
         />
       )}
       {evidenceModalOpen && (

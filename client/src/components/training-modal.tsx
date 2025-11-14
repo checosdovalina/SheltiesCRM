@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { insertTrainingSessionSchema } from "@shared/schema";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -30,21 +31,33 @@ interface TrainingModalProps {
   onOpenChange: (open: boolean) => void;
   dogId: string;
   dogName: string;
+  plannedProtocolId?: string | null;
+  appointmentId?: string | null;
 }
 
 export default function TrainingModal({ 
   open, 
   onOpenChange, 
   dogId, 
-  dogName 
+  dogName,
+  plannedProtocolId,
+  appointmentId
 }: TrainingModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: protocols, isLoading: protocolsLoading } = useQuery({
+    queryKey: ["/api/protocols"],
+    enabled: open,
+    retry: false,
+  });
 
   const form = useForm<z.infer<typeof insertTrainingSessionSchema>>({
     resolver: zodResolver(insertTrainingSessionSchema),
     defaultValues: {
       dogId: dogId,
+      appointmentId: appointmentId || undefined,
+      protocolId: plannedProtocolId || undefined,
       sessionDate: new Date(),
       trainer: "",
       objective: "",
@@ -61,6 +74,8 @@ export default function TrainingModal({
     if (open) {
       form.reset({
         dogId: dogId,
+        appointmentId: appointmentId || undefined,
+        protocolId: plannedProtocolId || undefined,
         sessionDate: new Date(),
         trainer: "",
         objective: "",
@@ -72,7 +87,7 @@ export default function TrainingModal({
         duration: undefined,
       });
     }
-  }, [open, dogId, form]);
+  }, [open, dogId, appointmentId, plannedProtocolId, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: z.infer<typeof insertTrainingSessionSchema>) => {
@@ -178,6 +193,36 @@ export default function TrainingModal({
                       value={field.value || ""}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="protocolId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Protocolo Aplicado (Opcional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-protocol">
+                        <SelectValue placeholder={plannedProtocolId ? "Protocolo de la cita seleccionado" : "Seleccionar protocolo..."} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Sin protocolo</SelectItem>
+                      {protocolsLoading ? (
+                        <SelectItem value="loading" disabled>Cargando protocolos...</SelectItem>
+                      ) : Array.isArray(protocols) && protocols
+                        .filter((protocol: any) => protocol.id && protocol.id.trim() !== '' && protocol.isActive)
+                        .map((protocol: any) => (
+                          <SelectItem key={protocol.id} value={protocol.id}>
+                            {protocol.name} ({protocol.category})
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
