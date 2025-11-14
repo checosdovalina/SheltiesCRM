@@ -992,16 +992,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Teacher Portal Routes
   
   // Get today's appointments for a teacher
-  app.get('/api/teacher/appointments/today', isAuthenticated, async (req, res) => {
+  app.get('/api/teacher/appointments/today', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = (req as any).userId;
-      const user = await storage.getUser(userId);
-      
-      if (!user || user.role !== 'teacher') {
+      if (!req.user || req.user.role !== 'teacher') {
         return res.status(403).json({ message: "Access denied" });
       }
       
-      const appointments = await storage.getTodayAppointmentsByTeacher(userId);
+      const appointments = await storage.getTodayAppointmentsByTeacher(req.user.id);
       res.json(appointments);
     } catch (error) {
       console.error("Error fetching teacher appointments:", error);
@@ -1010,16 +1007,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get dogs assigned to a teacher
-  app.get('/api/teacher/assigned-dogs', isAuthenticated, async (req, res) => {
+  app.get('/api/teacher/assigned-dogs', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = (req as any).userId;
-      const user = await storage.getUser(userId);
-      
-      if (!user || user.role !== 'teacher') {
+      if (!req.user || req.user.role !== 'teacher') {
         return res.status(403).json({ message: "Access denied" });
       }
       
-      const dogs = await storage.getAssignedDogsByTeacher(userId);
+      const dogs = await storage.getAssignedDogsByTeacher(req.user.id);
       res.json(dogs);
     } catch (error) {
       console.error("Error fetching assigned dogs:", error);
@@ -1028,16 +1022,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get recent notes for a teacher
-  app.get('/api/teacher/notes/recent', isAuthenticated, async (req, res) => {
+  app.get('/api/teacher/notes/recent', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = (req as any).userId;
-      const user = await storage.getUser(userId);
-      
-      if (!user || user.role !== 'teacher') {
+      if (!req.user || req.user.role !== 'teacher') {
         return res.status(403).json({ message: "Access denied" });
       }
       
-      const notes = await storage.getRecentNotesByTeacher(userId);
+      const notes = await storage.getRecentNotesByTeacher(req.user.id);
       res.json(notes);
     } catch (error) {
       console.error("Error fetching recent notes:", error);
@@ -1046,16 +1037,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get teacher personal statistics
-  app.get('/api/teacher/stats', isAuthenticated, async (req, res) => {
+  app.get('/api/teacher/stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = (req as any).userId;
-      const user = await storage.getUser(userId);
-      
-      if (!user || user.role !== 'teacher') {
+      if (!req.user || req.user.role !== 'teacher') {
         return res.status(403).json({ message: "Access denied" });
       }
       
-      const stats = await storage.getTeacherStats(userId);
+      const stats = await storage.getTeacherStats(req.user.id);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching teacher stats:", error);
@@ -1064,17 +1052,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get training sessions for teacher's assigned dogs
-  app.get('/api/teacher/training-sessions', isAuthenticated, async (req, res) => {
+  app.get('/api/teacher/training-sessions', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = (req as any).userId;
-      const user = await storage.getUser(userId);
-      
-      if (!user || user.role !== 'teacher') {
+      if (!req.user || req.user.role !== 'teacher') {
         return res.status(403).json({ message: "Access denied" });
       }
       
       // Get assigned dogs and then their training sessions
-      const assignedDogs = await storage.getAssignedDogsByTeacher(userId);
+      const assignedDogs = await storage.getAssignedDogsByTeacher(req.user.id);
       const dogIds = assignedDogs.map(dog => dog.id);
       
       if (dogIds.length === 0) {
