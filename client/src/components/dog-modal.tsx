@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import type { Protocol } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,14 @@ import { PetTypeSelector } from "./PetTypeSelector";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { SimpleImageUploader } from "@/components/SimpleImageUploader";
-import { X, FileText, Activity, Calendar, Heart, Stethoscope, Brain, Eye, Accessibility } from "lucide-react";
+import { X, FileText, Activity, Calendar, Heart, Stethoscope, Brain, Eye, Accessibility, BookOpen } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DogModalProps {
   open: boolean;
@@ -44,6 +52,10 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
   const queryClient = useQueryClient();
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+
+  const { data: protocols = [] } = useQuery<Protocol[]>({
+    queryKey: ["/api/protocols"],
+  });
 
   const defaultValues = useMemo(() => ({
     clientId: clientId,
@@ -135,6 +147,8 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     breathing: "",
     rolling: false,
     crouching: false,
+    // Protocolo activo
+    activeProtocolId: "",
   }), [clientId]);
 
   const form = useForm<z.infer<typeof insertDogSchema>>({
@@ -223,6 +237,7 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
           breathing: dog.breathing || "",
           rolling: dog.rolling || false,
           crouching: dog.crouching || false,
+          activeProtocolId: dog.activeProtocolId || "",
         });
         setUploadedImageUrl(dog.imageUrl || "");
       } else {
@@ -439,6 +454,41 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="activeProtocolId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-primary" />
+                        Protocolo/Expediente Activo
+                      </FormLabel>
+                      <FormControl>
+                        <Select
+                          value={field.value || "none"}
+                          onValueChange={(value) => field.onChange(value === "none" ? "" : value)}
+                        >
+                          <SelectTrigger data-testid="select-protocol">
+                            <SelectValue placeholder="Seleccionar protocolo..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sin protocolo asignado</SelectItem>
+                            {protocols.filter(p => p.isActive).map((protocol) => (
+                              <SelectItem key={protocol.id} value={protocol.id}>
+                                {protocol.name} - {protocol.category}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormDescription>
+                        Selecciona el tipo de protocolo o expediente a seguir para esta mascota
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}

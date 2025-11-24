@@ -231,6 +231,9 @@ export const dogs = pgTable("dogs", {
   rolling: boolean("rolling").default(false), // Se revuelca
   crouching: boolean("crouching").default(false), // Se agacha
   
+  // Protocolo activo asignado a esta mascota
+  activeProtocolId: varchar("active_protocol_id"), // ID del protocolo activo (referencia manual a protocols)
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
