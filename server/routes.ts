@@ -301,7 +301,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/dogs/:id', isAuthenticated, async (req, res) => {
     try {
-      const dogData = insertDogSchema.partial().parse(req.body);
+      // Extend schema to accept null for activeProtocolId when clearing protocol
+      const updateDogSchema = insertDogSchema.partial().extend({
+        activeProtocolId: z.string().nullable().optional(),
+      });
+      const dogData = updateDogSchema.parse(req.body);
       const dog = await storage.updateDog(req.params.id, dogData);
       res.json(dog);
     } catch (error) {
@@ -578,27 +582,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching dogs:", error);
       res.status(500).json({ message: "Failed to fetch dogs" });
-    }
-  });
-
-  app.put('/api/dogs/:id', isAuthenticated, async (req, res) => {
-    try {
-      const dogData = insertDogSchema.partial().parse(req.body);
-      const dog = await storage.updateDog(req.params.id, dogData);
-      res.json(dog);
-    } catch (error) {
-      console.error("Error updating dog:", error);
-      res.status(400).json({ message: "Failed to update dog" });
-    }
-  });
-
-  app.delete('/api/dogs/:id', isAuthenticated, async (req, res) => {
-    try {
-      await storage.deleteDog(req.params.id);
-      res.json({ message: "Dog deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting dog:", error);
-      res.status(500).json({ message: "Failed to delete dog" });
     }
   });
 

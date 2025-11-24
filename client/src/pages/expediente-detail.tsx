@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useRoute, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +36,7 @@ import TrainingModal from "@/components/training-modal";
 import EvidenceModal from "@/components/evidence-modal";
 import ObservationsModal from "@/components/observations-modal";
 import { format } from "date-fns";
-import { Pencil } from "lucide-react";
+import { Pencil, BookOpen } from "lucide-react";
 
 interface DogWithClient {
   id: string;
@@ -154,6 +163,17 @@ interface Evidence {
   createdAt: Date;
 }
 
+interface Protocol {
+  id: string;
+  name: string;
+  category: string;
+  objectives?: string;
+  description?: string;
+  steps?: any;
+  duration?: number;
+  isActive?: boolean;
+}
+
 const InfoField = ({ label, value }: { label: string; value?: string | number | boolean }) => {
   if (!value && value !== false && value !== 0) return null;
   
@@ -187,10 +207,39 @@ export default function ExpedienteDetail() {
   const [trainingModalOpen, setTrainingModalOpen] = useState(false);
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
   const [observationsModalOpen, setObservationsModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: dog, isLoading } = useQuery<DogWithClient>({
     queryKey: ["/api/dogs", dogId],
     enabled: !!dogId,
+  });
+
+  const { data: protocols = [] } = useQuery<Protocol[]>({
+    queryKey: ["/api/protocols"],
+  });
+
+  const updateProtocolMutation = useMutation({
+    mutationFn: async (protocolId: string | null) => {
+      return apiRequest(`/api/dogs/${dogId}`, {
+        method: "PUT",
+        body: JSON.stringify({ activeProtocolId: protocolId }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dogs", dogId] });
+      toast({
+        title: "Protocolo actualizado",
+        description: "El protocolo de la mascota ha sido actualizado exitosamente.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el protocolo.",
+        variant: "destructive",
+      });
+    },
   });
 
   const { data: medicalRecords = [] } = useQuery<MedicalRecord[]>({
@@ -289,6 +338,33 @@ export default function ExpedienteDetail() {
                 <h2 className="text-2xl font-bold" data-testid="text-dog-name">{dog.name}</h2>
                 <p className="text-muted-foreground">{dog.breed}</p>
                 <p className="text-sm text-muted-foreground">{dog.age} años</p>
+              </div>
+
+              {/* Protocol Selector */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                  <BookOpen className="h-4 w-4" />
+                  Protocolo/Expediente Activo
+                </label>
+                <Select
+                  value={dog.activeProtocolId || "none"}
+                  onValueChange={(value) => {
+                    updateProtocolMutation.mutate(value === "none" ? null : value);
+                  }}
+                  disabled={updateProtocolMutation.isPending}
+                >
+                  <SelectTrigger className="w-full" data-testid="select-active-protocol">
+                    <SelectValue placeholder="Seleccionar protocolo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin protocolo asignado</SelectItem>
+                    {protocols.filter(p => p.isActive).map((protocol) => (
+                      <SelectItem key={protocol.id} value={protocol.id}>
+                        {protocol.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <Separator />
