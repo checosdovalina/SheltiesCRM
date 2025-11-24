@@ -25,7 +25,9 @@ import {
 import MedicalRecordModal from "@/components/medical-record-modal";
 import TrainingModal from "@/components/training-modal";
 import EvidenceModal from "@/components/evidence-modal";
+import ObservationsModal from "@/components/observations-modal";
 import { format } from "date-fns";
+import { Pencil } from "lucide-react";
 
 interface DogWithClient {
   id: string;
@@ -184,6 +186,7 @@ export default function ExpedienteDetail() {
   const [medicalModalOpen, setMedicalModalOpen] = useState(false);
   const [trainingModalOpen, setTrainingModalOpen] = useState(false);
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
+  const [observationsModalOpen, setObservationsModalOpen] = useState(false);
 
   const { data: dog, isLoading } = useQuery<DogWithClient>({
     queryKey: ["/api/dogs", dogId],
@@ -390,6 +393,17 @@ export default function ExpedienteDetail() {
             {/* Observaciones Tab */}
             <TabsContent value="observaciones" data-testid="content-observaciones">
               <div className="space-y-4">
+                <div className="flex justify-end mb-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => setObservationsModalOpen(true)}
+                    data-testid="button-edit-observations"
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Editar Observaciones
+                  </Button>
+                </div>
                 {/* Características Físicas */}
                 <Card className="border-l-4 border-l-green-500">
                   <CardHeader>
@@ -745,6 +759,13 @@ export default function ExpedienteDetail() {
           onOpenChange={setEvidenceModalOpen}
           dogId={dog.id}
           dogName={dog.name}
+        />
+      )}
+      {observationsModalOpen && (
+        <ObservationsModal
+          open={observationsModalOpen}
+          onOpenChange={setObservationsModalOpen}
+          dog={dog}
         />
       )}
     </div>
