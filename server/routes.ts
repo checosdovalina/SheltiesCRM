@@ -812,7 +812,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Medical Records endpoints
   app.post('/api/medical-records', isAuthenticated, async (req, res) => {
     try {
-      const medicalRecord = await storage.createMedicalRecord(req.body);
+      const { recordDate, ...rest } = req.body;
+      const medicalRecord = await storage.createMedicalRecord({
+        ...rest,
+        recordDate: recordDate ? new Date(recordDate) : new Date(),
+      });
       res.json(medicalRecord);
     } catch (error) {
       console.error("Error creating medical record:", error);
@@ -850,7 +854,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/medical-records/:id', isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
-      const record = await storage.updateMedicalRecord(id, req.body);
+      const { recordDate, ...rest } = req.body;
+      const record = await storage.updateMedicalRecord(id, {
+        ...rest,
+        ...(recordDate && { recordDate: new Date(recordDate) }),
+      });
       res.json(record);
     } catch (error) {
       console.error("Error updating medical record:", error);
