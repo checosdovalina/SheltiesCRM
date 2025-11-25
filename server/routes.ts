@@ -17,6 +17,9 @@ import {
   insertPetTypeSchema,
   insertTaskSchema,
   insertAssessmentSchema,
+  insertServicePackageSchema,
+  insertPackageSessionSchema,
+  insertPackageAlertSchema,
   createUserSchema,
   loginSchema,
   registerSchema,
@@ -1340,6 +1343,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting assessment:", error);
       res.status(500).json({ message: "Failed to delete assessment" });
+    }
+  });
+
+  // ============ Service Package Routes (Gestión de Paquetes) ============
+  
+  // Get all packages (admin only)
+  app.get('/api/packages', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const packages = await storage.getServicePackages();
+      res.json(packages);
+    } catch (error) {
+      console.error("Error fetching packages:", error);
+      res.status(500).json({ message: "Error al obtener los paquetes" });
+    }
+  });
+
+  // Get packages by client
+  app.get('/api/clients/:clientId/packages', isAuthenticated, async (req: any, res) => {
+    try {
+      const packages = await storage.getServicePackagesByClient(req.params.clientId);
+      res.json(packages);
+    } catch (error) {
+      console.error("Error fetching client packages:", error);
+      res.status(500).json({ message: "Error al obtener los paquetes del cliente" });
+    }
+  });
+
+  // Get active packages by client
+  app.get('/api/clients/:clientId/packages/active', isAuthenticated, async (req: any, res) => {
+    try {
+      const packages = await storage.getActivePackagesByClient(req.params.clientId);
+      res.json(packages);
+    } catch (error) {
+      console.error("Error fetching active packages:", error);
+      res.status(500).json({ message: "Error al obtener los paquetes activos" });
+    }
+  });
+
+  // Get single package
+  app.get('/api/packages/:id', isAuthenticated, async (req, res) => {
+    try {
+      const pkg = await storage.getServicePackage(req.params.id);
+      if (!pkg) {
+        return res.status(404).json({ message: "Paquete no encontrado" });
+      }
+      res.json(pkg);
+    } catch (error) {
+      console.error("Error fetching package:", error);
+      res.status(500).json({ message: "Error al obtener el paquete" });
+    }
+  });
+
+  // Create package
+  app.post('/api/packages', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { purchaseDate, expiryDate, ...rest } = req.body;
+      const packageData = insertServicePackageSchema.parse({
+        ...rest,
+        purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
+        expiryDate: expiryDate ? new Date(expiryDate) : null,
+      });
+      const pkg = await storage.createServicePackage(packageData);
+      res.json(pkg);
+    } catch (error) {
+      console.error("Error creating package:", error);
+      res.status(400).json({ message: "Error al crear el paquete" });
+    }
+  });
+
+  // Update package
+  app.put('/api/packages/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { purchaseDate, expiryDate, ...rest } = req.body;
+      const packageData = insertServicePackageSchema.partial().parse({
+        ...rest,
+        ...(purchaseDate && { purchaseDate: new Date(purchaseDate) }),
+        ...(expiryDate && { expiryDate: new Date(expiryDate) }),
+      });
+      const pkg = await storage.updateServicePackage(req.params.id, packageData);
+      res.json(pkg);
+    } catch (error) {
+      console.error("Error updating package:", error);
+      res.status(400).json({ message: "Error al actualizar el paquete" });
+    }
+  });
+
+  // Delete package
+  app.delete('/api/packages/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteServicePackage(req.params.id);
+      res.json({ message: "Paquete eliminado exitosamente" });
+    } catch (error) {
+      console.error("Error deleting package:", error);
+      res.status(500).json({ message: "Error al eliminar el paquete" });
+    }
+  });
+
+  // Get packages with alerts
+  app.get('/api/packages/alerts/pending', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const packages = await storage.getPackagesWithAlerts();
+      res.json(packages);
+    } catch (error) {
+      console.error("Error fetching packages with alerts:", error);
+      res.status(500).json({ message: "Error al obtener paquetes con alertas" });
+    }
+  });
+
+  // Get package dashboard metrics
+  app.get('/api/packages/dashboard/metrics', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const metrics = await storage.getPackageDashboardMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching package metrics:", error);
+      res.status(500).json({ message: "Error al obtener métricas de paquetes" });
+    }
+  });
+
+  // ============ Package Session Routes (Control de Sesiones) ============
+  
+  // Get sessions by package
+  app.get('/api/packages/:packageId/sessions', isAuthenticated, async (req, res) => {
+    try {
+      const sessions = await storage.getPackageSessionsByPackage(req.params.packageId);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching package sessions:", error);
+      res.status(500).json({ message: "Error al obtener las sesiones del paquete" });
+    }
+  });
+
+  // Get sessions by client
+  app.get('/api/clients/:clientId/sessions', isAuthenticated, async (req: any, res) => {
+    try {
+      const sessions = await storage.getPackageSessionsByClient(req.params.clientId);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching client sessions:", error);
+      res.status(500).json({ message: "Error al obtener las sesiones del cliente" });
+    }
+  });
+
+  // Consume session from package
+  app.post('/api/packages/:packageId/consume', isAuthenticated, async (req: any, res) => {
+    try {
+      const { sessionDate, ...rest } = req.body;
+      const sessionData = insertPackageSessionSchema.omit({ packageId: true }).parse({
+        ...rest,
+        sessionDate: sessionDate ? new Date(sessionDate) : new Date(),
+        registeredBy: req.user.id,
+      });
+      const result = await storage.consumeSession(req.params.packageId, sessionData);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error consuming session:", error);
+      res.status(400).json({ message: error.message || "Error al registrar la sesión" });
+    }
+  });
+
+  // ============ Package Alert Routes (Alertas y Notificaciones) ============
+  
+  // Get all unread alerts (admin)
+  app.get('/api/alerts/unread', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const alerts = await storage.getAllUnreadAlerts();
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching unread alerts:", error);
+      res.status(500).json({ message: "Error al obtener las alertas" });
+    }
+  });
+
+  // Get alerts by client
+  app.get('/api/clients/:clientId/alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const alerts = await storage.getPackageAlertsByClient(req.params.clientId);
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching client alerts:", error);
+      res.status(500).json({ message: "Error al obtener las alertas del cliente" });
+    }
+  });
+
+  // Get unread alerts by client
+  app.get('/api/clients/:clientId/alerts/unread', isAuthenticated, async (req: any, res) => {
+    try {
+      const alerts = await storage.getUnreadAlertsByClient(req.params.clientId);
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching unread alerts:", error);
+      res.status(500).json({ message: "Error al obtener las alertas no leídas" });
+    }
+  });
+
+  // Mark alert as read
+  app.put('/api/alerts/:id/read', isAuthenticated, async (req, res) => {
+    try {
+      await storage.markAlertAsRead(req.params.id);
+      res.json({ message: "Alerta marcada como leída" });
+    } catch (error) {
+      console.error("Error marking alert as read:", error);
+      res.status(500).json({ message: "Error al marcar la alerta como leída" });
+    }
+  });
+
+  // Mark all alerts as read for client
+  app.put('/api/clients/:clientId/alerts/read-all', isAuthenticated, async (req, res) => {
+    try {
+      await storage.markAllAlertsAsRead(req.params.clientId);
+      res.json({ message: "Todas las alertas marcadas como leídas" });
+    } catch (error) {
+      console.error("Error marking all alerts as read:", error);
+      res.status(500).json({ message: "Error al marcar las alertas como leídas" });
     }
   });
 
