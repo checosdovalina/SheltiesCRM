@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Dog, Calendar, CreditCard, Camera, FileText, Star } from "lucide-react";
+import { User, Dog, Calendar, CreditCard, Camera, FileText, Star, Package, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { Progress } from "@/components/ui/progress";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default function ClientPortal() {
   const { toast } = useToast();
@@ -58,6 +61,18 @@ export default function ClientPortal() {
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
     queryKey: ["/api/client-portal/invoices"],
     enabled: isAuthenticated && user?.role === 'client',
+    retry: false,
+  });
+
+  const { data: packages, isLoading: packagesLoading } = useQuery<any[]>({
+    queryKey: ["/api/clients", profile?.client?.id, "packages"],
+    enabled: isAuthenticated && user?.role === 'client' && !!profile?.client?.id,
+    retry: false,
+  });
+
+  const { data: alerts, isLoading: alertsLoading } = useQuery<any[]>({
+    queryKey: ["/api/clients", profile?.client?.id, "alerts", "unread"],
+    enabled: isAuthenticated && user?.role === 'client' && !!profile?.client?.id,
     retry: false,
   });
 
@@ -130,6 +145,36 @@ export default function ClientPortal() {
     }
   };
 
+  const getPackageStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-700 border-green-200';
+      case 'finishing': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'expired': return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-muted text-muted-foreground border-muted';
+    }
+  };
+
+  const getPackageStatusText = (status: string) => {
+    switch (status) {
+      case 'active': return 'Activo';
+      case 'finishing': return 'Por terminar';
+      case 'completed': return 'Completado';
+      case 'expired': return 'Expirado';
+      default: return status;
+    }
+  };
+
+  const getPackageStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active': return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'finishing': return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+      case 'completed': return <CheckCircle className="w-4 h-4 text-blue-500" />;
+      case 'expired': return <XCircle className="w-4 h-4 text-red-500" />;
+      default: return <Package className="w-4 h-4" />;
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
@@ -186,22 +231,36 @@ export default function ClientPortal() {
       ) : null}
 
       <Tabs defaultValue="pets" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="pets" data-testid="tab-pets">
             <Dog className="w-4 h-4 mr-2" />
-            Mis Mascotas
+            <span className="hidden sm:inline">Mis Mascotas</span>
+            <span className="sm:hidden">Mascotas</span>
+          </TabsTrigger>
+          <TabsTrigger value="packages" data-testid="tab-packages" className="relative">
+            <Package className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Paquetes</span>
+            <span className="sm:hidden">Paq.</span>
+            {alerts && alerts.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {alerts.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="appointments" data-testid="tab-appointments">
             <Calendar className="w-4 h-4 mr-2" />
-            Citas
+            <span className="hidden sm:inline">Citas</span>
+            <span className="sm:hidden">Citas</span>
           </TabsTrigger>
           <TabsTrigger value="progress" data-testid="tab-progress">
             <Star className="w-4 h-4 mr-2" />
-            Progreso
+            <span className="hidden sm:inline">Progreso</span>
+            <span className="sm:hidden">Prog.</span>
           </TabsTrigger>
           <TabsTrigger value="billing" data-testid="tab-billing">
             <CreditCard className="w-4 h-4 mr-2" />
-            Facturación
+            <span className="hidden sm:inline">Facturación</span>
+            <span className="sm:hidden">Fact.</span>
           </TabsTrigger>
         </TabsList>
 
@@ -280,6 +339,160 @@ export default function ClientPortal() {
                   </CardContent>
                 </Card>
               </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Packages Tab */}
+        <TabsContent value="packages">
+          <div className="space-y-6">
+            {/* Active Packages Alert Banner */}
+            {alerts && alerts.length > 0 && (
+              <Card className="border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                        Tienes {alerts.length} notificación{alerts.length !== 1 ? 'es' : ''} pendiente{alerts.length !== 1 ? 's' : ''}
+                      </h4>
+                      <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                        {alerts.slice(0, 3).map((alert: any) => (
+                          <li key={alert.id}>• {alert.message}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Packages List */}
+            {packagesLoading ? (
+              <div className="grid gap-6 md:grid-cols-2">
+                {[...Array(2)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardHeader>
+                      <div className="h-6 bg-muted rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-1/3"></div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="h-4 bg-muted rounded"></div>
+                        <div className="h-2 bg-muted rounded w-full"></div>
+                        <div className="h-4 bg-muted rounded w-2/3"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : packages && packages.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2">
+                {packages.map((pkg: any) => {
+                  const progressPercentage = pkg.totalSessions > 0 
+                    ? ((pkg.totalSessions - pkg.remainingSessions) / pkg.totalSessions) * 100 
+                    : 0;
+                  
+                  return (
+                    <Card key={pkg.id} data-testid={`package-card-${pkg.id}`} className={
+                      pkg.status === 'finishing' ? 'border-yellow-300' : 
+                      pkg.status === 'expired' ? 'border-red-300' : ''
+                    }>
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="flex items-center gap-2">
+                              <Package className="w-5 h-5 text-primary" />
+                              {pkg.packageName}
+                            </CardTitle>
+                            {pkg.service && (
+                              <p className="text-sm text-muted-foreground mt-1">{pkg.service.name}</p>
+                            )}
+                          </div>
+                          <Badge variant="outline" className={getPackageStatusColor(pkg.status)}>
+                            {getPackageStatusIcon(pkg.status)}
+                            <span className="ml-1">{getPackageStatusText(pkg.status)}</span>
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Sessions Progress */}
+                          <div>
+                            <div className="flex justify-between text-sm mb-2">
+                              <span className="text-muted-foreground">Sesiones utilizadas</span>
+                              <span className="font-medium">{pkg.usedSessions} de {pkg.totalSessions}</span>
+                            </div>
+                            <Progress value={progressPercentage} className="h-2" />
+                            <div className="flex justify-between text-xs mt-1">
+                              <span className="text-muted-foreground">
+                                Restantes: {pkg.remainingSessions}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {Math.round(progressPercentage)}% completado
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Package Details */}
+                          <div className="pt-3 border-t border-border space-y-2">
+                            {pkg.dog && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <Dog className="w-4 h-4 text-muted-foreground" />
+                                <span>Mascota: {pkg.dog.name}</span>
+                              </div>
+                            )}
+                            {pkg.expiryDate && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="w-4 h-4 text-muted-foreground" />
+                                <span>
+                                  Expira: {format(new Date(pkg.expiryDate), "dd 'de' MMMM, yyyy", { locale: es })}
+                                </span>
+                              </div>
+                            )}
+                            {pkg.purchaseDate && (
+                              <div className="text-xs text-muted-foreground">
+                                Adquirido: {format(new Date(pkg.purchaseDate), "dd/MM/yyyy", { locale: es })}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Warning for finishing packages */}
+                          {pkg.status === 'finishing' && (
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 mt-3">
+                              <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 text-sm">
+                                <AlertTriangle className="w-4 h-4" />
+                                <span>Te quedan pocas sesiones. Considera renovar tu paquete.</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {pkg.status === 'completed' && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mt-3">
+                              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 text-sm">
+                                <CheckCircle className="w-4 h-4" />
+                                <span>Paquete completado. ¡Contáctanos para renovar!</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    No tienes paquetes activos
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Contáctanos para adquirir un paquete de sesiones
+                  </p>
+                </CardContent>
+              </Card>
             )}
           </div>
         </TabsContent>
