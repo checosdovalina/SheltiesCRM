@@ -17,6 +17,7 @@ import {
   servicePackages,
   packageSessions,
   packageAlerts,
+  packageTemplates,
   tasks,
   assessments,
   type User,
@@ -55,6 +56,8 @@ import {
   type InsertPackageSession,
   type PackageAlert,
   type InsertPackageAlert,
+  type PackageTemplate,
+  type InsertPackageTemplate,
   type Task,
   type InsertTask,
   type Assessment,
@@ -252,6 +255,15 @@ export interface IStorage {
     expiredPackages: number;
     clientsWithAlerts: number;
   }>;
+
+  // Package Template operations (Plantillas de Paquetes)
+  getPackageTemplates(): Promise<PackageTemplate[]>;
+  getPackageTemplatesByCategory(category: string): Promise<PackageTemplate[]>;
+  getActivePackageTemplates(): Promise<PackageTemplate[]>;
+  getPackageTemplate(id: string): Promise<PackageTemplate | undefined>;
+  createPackageTemplate(template: InsertPackageTemplate): Promise<PackageTemplate>;
+  updatePackageTemplate(id: string, template: Partial<InsertPackageTemplate>): Promise<PackageTemplate>;
+  deletePackageTemplate(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2144,6 +2156,59 @@ export class DatabaseStorage implements IStorage {
       expiredPackages: expiredResult?.count || 0,
       clientsWithAlerts: alertClients.length,
     };
+  }
+
+  // Package Template operations (Plantillas de Paquetes)
+  async getPackageTemplates(): Promise<PackageTemplate[]> {
+    return await db
+      .select()
+      .from(packageTemplates)
+      .orderBy(packageTemplates.category, packageTemplates.name);
+  }
+
+  async getPackageTemplatesByCategory(category: string): Promise<PackageTemplate[]> {
+    return await db
+      .select()
+      .from(packageTemplates)
+      .where(eq(packageTemplates.category, category as any))
+      .orderBy(packageTemplates.name);
+  }
+
+  async getActivePackageTemplates(): Promise<PackageTemplate[]> {
+    return await db
+      .select()
+      .from(packageTemplates)
+      .where(eq(packageTemplates.isActive, true))
+      .orderBy(packageTemplates.category, packageTemplates.name);
+  }
+
+  async getPackageTemplate(id: string): Promise<PackageTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(packageTemplates)
+      .where(eq(packageTemplates.id, id));
+    return template;
+  }
+
+  async createPackageTemplate(template: InsertPackageTemplate): Promise<PackageTemplate> {
+    const [newTemplate] = await db
+      .insert(packageTemplates)
+      .values(template)
+      .returning();
+    return newTemplate;
+  }
+
+  async updatePackageTemplate(id: string, template: Partial<InsertPackageTemplate>): Promise<PackageTemplate> {
+    const [updatedTemplate] = await db
+      .update(packageTemplates)
+      .set({ ...template, updatedAt: new Date() })
+      .where(eq(packageTemplates.id, id))
+      .returning();
+    return updatedTemplate;
+  }
+
+  async deletePackageTemplate(id: string): Promise<void> {
+    await db.delete(packageTemplates).where(eq(packageTemplates.id, id));
   }
 }
 

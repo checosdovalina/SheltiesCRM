@@ -1346,6 +1346,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ Package Template Routes (Plantillas de Paquetes) ============
+
+  // Get all package templates
+  app.get('/api/package-templates', isAuthenticated, async (req, res) => {
+    try {
+      const templates = await storage.getPackageTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching package templates:", error);
+      res.status(500).json({ message: "Error al obtener las plantillas de paquetes" });
+    }
+  });
+
+  // Get active package templates only
+  app.get('/api/package-templates/active', isAuthenticated, async (req, res) => {
+    try {
+      const templates = await storage.getActivePackageTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching active templates:", error);
+      res.status(500).json({ message: "Error al obtener las plantillas activas" });
+    }
+  });
+
+  // Get package templates by category
+  app.get('/api/package-templates/category/:category', isAuthenticated, async (req, res) => {
+    try {
+      const templates = await storage.getPackageTemplatesByCategory(req.params.category);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching templates by category:", error);
+      res.status(500).json({ message: "Error al obtener las plantillas por categoría" });
+    }
+  });
+
+  // Get single package template
+  app.get('/api/package-templates/:id', isAuthenticated, async (req, res) => {
+    try {
+      const template = await storage.getPackageTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Plantilla no encontrada" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching template:", error);
+      res.status(500).json({ message: "Error al obtener la plantilla" });
+    }
+  });
+
+  // Create package template (admin only)
+  app.post('/api/package-templates', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const template = await storage.createPackageTemplate(req.body);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error creating template:", error);
+      res.status(400).json({ message: "Error al crear la plantilla" });
+    }
+  });
+
+  // Update package template (admin only)
+  app.put('/api/package-templates/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const template = await storage.updatePackageTemplate(req.params.id, req.body);
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating template:", error);
+      res.status(400).json({ message: "Error al actualizar la plantilla" });
+    }
+  });
+
+  // Delete package template (admin only)
+  app.delete('/api/package-templates/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deletePackageTemplate(req.params.id);
+      res.json({ message: "Plantilla eliminada exitosamente" });
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      res.status(500).json({ message: "Error al eliminar la plantilla" });
+    }
+  });
+
   // ============ Service Package Routes (Gestión de Paquetes) ============
   
   // Get all packages (admin only)

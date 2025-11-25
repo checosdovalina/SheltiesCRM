@@ -795,6 +795,41 @@ export const alertLevelEnum = pgEnum("alert_level", [
   "critical"   // 1 sesión restante
 ]);
 
+// Package Category Enum
+export const packageCategoryEnum = pgEnum("package_category", [
+  "clases",    // Combos de clases
+  "kinder",    // Combos de kínder
+  "extension"  // Extensiones de paquete
+]);
+
+// Package Templates (plantillas predefinidas de paquetes)
+export const packageTemplates = pgTable("package_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  category: packageCategoryEnum("category").notNull(),
+  description: text("description"),
+  sessionsIncluded: integer("sessions_included").notNull(),
+  bonusSessions: integer("bonus_sessions").default(0),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  validityDays: integer("validity_days").default(30),
+  includesTransport: boolean("includes_transport").default(false),
+  transportSessions: integer("transport_sessions").default(0),
+  includesKinder: boolean("includes_kinder").default(false),
+  kinderSessions: integer("kinder_sessions").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type PackageTemplate = typeof packageTemplates.$inferSelect;
+export type InsertPackageTemplate = typeof packageTemplates.$inferInsert;
+
+export const insertPackageTemplateSchema = createInsertSchema(packageTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Service Packages (for tracking usage like "10 sessions package")
 export const servicePackages = pgTable("service_packages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

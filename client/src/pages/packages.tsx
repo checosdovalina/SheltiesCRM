@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
   Plus, Edit, Trash2, Package, AlertTriangle, Clock, CheckCircle, 
-  XCircle, Eye, Calendar, DollarSign, Users, Play
+  XCircle, Eye, Calendar, DollarSign, Users, Play, Zap, GraduationCap, Dog as DogIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -77,10 +78,16 @@ export default function Packages() {
     queryKey: ["/api/packages", "dashboard", "metrics"],
   });
 
+  const { data: packageTemplates } = useQuery<any[]>({
+    queryKey: ["/api/package-templates/active"],
+  });
+
   const { data: packageSessions } = useQuery<any[]>({
     queryKey: ["/api/packages", selectedPackage?.id, "sessions"],
     enabled: !!selectedPackage?.id,
   });
+
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
 
   const packageForm = useForm<PackageFormData>({
     resolver: zodResolver(packageSchema),
@@ -486,13 +493,90 @@ export default function Packages() {
       </Card>
 
       {/* Create/Edit Package Modal */}
-      <Dialog open={showPackageModal} onOpenChange={setShowPackageModal}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <Dialog open={showPackageModal} onOpenChange={(open) => {
+        setShowPackageModal(open);
+        if (!open) setSelectedTemplate(null);
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingPackage ? "Editar Paquete" : "Nuevo Paquete"}
             </DialogTitle>
           </DialogHeader>
+
+          {/* Template Selection Section */}
+          {!editingPackage && packageTemplates && packageTemplates.length > 0 && (
+            <div className="mb-6">
+              <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-primary" />
+                Seleccionar Plantilla (Opcional)
+              </h4>
+              <ScrollArea className="h-48 border rounded-lg p-3">
+                <div className="grid grid-cols-1 gap-2">
+                  {packageTemplates.map((template: any) => (
+                    <div
+                      key={template.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-all hover:border-primary hover:bg-primary/5 ${
+                        selectedTemplate?.id === template.id ? 'border-primary bg-primary/10' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedTemplate(template);
+                        const totalSessions = (template.sessionsIncluded || 0) + (template.bonusSessions || 0);
+                        packageForm.setValue('packageName', template.name);
+                        packageForm.setValue('totalSessions', totalSessions.toString());
+                        packageForm.setValue('price', template.price?.toString() || '');
+                        if (template.validityDays) {
+                          const expiryDate = new Date();
+                          expiryDate.setDate(expiryDate.getDate() + template.validityDays);
+                          packageForm.setValue('expiryDate', expiryDate.toISOString().split('T')[0]);
+                        }
+                        packageForm.setValue('notes', template.description || '');
+                      }}
+                      data-testid={`template-${template.id}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="font-medium">{template.name}</span>
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            {template.category === 'clases' && <GraduationCap className="w-3 h-3 mr-1" />}
+                            {template.category === 'kinder' && <DogIcon className="w-3 h-3 mr-1" />}
+                            {template.category === 'extension' && <Plus className="w-3 h-3 mr-1" />}
+                            {template.category === 'clases' ? 'Clases' : 
+                             template.category === 'kinder' ? 'Kínder' : 'Extensión'}
+                          </Badge>
+                        </div>
+                        <span className="font-bold text-primary">${Number(template.price).toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{template.description}</p>
+                      <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                        <span>{template.sessionsIncluded} sesiones</span>
+                        {template.bonusSessions > 0 && (
+                          <span className="text-green-600">+{template.bonusSessions} bonus</span>
+                        )}
+                        {template.validityDays && (
+                          <span>{template.validityDays} días</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+              {selectedTemplate && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    setSelectedTemplate(null);
+                    packageForm.reset();
+                  }}
+                  className="mt-2"
+                >
+                  Limpiar selección
+                </Button>
+              )}
+            </div>
+          )}
+
           <Form {...packageForm}>
             <form onSubmit={packageForm.handleSubmit(onSubmitPackage)} className="space-y-4">
               <FormField
