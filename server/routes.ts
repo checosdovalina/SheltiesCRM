@@ -1265,8 +1265,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Assessment routes (Evaluaciones de Valoración)
   app.post('/api/assessments', isAuthenticated, async (req: any, res) => {
     try {
+      const { assessmentDate, ...rest } = req.body;
       const assessmentData = insertAssessmentSchema.parse({
-        ...req.body,
+        ...rest,
+        assessmentDate: assessmentDate ? new Date(assessmentDate) : new Date(),
         evaluatorId: req.user.id,
       });
       const assessment = await storage.createAssessment(assessmentData);
@@ -1302,7 +1304,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/assessments/:id', isAuthenticated, async (req, res) => {
     try {
-      const assessmentData = insertAssessmentSchema.partial().parse(req.body);
+      const { assessmentDate, ...rest } = req.body;
+      const assessmentData = insertAssessmentSchema.partial().parse({
+        ...rest,
+        ...(assessmentDate && { assessmentDate: new Date(assessmentDate) }),
+      });
       const assessment = await storage.updateAssessment(req.params.id, assessmentData);
       res.json(assessment);
     } catch (error) {
