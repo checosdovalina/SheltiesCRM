@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ArrowLeft,
   Dog,
@@ -288,8 +290,233 @@ const RatingDisplay = ({ value }: { value?: number }) => {
   return <Icon className={`h-4 w-4 ${face.color}`} />;
 };
 
-const AssessmentCard = ({ assessment }: { assessment: Assessment }) => (
-  <Card className="border-l-4 border-l-blue-500">
+const RatingRow = ({ label, value }: { label: string; value?: number }) => (
+  <div className="flex items-center justify-between py-1">
+    <span className="text-sm text-muted-foreground">{label}</span>
+    <RatingDisplay value={value} />
+  </div>
+);
+
+const AssessmentDetailModal = ({ 
+  assessment, 
+  isOpen, 
+  onClose 
+}: { 
+  assessment: Assessment | null; 
+  isOpen: boolean; 
+  onClose: () => void;
+}) => {
+  if (!assessment) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">
+            Evaluación de Valoración - {format(new Date(assessment.assessmentDate), "dd/MM/yyyy")}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <ScrollArea className="h-[calc(90vh-120px)] pr-4">
+          <div className="space-y-6">
+            {/* Reacciones */}
+            <Card className="border-l-4 border-l-amber-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-amber-600">Reacciones</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-sm mb-2">Al Llegar</h4>
+                    <RatingRow label="Se esconde detrás del dueño" value={assessment.reactionArrivalHidesBehind} />
+                    <RatingRow label="Se pone rígido" value={assessment.reactionArrivalRigid} />
+                    <RatingRow label="Se sienta" value={assessment.reactionArrivalSits} />
+                    <RatingRow label="Se queda inmóvil" value={assessment.reactionArrivalImmobile} />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-sm mb-2">Durante Anamnesis</h4>
+                    <RatingRow label="Se esconde detrás del dueño" value={assessment.reactionAnamnesisHidesBehind} />
+                    <RatingRow label="Se pone rígido" value={assessment.reactionAnamnesisRigid} />
+                    <RatingRow label="Se sienta" value={assessment.reactionAnamnesisSits} />
+                    <RatingRow label="Se queda inmóvil" value={assessment.reactionAnamnesisImmobile} />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-sm mb-2">Durante Evaluación</h4>
+                    <RatingRow label="Se esconde detrás del dueño" value={assessment.reactionEvalHidesBehind} />
+                    <RatingRow label="Se pone rígido" value={assessment.reactionEvalRigid} />
+                    <RatingRow label="Se sienta" value={assessment.reactionEvalSits} />
+                    <RatingRow label="Se queda inmóvil" value={assessment.reactionEvalImmobile} />
+                  </div>
+                </div>
+                {assessment.reactionComments && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-sm"><span className="font-medium">Comentarios:</span> {assessment.reactionComments}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Características Físicas */}
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-green-600">Características Físicas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <RatingRow label="Pelaje" value={assessment.physCoat} />
+                  <RatingRow label="Peso" value={assessment.physWeight} />
+                  <RatingRow label="Temperatura" value={assessment.physTemperature} />
+                  <RatingRow label="Ojos" value={assessment.physEyes} />
+                  <RatingRow label="Dientes" value={assessment.physTeeth} />
+                  <RatingRow label="Olor" value={assessment.physSmell} />
+                  <RatingRow label="Tensión muscular" value={assessment.physMuscleTension} />
+                  <RatingRow label="Reactividad al tacto" value={assessment.physTouchReactive} />
+                  <RatingRow label="Salivando" value={assessment.physSalivating} />
+                  <RatingRow label="Patas sudando" value={assessment.physSweatingPaws} />
+                  <RatingRow label="Mudando pelo" value={assessment.physShedding} />
+                </div>
+                {assessment.physComments && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-sm"><span className="font-medium">Comentarios:</span> {assessment.physComments}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Movimiento */}
+            <Card className="border-l-4 border-l-indigo-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-indigo-600">Movimiento</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <RatingRow label="Equilibrio" value={assessment.movBalance} />
+                  <RatingRow label="Marcha" value={assessment.movGait} />
+                  <RatingRow label="Rapidez" value={assessment.movSpeed} />
+                  <RatingRow label="Coordinación" value={assessment.movCoordination} />
+                </div>
+                {assessment.movComments && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-sm"><span className="font-medium">Comentarios:</span> {assessment.movComments}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Correa */}
+            <Card className="border-l-4 border-l-cyan-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-cyan-600">Comportamiento con Correa</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-sm mb-2">Con el Dueño</h4>
+                    <RatingRow label="Seguro" value={assessment.leashOwnerSecure} />
+                    <RatingRow label="Jala la correa" value={assessment.leashOwnerPulls} />
+                    <RatingRow label="Reactivo" value={assessment.leashOwnerReactive} />
+                    <RatingRow label="Agresivo" value={assessment.leashOwnerAggressive} />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-sm mb-2">Con Otra Persona</h4>
+                    <RatingRow label="Seguro" value={assessment.leashOtherSecure} />
+                    <RatingRow label="Jala la correa" value={assessment.leashOtherPulls} />
+                    <RatingRow label="Reactivo" value={assessment.leashOtherReactive} />
+                    <RatingRow label="Agresivo" value={assessment.leashOtherAggressive} />
+                  </div>
+                </div>
+                {assessment.leashComments && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-sm"><span className="font-medium">Comentarios:</span> {assessment.leashComments}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Señales de Calma */}
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-blue-600">Señales de Calma</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <RatingRow label="Bostezar" value={assessment.calmYawning} />
+                  <RatingRow label="Lamerse" value={assessment.calmLicking} />
+                  <RatingRow label="Estirarse" value={assessment.calmStretching} />
+                  <RatingRow label="Girar la cabeza" value={assessment.calmTurnHead} />
+                  <RatingRow label="Parpadear" value={assessment.calmBlinking} />
+                  <RatingRow label="Olfatear" value={assessment.calmSniffing} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Interacción Social */}
+            <Card className="border-l-4 border-l-pink-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-pink-600">Interacción Social</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <RatingRow label="Reacción a extraños" value={assessment.interactionStrangers} />
+                  <RatingRow label="Reacción a otros perros" value={assessment.interactionOtherDogs} />
+                </div>
+                {assessment.interactionComments && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-sm"><span className="font-medium">Comentarios:</span> {assessment.interactionComments}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Postura */}
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-purple-600">Postura</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <RatingRow label="Cola" value={assessment.postureTail} />
+                  <RatingRow label="Cabeza" value={assessment.postureHead} />
+                  <RatingRow label="Orejas" value={assessment.postureEars} />
+                  <RatingRow label="Ojos" value={assessment.postureEyes} />
+                  <RatingRow label="Equilibrio" value={assessment.postureBalance} />
+                  <RatingRow label="Simetría" value={assessment.postureSymmetry} />
+                  <RatingRow label="Respiración" value={assessment.postureBreathing} />
+                  <RatingRow label="Se revuelca" value={assessment.postureRolling} />
+                  <RatingRow label="Se agacha" value={assessment.postureCrouching} />
+                </div>
+                {assessment.postureComments && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-sm"><span className="font-medium">Comentarios:</span> {assessment.postureComments}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Notas Generales */}
+            {assessment.generalNotes && (
+              <Card className="border-l-4 border-l-gray-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-gray-600">Notas Generales</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm">{assessment.generalNotes}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const AssessmentCard = ({ assessment, onViewDetail }: { assessment: Assessment; onViewDetail: () => void }) => (
+  <Card 
+    className="border-l-4 border-l-blue-500 cursor-pointer hover:shadow-md transition-shadow"
+    onClick={onViewDetail}
+    data-testid={`card-assessment-${assessment.id}`}
+  >
     <CardContent className="p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -298,6 +525,10 @@ const AssessmentCard = ({ assessment }: { assessment: Assessment }) => (
             Evaluación del {format(new Date(assessment.assessmentDate), "dd/MM/yyyy")}
           </span>
         </div>
+        <Button variant="ghost" size="sm" data-testid="button-view-assessment">
+          <Eye className="h-4 w-4 mr-1" />
+          Ver detalle
+        </Button>
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -380,6 +611,8 @@ export default function ExpedienteDetail() {
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
   const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
   const [observationsModalOpen, setObservationsModalOpen] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
+  const [assessmentDetailOpen, setAssessmentDetailOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -804,7 +1037,14 @@ export default function ExpedienteDetail() {
                   {assessments.length > 0 ? (
                     <div className="space-y-4">
                       {assessments.map((assessment) => (
-                        <AssessmentCard key={assessment.id} assessment={assessment} />
+                        <AssessmentCard 
+                          key={assessment.id} 
+                          assessment={assessment} 
+                          onViewDetail={() => {
+                            setSelectedAssessment(assessment);
+                            setAssessmentDetailOpen(true);
+                          }}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -1063,6 +1303,15 @@ export default function ExpedienteDetail() {
           onClose={() => setAssessmentModalOpen(false)}
         />
       )}
+
+      <AssessmentDetailModal
+        assessment={selectedAssessment}
+        isOpen={assessmentDetailOpen}
+        onClose={() => {
+          setAssessmentDetailOpen(false);
+          setSelectedAssessment(null);
+        }}
+      />
     </div>
   );
 }
