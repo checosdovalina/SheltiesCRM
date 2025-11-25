@@ -880,7 +880,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Training Sessions endpoints
   app.post('/api/training-sessions', isAuthenticated, async (req, res) => {
     try {
-      const session = await storage.createTrainingSession(req.body);
+      const { sessionDate, ...rest } = req.body;
+      const session = await storage.createTrainingSession({
+        ...rest,
+        sessionDate: sessionDate ? new Date(sessionDate) : new Date(),
+      });
       res.json(session);
     } catch (error) {
       console.error("Error creating training session:", error);
@@ -918,7 +922,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/training-sessions/:id', isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
-      const session = await storage.updateTrainingSession(id, req.body);
+      const { sessionDate, ...rest } = req.body;
+      const session = await storage.updateTrainingSession(id, {
+        ...rest,
+        ...(sessionDate && { sessionDate: new Date(sessionDate) }),
+      });
       res.json(session);
     } catch (error) {
       console.error("Error updating training session:", error);

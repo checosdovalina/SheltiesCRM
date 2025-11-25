@@ -52,6 +52,12 @@ export default function TrainingModal({
     retry: false,
   });
 
+  const { data: teachers, isLoading: teachersLoading } = useQuery<any[]>({
+    queryKey: ["/api/teachers"],
+    enabled: open,
+    retry: false,
+  });
+
   const form = useForm<z.infer<typeof insertTrainingSessionSchema>>({
     resolver: zodResolver(insertTrainingSessionSchema),
     defaultValues: {
@@ -184,15 +190,29 @@ export default function TrainingModal({
               name="trainer"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Entrenador (Opcional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Nombre del entrenador"
-                      data-testid="input-trainer"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
+                  <FormLabel>Entrenador</FormLabel>
+                  <Select 
+                    onValueChange={(value) => field.onChange(value === "none" ? "" : value)} 
+                    value={field.value || "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger data-testid="select-trainer">
+                        <SelectValue placeholder="Seleccionar entrenador..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Sin asignar</SelectItem>
+                      {teachersLoading ? (
+                        <SelectItem value="loading" disabled>Cargando entrenadores...</SelectItem>
+                      ) : Array.isArray(teachers) && teachers
+                        .filter((teacher: any) => teacher.id && teacher.role === 'teacher')
+                        .map((teacher: any) => (
+                          <SelectItem key={teacher.id} value={teacher.firstName && teacher.lastName ? `${teacher.firstName} ${teacher.lastName}` : teacher.username}>
+                            {teacher.firstName && teacher.lastName ? `${teacher.firstName} ${teacher.lastName}` : teacher.username}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
