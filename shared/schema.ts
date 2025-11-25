@@ -890,3 +890,113 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// Evaluaciones de Valoración (Assessment) - Formulario con caritas 1-5
+export const assessments = pgTable("assessments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dogId: varchar("dog_id").references(() => dogs.id).notNull(),
+  evaluatorId: varchar("evaluator_id").references(() => users.id),
+  assessmentDate: timestamp("assessment_date").defaultNow(),
+  
+  // LA REACCIÓN - Al Llegar (1-5)
+  reactionArrivalHidesBehind: integer("reaction_arrival_hides_behind"),
+  reactionArrivalRigid: integer("reaction_arrival_rigid"),
+  reactionArrivalSits: integer("reaction_arrival_sits"),
+  reactionArrivalImmobile: integer("reaction_arrival_immobile"),
+  
+  // LA REACCIÓN - Durante Anamnesis (1-5)
+  reactionAnamnesisHidesBehind: integer("reaction_anamnesis_hides_behind"),
+  reactionAnamnesisRigid: integer("reaction_anamnesis_rigid"),
+  reactionAnamnesisSits: integer("reaction_anamnesis_sits"),
+  reactionAnamnesisImmobile: integer("reaction_anamnesis_immobile"),
+  
+  // LA REACCIÓN - Durante Evaluación (1-5)
+  reactionEvalHidesBehind: integer("reaction_eval_hides_behind"),
+  reactionEvalRigid: integer("reaction_eval_rigid"),
+  reactionEvalSits: integer("reaction_eval_sits"),
+  reactionEvalImmobile: integer("reaction_eval_immobile"),
+  reactionComments: text("reaction_comments"),
+  
+  // CARACTERÍSTICAS FÍSICAS (1-5)
+  physCoat: integer("phys_coat"),
+  physTemperature: integer("phys_temperature"),
+  physEyes: integer("phys_eyes"),
+  physTeeth: integer("phys_teeth"),
+  physWeight: integer("phys_weight"),
+  physSmell: integer("phys_smell"),
+  physMuscleTension: integer("phys_muscle_tension"),
+  physTouchReactive: integer("phys_touch_reactive"),
+  physSalivating: integer("phys_salivating"),
+  physSweatingPaws: integer("phys_sweating_paws"),
+  physShedding: integer("phys_shedding"),
+  physComments: text("phys_comments"),
+  
+  // MOVIMIENTO (1-5)
+  movBalance: integer("mov_balance"),
+  movGait: integer("mov_gait"), // Normal/cojea
+  movSpeed: integer("mov_speed"),
+  movCoordination: integer("mov_coordination"),
+  movComments: text("mov_comments"),
+  
+  // CORREA - CON EL DUEÑO (1-5)
+  leashOwnerSecure: integer("leash_owner_secure"),
+  leashOwnerPulls: integer("leash_owner_pulls"),
+  leashOwnerReactive: integer("leash_owner_reactive"),
+  leashOwnerAggressive: integer("leash_owner_aggressive"),
+  
+  // CORREA - CON OTRA PERSONA (1-5)
+  leashOtherSecure: integer("leash_other_secure"),
+  leashOtherPulls: integer("leash_other_pulls"),
+  leashOtherReactive: integer("leash_other_reactive"),
+  leashOtherAggressive: integer("leash_other_aggressive"),
+  leashComments: text("leash_comments"),
+  
+  // INTERACCIÓN - SEÑALES DE CALMA (1-5)
+  calmYawning: integer("calm_yawning"),
+  calmLicking: integer("calm_licking"),
+  calmStretching: integer("calm_stretching"),
+  calmTurnHead: integer("calm_turn_head"),
+  calmBlinking: integer("calm_blinking"),
+  calmSniffing: integer("calm_sniffing"),
+  interactionStrangers: integer("interaction_strangers"),
+  interactionOtherDogs: integer("interaction_other_dogs"),
+  interactionComments: text("interaction_comments"),
+  
+  // POSTURA (1-5)
+  postureTail: integer("posture_tail"),
+  postureHead: integer("posture_head"),
+  postureEars: integer("posture_ears"),
+  postureEyes: integer("posture_eyes"),
+  postureBalance: integer("posture_balance"),
+  postureSymmetry: integer("posture_symmetry"),
+  postureBreathing: integer("posture_breathing"),
+  postureRolling: integer("posture_rolling"),
+  postureCrouching: integer("posture_crouching"),
+  postureComments: text("posture_comments"),
+  
+  // Comentarios generales
+  generalNotes: text("general_notes"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type Assessment = typeof assessments.$inferSelect;
+export type InsertAssessment = typeof assessments.$inferInsert;
+
+export const insertAssessmentSchema = createInsertSchema(assessments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const assessmentsRelations = relations(assessments, ({ one }) => ({
+  dog: one(dogs, {
+    fields: [assessments.dogId],
+    references: [dogs.id],
+  }),
+  evaluator: one(users, {
+    fields: [assessments.evaluatorId],
+    references: [users.id],
+  }),
+}));
