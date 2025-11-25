@@ -131,8 +131,8 @@ export default function Navigation() {
 
         {/* Navigation menu */}
         <div className="px-6 py-3 bg-muted/30">
-          <div className="max-w-7xl mx-auto">
-            <nav className="flex items-center space-x-6">
+          <div className="max-w-7xl mx-auto overflow-x-auto scrollbar-hide">
+            <nav className="flex items-center space-x-2 min-w-max">
               {filteredNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = location === item.path;
@@ -140,7 +140,7 @@ export default function Navigation() {
                 return (
                   <Link key={item.path} href={item.path}>
                     <div
-                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                         isActive 
                           ? "bg-primary text-primary-foreground shadow-sm" 
                           : "text-muted-foreground hover:text-foreground hover:bg-background"
@@ -248,64 +248,67 @@ export default function Navigation() {
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden mobile-nav">
-        <div className="flex items-center">
-          {filteredNavigation.slice(0, 4).map((item) => {
+        <div className="flex items-center justify-around">
+          {filteredNavigation.slice(0, 5).map((item) => {
             const Icon = item.icon;
             const isActive = location === item.path;
             
             return (
-              <Link key={item.path} href={item.path} className="mobile-nav-item">
+              <Link key={item.path} href={item.path} className="flex-1">
                 <Button
                   variant="ghost"
-                  className={`flex flex-col items-center justify-center h-12 w-full border-0 ${
+                  className={`flex flex-col items-center justify-center h-14 w-full border-0 rounded-none ${
                     isActive 
-                      ? "text-primary" 
+                      ? "text-primary bg-primary/5" 
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                   data-testid={`bottom-nav-${item.path.replace('/', '') || 'dashboard'}`}
                 >
-                  <Icon className="w-5 h-5 mb-1" />
-                  <span className="text-xs">{item.mobileLabel}</span>
+                  <Icon className="w-5 h-5 mb-0.5" />
+                  <span className="text-[10px] leading-tight">{item.mobileLabel}</span>
                 </Button>
               </Link>
             );
           })}
           
-          {filteredNavigation.length > 4 && (
+          {filteredNavigation.length > 5 && (
             <Sheet>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex flex-col items-center justify-center h-12 w-full text-muted-foreground hover:text-foreground border-0 mobile-nav-item"
+                  className="flex flex-col items-center justify-center h-14 flex-1 text-muted-foreground hover:text-foreground border-0 rounded-none"
                   data-testid="bottom-nav-more"
                 >
-                  <Menu className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Más</span>
+                  <Menu className="w-5 h-5 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Más</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="h-auto">
-                <div className="grid grid-cols-2 gap-4 p-4">
-                  {filteredNavigation.slice(4).map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location === item.path;
-                    
-                    return (
-                      <Link key={item.path} href={item.path}>
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start touch-target ${
-                            isActive 
-                              ? "bg-primary/10 text-primary" 
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                          data-testid={`more-nav-${item.path.replace('/', '') || 'dashboard'}`}
-                        >
-                          <Icon className="w-5 h-5 mr-3" />
-                          {item.label}
-                        </Button>
-                      </Link>
-                    );
-                  })}
+              <SheetContent side="bottom" className="h-auto max-h-[60vh] rounded-t-xl">
+                <div className="pt-2 pb-6">
+                  <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-4" />
+                  <div className="grid grid-cols-3 gap-3 px-2">
+                    {filteredNavigation.slice(5).map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location === item.path;
+                      
+                      return (
+                        <Link key={item.path} href={item.path}>
+                          <Button
+                            variant="ghost"
+                            className={`w-full flex flex-col items-center justify-center h-20 rounded-xl ${
+                              isActive 
+                                ? "bg-primary/10 text-primary" 
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }`}
+                            data-testid={`more-nav-${item.path.replace('/', '') || 'dashboard'}`}
+                          >
+                            <Icon className="w-6 h-6 mb-1" />
+                            <span className="text-xs">{item.mobileLabel}</span>
+                          </Button>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
