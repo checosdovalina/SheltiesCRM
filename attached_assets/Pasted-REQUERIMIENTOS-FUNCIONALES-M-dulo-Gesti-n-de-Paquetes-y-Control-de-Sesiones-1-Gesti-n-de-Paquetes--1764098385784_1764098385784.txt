@@ -1,0 +1,268 @@
+REQUERIMIENTOS FUNCIONALES
+Módulo: Gestión de Paquetes y Control de Sesiones
+1. Gestión de Paquetes
+RF-01. Crear paquete
+
+El sistema debe permitir que el administrador registre un paquete para un usuario, especificando:
+
+Usuario asignado
+
+Nombre del paquete
+
+Total de sesiones incluidas
+
+Fecha de compra
+
+Fecha de expiración (opcional)
+
+Precio (opcional)
+
+RF-02. Editar paquete
+
+El administrador podrá modificar:
+
+Total de sesiones
+
+Fecha de expiración
+
+Estado del paquete
+
+Observaciones
+
+RF-03. Ver paquetes disponibles
+
+El sistema debe mostrar a cada usuario:
+
+Sus paquetes activos
+
+Sus paquetes completados
+
+Paquetes expirados
+
+Paquetes próximos a terminar
+
+RF-04. Estado automático del paquete
+
+El sistema debe cambiar el estado del paquete según las sesiones usadas:
+
+Activo: sesiones_restantes > 0
+
+Por terminar: sesiones_restantes ≤ 3
+
+Terminado: sesiones_restantes = 0
+
+Expirado: fecha actual > fecha de expiración
+
+2. Control de Sesiones
+RF-05. Registrar sesión
+
+El sistema debe permitir registrar una sesión a un usuario y asociarla al paquete activo.
+
+La sesión debe contener:
+
+Usuario
+
+Paquete utilizado
+
+Fecha
+
+Tipo de sesión
+
+Estado de la asistencia (asistió, canceló, no-show)
+
+RF-06. Actualizar sesiones usadas
+
+Cada vez que se registre una sesión:
+
+Incrementar sesiones_usadas
+
+Recalcular sesiones_restantes
+
+Actualizar estado del paquete
+
+RF-07. Evitar uso sin sesiones
+
+El sistema debe impedir que un usuario consuma sesiones cuando:
+
+No tenga paquetes activos
+
+Sus sesiones se hayan terminado
+
+El paquete esté expirado
+
+Debe mostrar un mensaje:
+
+“No cuentas con sesiones disponibles. Necesitas renovar tu paquete.”
+
+3. Notificaciones y Alertas (Red Flags)
+RF-08. Alerta por pocas sesiones
+
+El sistema debe generar una alerta cuando el paquete llegue a los siguientes niveles:
+
+Sesiones restantes	Alerta
+5	Amarilla
+3	Roja
+1	Roja prioritaria
+RF-09. Notificación al usuario
+
+El usuario debe recibir una notificación cuando:
+
+Queden ≤ 5 sesiones
+
+Se termine el paquete
+
+El paquete esté por expirar
+
+El paquete expire
+
+Notificaciones pueden ser:
+
+En el panel (alerta visual)
+
+Email
+
+Notificación móvil (si aplica)
+
+RF-10. Notificación al administrador
+
+El administrador debe recibir alertas cuando:
+
+El usuario tenga sesiones por terminar
+
+El paquete se quede en 0
+
+Un paquete esté próximo a expirar
+
+RF-11. Registro de alertas
+
+El sistema debe mantener un historial de alertas enviadas:
+
+Usuario
+
+Tipo de alerta
+
+Fecha
+
+Método (email/panel/app)
+
+4. Reportes y Dashboard
+RF-12. Dashboard del usuario
+
+El usuario debe ver:
+
+Total de sesiones compradas
+
+Sesiones usadas
+
+Sesiones restantes
+
+Estado del paquete
+
+Fecha de expiración
+
+Historial de sesiones
+
+RF-13. Dashboard del administrador
+
+El administrador debe ver:
+
+Usuarios con paquetes activos
+
+Usuarios con alertas (bandera amarilla y roja)
+
+Usuarios sin sesiones
+
+Paquetes expirados
+
+Ranking de uso de sesiones
+
+Reporte por fechas
+
+RF-14. Filtro por estado
+
+El sistema debe permitir filtrar paquetes por:
+
+Activos
+
+Por terminar
+
+Terminados
+
+Expirados
+
+RF-15. Exportación
+
+El admin podrá exportar los reportes a:
+
+Excel
+
+PDF
+
+CSV
+
+5. Lógica de Renovación
+RF-16. Prohibir reservas cuando no hay sesiones
+
+Si el usuario no tiene sesiones disponibles, el sistema no debe permitirle reservar clases.
+
+RF-17. Sugerencia de renovación
+
+Cuando el usuario esté por terminar su paquete (3 o menos sesiones):
+
+Mostrar botón “Renovar paquete”
+
+Mostrar mensaje de alerta
+
+RF-18. Renovación automática (opcional)
+
+Si está habilitado, el sistema puede:
+
+Crear un nuevo paquete al llegar a 0
+
+Enviar notificación al usuario
+
+Registrar la transacción
+
+6. Permisos y Roles
+RF-19. Permisos del usuario
+
+El usuario puede:
+
+Ver sus paquetes
+
+Ver alertas
+
+Ver sesiones usadas
+
+Reservar clases si cuenta con sesiones
+
+Ver historial
+
+RF-20. Permisos del administrador
+
+El admin puede:
+
+Crear, editar y eliminar paquetes
+
+Registrar sesiones manualmente
+
+Ver reportes globales
+
+Activar/desactivar notificaciones
+
+Ver todos los usuarios y sus paquetes
+
+7. Reglas de negocio
+RF-21. Un usuario solo puede tener un paquete activo
+
+Si compra otro:
+
+Se acumulan las sesiones o se crea un segundo paquete (según configuración del CRM)
+
+RF-22. No modificar historial
+
+Las sesiones registradas no pueden eliminarse, solo marcarse como:
+
+Error administrativo
+
+Cancelación

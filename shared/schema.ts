@@ -764,23 +764,109 @@ export const internalNotes = pgTable("internal_notes", {
 export type InternalNote = typeof internalNotes.$inferSelect;
 export type InsertInternalNote = typeof internalNotes.$inferInsert;
 
+// Package Status Enum
+export const packageStatusEnum = pgEnum("package_status", [
+  "active",      // Activo: sesiones_restantes > 0
+  "finishing",   // Por terminar: sesiones_restantes <= 3
+  "completed",   // Terminado: sesiones_restantes = 0
+  "expired"      // Expirado: fecha actual > fecha de expiración
+]);
+
+// Package Session Status Enum
+export const packageSessionStatusEnum = pgEnum("package_session_status", [
+  "attended",     // Asistió
+  "cancelled",    // Canceló
+  "no_show",      // No se presentó
+  "error"         // Error administrativo
+]);
+
+// Alert Type Enum
+export const alertTypeEnum = pgEnum("alert_type", [
+  "low_sessions",      // Pocas sesiones
+  "package_completed", // Paquete terminado
+  "expiring_soon",     // Por expirar
+  "expired"            // Expirado
+]);
+
+// Alert Level Enum
+export const alertLevelEnum = pgEnum("alert_level", [
+  "yellow",    // 5 sesiones restantes
+  "red",       // 3 sesiones restantes
+  "critical"   // 1 sesión restante
+]);
+
 // Service Packages (for tracking usage like "10 sessions package")
 export const servicePackages = pgTable("service_packages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").references(() => clients.id).notNull(),
-  dogId: varchar("dog_id").references(() => dogs.id).notNull(),
-  serviceId: varchar("service_id").references(() => services.id).notNull(),
-  packageName: varchar("package_name").notNull(), // "10 Training Sessions", etc.
+  dogId: varchar("dog_id").references(() => dogs.id),
+  serviceId: varchar("service_id").references(() => services.id),
+  packageName: varchar("package_name").notNull(),
   totalSessions: integer("total_sessions").notNull(),
-  usedSessions: integer("used_sessions").default(0),
+  usedSessions: integer("used_sessions").default(0).notNull(),
+  remainingSessions: integer("remaining_sessions").notNull(),
+  purchaseDate: timestamp("purchase_date").defaultNow(),
   expiryDate: timestamp("expiry_date"),
-  isActive: boolean("is_active").default(true),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  status: packageStatusEnum("status").default("active").notNull(),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type ServicePackage = typeof servicePackages.$inferSelect;
 export type InsertServicePackage = typeof servicePackages.$inferInsert;
+
+export const insertServicePackageSchema = createInsertSchema(servicePackages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Package Sessions (registro de consumo de sesiones)
+export const packageSessions = pgTable("package_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  packageId: varchar("package_id").references(() => servicePackages.id).notNull(),
+  clientId: varchar("client_id").references(() => clients.id).notNull(),
+  dogId: varchar("dog_id").references(() => dogs.id),
+  appointmentId: varchar("appointment_id").references(() => appointments.id),
+  sessionDate: timestamp("session_date").notNull(),
+  sessionType: varchar("session_type"),
+  status: packageSessionStatusEnum("status").default("attended").notNull(),
+  registeredBy: varchar("registered_by").references(() => users.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type PackageSession = typeof packageSessions.$inferSelect;
+export type InsertPackageSession = typeof packageSessions.$inferInsert;
+
+export const insertPackageSessionSchema = createInsertSchema(packageSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Package Alerts (alertas del sistema de paquetes)
+export const packageAlerts = pgTable("package_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  packageId: varchar("package_id").references(() => servicePackages.id).notNull(),
+  clientId: varchar("client_id").references(() => clients.id).notNull(),
+  alertType: alertTypeEnum("alert_type").notNull(),
+  alertLevel: alertLevelEnum("alert_level"),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  sentViaEmail: boolean("sent_via_email").default(false),
+  sentViaPanel: boolean("sent_via_panel").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type PackageAlert = typeof packageAlerts.$inferSelect;
+export type InsertPackageAlert = typeof packageAlerts.$inferInsert;
+
+export const insertPackageAlertSchema = createInsertSchema(packageAlerts).omit({
+  id: true,
+  createdAt: true,
+});
 
 // Tasks for teacher assignments (general tasks, classes, meetings)
 export const taskTypeEnum = pgEnum("task_type", [
@@ -865,7 +951,7 @@ export const internalNotesRelations = relations(internalNotes, ({ one }) => ({
   }),
 }));
 
-export const servicePackagesRelations = relations(servicePackages, ({ one }) => ({
+export const servicePackagesRelations = relations(servicePackages, ({ one, many }) => ({
   client: one(clients, {
     fields: [servicePackages.clientId],
     references: [clients.id],
@@ -877,6 +963,42 @@ export const servicePackagesRelations = relations(servicePackages, ({ one }) => 
   service: one(services, {
     fields: [servicePackages.serviceId],
     references: [services.id],
+  }),
+  sessions: many(packageSessions),
+  alerts: many(packageAlerts),
+}));
+
+export const packageSessionsRelations = relations(packageSessions, ({ one }) => ({
+  package: one(servicePackages, {
+    fields: [packageSessions.packageId],
+    references: [servicePackages.id],
+  }),
+  client: one(clients, {
+    fields: [packageSessions.clientId],
+    references: [clients.id],
+  }),
+  dog: one(dogs, {
+    fields: [packageSessions.dogId],
+    references: [dogs.id],
+  }),
+  appointment: one(appointments, {
+    fields: [packageSessions.appointmentId],
+    references: [appointments.id],
+  }),
+  registeredByUser: one(users, {
+    fields: [packageSessions.registeredBy],
+    references: [users.id],
+  }),
+}));
+
+export const packageAlertsRelations = relations(packageAlerts, ({ one }) => ({
+  package: one(servicePackages, {
+    fields: [packageAlerts.packageId],
+    references: [servicePackages.id],
+  }),
+  client: one(clients, {
+    fields: [packageAlerts.clientId],
+    references: [clients.id],
   }),
 }));
 
