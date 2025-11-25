@@ -1480,9 +1480,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create package
   app.post('/api/packages', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const { purchaseDate, expiryDate, ...rest } = req.body;
+      const { purchaseDate, expiryDate, price, totalSessions, sessionsUsed, sessionsRemaining, ...rest } = req.body;
       const packageData = insertServicePackageSchema.parse({
         ...rest,
+        price: price !== undefined ? String(price) : undefined,
+        totalSessions: totalSessions !== undefined ? Number(totalSessions) : undefined,
+        sessionsUsed: sessionsUsed !== undefined ? Number(sessionsUsed) : 0,
+        sessionsRemaining: sessionsRemaining !== undefined ? Number(sessionsRemaining) : (totalSessions !== undefined ? Number(totalSessions) : 0),
         purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
         expiryDate: expiryDate ? new Date(expiryDate) : null,
       });
