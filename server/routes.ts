@@ -16,6 +16,7 @@ import {
   insertProgressEntrySchema,
   insertPetTypeSchema,
   insertTaskSchema,
+  insertAssessmentSchema,
   createUserSchema,
   loginSchema,
   registerSchema,
@@ -1258,6 +1259,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting task:", error);
       res.status(500).json({ message: "Failed to delete task" });
+    }
+  });
+
+  // Assessment routes (Evaluaciones de Valoración)
+  app.post('/api/assessments', isAuthenticated, async (req: any, res) => {
+    try {
+      const assessmentData = insertAssessmentSchema.parse({
+        ...req.body,
+        evaluatorId: req.user.id,
+      });
+      const assessment = await storage.createAssessment(assessmentData);
+      res.json(assessment);
+    } catch (error) {
+      console.error("Error creating assessment:", error);
+      res.status(400).json({ message: "Failed to create assessment" });
+    }
+  });
+
+  app.get('/api/dogs/:dogId/assessments', isAuthenticated, async (req, res) => {
+    try {
+      const assessments = await storage.getAssessmentsByDogId(req.params.dogId);
+      res.json(assessments);
+    } catch (error) {
+      console.error("Error fetching assessments:", error);
+      res.status(500).json({ message: "Failed to fetch assessments" });
+    }
+  });
+
+  app.get('/api/assessments/:id', isAuthenticated, async (req, res) => {
+    try {
+      const assessment = await storage.getAssessment(req.params.id);
+      if (!assessment) {
+        return res.status(404).json({ message: "Assessment not found" });
+      }
+      res.json(assessment);
+    } catch (error) {
+      console.error("Error fetching assessment:", error);
+      res.status(500).json({ message: "Failed to fetch assessment" });
+    }
+  });
+
+  app.put('/api/assessments/:id', isAuthenticated, async (req, res) => {
+    try {
+      const assessmentData = insertAssessmentSchema.partial().parse(req.body);
+      const assessment = await storage.updateAssessment(req.params.id, assessmentData);
+      res.json(assessment);
+    } catch (error) {
+      console.error("Error updating assessment:", error);
+      res.status(400).json({ message: "Failed to update assessment" });
+    }
+  });
+
+  app.delete('/api/assessments/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteAssessment(req.params.id);
+      res.json({ message: "Assessment deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting assessment:", error);
+      res.status(500).json({ message: "Failed to delete assessment" });
     }
   });
 

@@ -16,6 +16,7 @@ import {
   internalNotes,
   servicePackages,
   tasks,
+  assessments,
   type User,
   type UpsertUser,
   type Client,
@@ -50,6 +51,8 @@ import {
   type InsertServicePackage,
   type Task,
   type InsertTask,
+  type Assessment,
+  type InsertAssessment,
   petTypes,
   PetType,
   InsertPetType,
@@ -202,6 +205,13 @@ export interface IStorage {
   deleteTask(id: string): Promise<void>;
   getUnreadTasksByTeacher(teacherId: string): Promise<number>;
   markTaskAsRead(id: string): Promise<void>;
+
+  // Assessment operations (Evaluaciones de Valoración)
+  createAssessment(assessment: InsertAssessment): Promise<Assessment>;
+  getAssessmentsByDogId(dogId: string): Promise<Assessment[]>;
+  getAssessment(id: string): Promise<Assessment | undefined>;
+  updateAssessment(id: string, assessment: Partial<InsertAssessment>): Promise<Assessment>;
+  deleteAssessment(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1585,6 +1595,44 @@ export class DatabaseStorage implements IStorage {
       .update(tasks)
       .set({ isRead: true })
       .where(eq(tasks.id, id));
+  }
+
+  // Assessment operations (Evaluaciones de Valoración)
+  async createAssessment(assessmentData: InsertAssessment): Promise<Assessment> {
+    const [assessment] = await db
+      .insert(assessments)
+      .values(assessmentData)
+      .returning();
+    return assessment;
+  }
+
+  async getAssessmentsByDogId(dogId: string): Promise<Assessment[]> {
+    return await db
+      .select()
+      .from(assessments)
+      .where(eq(assessments.dogId, dogId))
+      .orderBy(desc(assessments.assessmentDate));
+  }
+
+  async getAssessment(id: string): Promise<Assessment | undefined> {
+    const [assessment] = await db
+      .select()
+      .from(assessments)
+      .where(eq(assessments.id, id));
+    return assessment;
+  }
+
+  async updateAssessment(id: string, assessmentData: Partial<InsertAssessment>): Promise<Assessment> {
+    const [assessment] = await db
+      .update(assessments)
+      .set({ ...assessmentData, updatedAt: new Date() })
+      .where(eq(assessments.id, id))
+      .returning();
+    return assessment;
+  }
+
+  async deleteAssessment(id: string): Promise<void> {
+    await db.delete(assessments).where(eq(assessments.id, id));
   }
 }
 
