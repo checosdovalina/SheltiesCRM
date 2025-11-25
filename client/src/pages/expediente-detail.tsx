@@ -30,11 +30,18 @@ import {
   FileText,
   Plus,
   Eye,
+  ClipboardCheck,
+  Frown,
+  Meh,
+  Smile,
+  Laugh,
+  Heart,
 } from "lucide-react";
 import MedicalRecordModal from "@/components/medical-record-modal";
 import TrainingModal from "@/components/training-modal";
 import EvidenceModal from "@/components/evidence-modal";
 import ObservationsModal from "@/components/observations-modal";
+import { AssessmentModal } from "@/components/assessment-modal";
 import { format } from "date-fns";
 import { Pencil, BookOpen } from "lucide-react";
 
@@ -48,6 +55,7 @@ interface DogWithClient {
   notes?: string;
   clientId: string;
   petTypeId: string;
+  activeProtocolId?: string | null;
   
   problemDescription?: string;
   trainingObjectives?: string;
@@ -163,6 +171,73 @@ interface Evidence {
   createdAt: Date;
 }
 
+interface Assessment {
+  id: string;
+  dogId: string;
+  evaluatorId: string;
+  assessmentDate: Date;
+  reactionArrivalHidesBehind?: number;
+  reactionArrivalRigid?: number;
+  reactionArrivalSits?: number;
+  reactionArrivalImmobile?: number;
+  reactionAnamnesisHidesBehind?: number;
+  reactionAnamnesisRigid?: number;
+  reactionAnamnesisSits?: number;
+  reactionAnamnesisImmobile?: number;
+  reactionEvalHidesBehind?: number;
+  reactionEvalRigid?: number;
+  reactionEvalSits?: number;
+  reactionEvalImmobile?: number;
+  reactionComments?: string;
+  physCoat?: number;
+  physTemperature?: number;
+  physEyes?: number;
+  physTeeth?: number;
+  physWeight?: number;
+  physSmell?: number;
+  physMuscleTension?: number;
+  physTouchReactive?: number;
+  physSalivating?: number;
+  physSweatingPaws?: number;
+  physShedding?: number;
+  physComments?: string;
+  movBalance?: number;
+  movGait?: number;
+  movSpeed?: number;
+  movCoordination?: number;
+  movComments?: string;
+  leashOwnerSecure?: number;
+  leashOwnerPulls?: number;
+  leashOwnerReactive?: number;
+  leashOwnerAggressive?: number;
+  leashOtherSecure?: number;
+  leashOtherPulls?: number;
+  leashOtherReactive?: number;
+  leashOtherAggressive?: number;
+  leashComments?: string;
+  calmYawning?: number;
+  calmLicking?: number;
+  calmStretching?: number;
+  calmTurnHead?: number;
+  calmBlinking?: number;
+  calmSniffing?: number;
+  interactionStrangers?: number;
+  interactionOtherDogs?: number;
+  interactionComments?: string;
+  postureTail?: number;
+  postureHead?: number;
+  postureEars?: number;
+  postureEyes?: number;
+  postureBalance?: number;
+  postureSymmetry?: number;
+  postureBreathing?: number;
+  postureRolling?: number;
+  postureCrouching?: number;
+  postureComments?: string;
+  generalNotes?: string;
+  createdAt: Date;
+}
+
 interface Protocol {
   id: string;
   name: string;
@@ -199,6 +274,103 @@ const EmptyState = ({ icon: Icon, title, description, onAdd }: { icon: any; titl
   </div>
 );
 
+const RatingDisplay = ({ value }: { value?: number }) => {
+  if (!value) return <span className="text-muted-foreground">-</span>;
+  const faces = [
+    { icon: Frown, color: "text-red-500" },
+    { icon: Meh, color: "text-orange-500" },
+    { icon: Smile, color: "text-yellow-500" },
+    { icon: Laugh, color: "text-lime-500" },
+    { icon: Heart, color: "text-green-500" },
+  ];
+  const face = faces[value - 1];
+  const Icon = face.icon;
+  return <Icon className={`h-4 w-4 ${face.color}`} />;
+};
+
+const AssessmentCard = ({ assessment }: { assessment: Assessment }) => (
+  <Card className="border-l-4 border-l-blue-500">
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <ClipboardCheck className="h-5 w-5 text-blue-500" />
+          <span className="font-semibold">
+            Evaluación del {format(new Date(assessment.assessmentDate), "dd/MM/yyyy")}
+          </span>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="space-y-2">
+          <h4 className="font-medium text-amber-600">Reacciones (Llegada)</h4>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Se esconde</span>
+            <RatingDisplay value={assessment.reactionArrivalHidesBehind} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Rígido</span>
+            <RatingDisplay value={assessment.reactionArrivalRigid} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Inmóvil</span>
+            <RatingDisplay value={assessment.reactionArrivalImmobile} />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="font-medium text-green-600">Físico</h4>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Temperatura</span>
+            <RatingDisplay value={assessment.physTemperature} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Tensión</span>
+            <RatingDisplay value={assessment.physMuscleTension} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Tacto</span>
+            <RatingDisplay value={assessment.physTouchReactive} />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="font-medium text-indigo-600">Movimiento</h4>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Equilibrio</span>
+            <RatingDisplay value={assessment.movBalance} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Coordinación</span>
+            <RatingDisplay value={assessment.movCoordination} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Rapidez</span>
+            <RatingDisplay value={assessment.movSpeed} />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="font-medium text-pink-600">Social</h4>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Extraños</span>
+            <RatingDisplay value={assessment.interactionStrangers} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Otros perros</span>
+            <RatingDisplay value={assessment.interactionOtherDogs} />
+          </div>
+        </div>
+      </div>
+
+      {assessment.generalNotes && (
+        <div className="mt-4 pt-3 border-t">
+          <p className="text-sm text-muted-foreground">{assessment.generalNotes}</p>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+);
+
 export default function ExpedienteDetail() {
   const [, params] = useRoute("/expediente/:id");
   const dogId = params?.id;
@@ -206,6 +378,7 @@ export default function ExpedienteDetail() {
   const [medicalModalOpen, setMedicalModalOpen] = useState(false);
   const [trainingModalOpen, setTrainingModalOpen] = useState(false);
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
+  const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
   const [observationsModalOpen, setObservationsModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -221,10 +394,7 @@ export default function ExpedienteDetail() {
 
   const updateProtocolMutation = useMutation({
     mutationFn: async (protocolId: string | null) => {
-      return apiRequest(`/api/dogs/${dogId}`, {
-        method: "PUT",
-        body: JSON.stringify({ activeProtocolId: protocolId }),
-      });
+      return apiRequest("PUT", `/api/dogs/${dogId}`, { activeProtocolId: protocolId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/dogs", dogId] });
@@ -254,6 +424,11 @@ export default function ExpedienteDetail() {
 
   const { data: evidence = [] } = useQuery<Evidence[]>({
     queryKey: ["/api/dogs", dogId, "evidence"],
+    enabled: !!dogId,
+  });
+
+  const { data: assessments = [] } = useQuery<Assessment[]>({
+    queryKey: ["/api/dogs", dogId, "assessments"],
     enabled: !!dogId,
   });
 
@@ -415,7 +590,7 @@ export default function ExpedienteDetail() {
         {/* Right Column - Tabbed Content */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="resumen" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 mb-4 h-auto">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-4 h-auto">
               <TabsTrigger value="resumen" data-testid="tab-resumen" className="text-xs sm:text-sm">
                 <FileText className="h-4 w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Resumen</span>
@@ -425,6 +600,11 @@ export default function ExpedienteDetail() {
                 <Eye className="h-4 w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Observaciones</span>
                 <span className="sm:hidden">Obs.</span>
+              </TabsTrigger>
+              <TabsTrigger value="valoracion" data-testid="tab-valoracion" className="text-xs sm:text-sm">
+                <ClipboardCheck className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Valoración</span>
+                <span className="sm:hidden">Eval.</span>
               </TabsTrigger>
               <TabsTrigger value="medico" data-testid="tab-medico" className="text-xs sm:text-sm">
                 <Stethoscope className="h-4 w-4 mr-1 sm:mr-2" />
@@ -607,6 +787,36 @@ export default function ExpedienteDetail() {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            {/* Valoración Tab */}
+            <TabsContent value="valoracion" data-testid="content-valoracion">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <CardTitle>Evaluaciones de Valoración</CardTitle>
+                  <Button size="sm" onClick={() => setAssessmentModalOpen(true)} data-testid="button-add-assessment">
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Nueva Evaluación</span>
+                    <span className="sm:hidden">Nueva</span>
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {assessments.length > 0 ? (
+                    <div className="space-y-4">
+                      {assessments.map((assessment) => (
+                        <AssessmentCard key={assessment.id} assessment={assessment} />
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState
+                      icon={ClipboardCheck}
+                      title="No hay evaluaciones de valoración"
+                      description="Comienza agregando la primera evaluación de valoración"
+                      onAdd={() => setAssessmentModalOpen(true)}
+                    />
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Médico Tab */}
@@ -842,6 +1052,15 @@ export default function ExpedienteDetail() {
           open={observationsModalOpen}
           onOpenChange={setObservationsModalOpen}
           dog={dog}
+        />
+      )}
+      
+      {dog && (
+        <AssessmentModal
+          dogId={dog.id}
+          dogName={dog.name}
+          isOpen={assessmentModalOpen}
+          onClose={() => setAssessmentModalOpen(false)}
         />
       )}
     </div>
