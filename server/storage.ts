@@ -15,6 +15,8 @@ import {
   teacherAssignments,
   internalNotes,
   servicePackages,
+  packageSessions,
+  packageAlerts,
   tasks,
   assessments,
   type User,
@@ -49,6 +51,10 @@ import {
   type InsertInternalNote,
   type ServicePackage,
   type InsertServicePackage,
+  type PackageSession,
+  type InsertPackageSession,
+  type PackageAlert,
+  type InsertPackageAlert,
   type Task,
   type InsertTask,
   type Assessment,
@@ -212,6 +218,40 @@ export interface IStorage {
   getAssessment(id: string): Promise<Assessment | undefined>;
   updateAssessment(id: string, assessment: Partial<InsertAssessment>): Promise<Assessment>;
   deleteAssessment(id: string): Promise<void>;
+
+  // Service Package operations (Gestión de Paquetes)
+  createServicePackage(pkg: InsertServicePackage): Promise<ServicePackage>;
+  getServicePackages(): Promise<any[]>;
+  getServicePackagesByClient(clientId: string): Promise<any[]>;
+  getActivePackagesByClient(clientId: string): Promise<any[]>;
+  getServicePackage(id: string): Promise<any | undefined>;
+  updateServicePackage(id: string, pkg: Partial<InsertServicePackage>): Promise<ServicePackage>;
+  deleteServicePackage(id: string): Promise<void>;
+  updatePackageStatus(id: string): Promise<ServicePackage>;
+  getPackagesWithAlerts(): Promise<any[]>;
+
+  // Package Session operations (Control de Sesiones)
+  createPackageSession(session: InsertPackageSession): Promise<PackageSession>;
+  getPackageSessionsByPackage(packageId: string): Promise<any[]>;
+  getPackageSessionsByClient(clientId: string): Promise<any[]>;
+  consumeSession(packageId: string, sessionData: Omit<InsertPackageSession, 'packageId'>): Promise<{ session: PackageSession; package: ServicePackage }>;
+
+  // Package Alert operations (Alertas y Notificaciones)
+  createPackageAlert(alert: InsertPackageAlert): Promise<PackageAlert>;
+  getPackageAlertsByClient(clientId: string): Promise<PackageAlert[]>;
+  getUnreadAlertsByClient(clientId: string): Promise<PackageAlert[]>;
+  getAllUnreadAlerts(): Promise<any[]>;
+  markAlertAsRead(id: string): Promise<void>;
+  markAllAlertsAsRead(clientId: string): Promise<void>;
+
+  // Package Dashboard metrics
+  getPackageDashboardMetrics(): Promise<{
+    activePackages: number;
+    finishingPackages: number;
+    completedPackages: number;
+    expiredPackages: number;
+    clientsWithAlerts: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1633,6 +1673,477 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAssessment(id: string): Promise<void> {
     await db.delete(assessments).where(eq(assessments.id, id));
+  }
+
+  // Service Package operations (Gestión de Paquetes)
+  async createServicePackage(pkg: InsertServicePackage): Promise<ServicePackage> {
+    const [newPackage] = await db.insert(servicePackages).values(pkg).returning();
+    return newPackage;
+  }
+
+  async getServicePackages(): Promise<any[]> {
+    return await db
+      .select({
+        id: servicePackages.id,
+        clientId: servicePackages.clientId,
+        dogId: servicePackages.dogId,
+        serviceId: servicePackages.serviceId,
+        packageName: servicePackages.packageName,
+        totalSessions: servicePackages.totalSessions,
+        usedSessions: servicePackages.usedSessions,
+        remainingSessions: servicePackages.remainingSessions,
+        purchaseDate: servicePackages.purchaseDate,
+        expiryDate: servicePackages.expiryDate,
+        price: servicePackages.price,
+        status: servicePackages.status,
+        notes: servicePackages.notes,
+        createdAt: servicePackages.createdAt,
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+        dog: {
+          id: dogs.id,
+          name: dogs.name,
+          breed: dogs.breed,
+        },
+        service: {
+          id: services.id,
+          name: services.name,
+          type: services.type,
+        },
+      })
+      .from(servicePackages)
+      .leftJoin(clients, eq(servicePackages.clientId, clients.id))
+      .leftJoin(dogs, eq(servicePackages.dogId, dogs.id))
+      .leftJoin(services, eq(servicePackages.serviceId, services.id))
+      .orderBy(desc(servicePackages.createdAt));
+  }
+
+  async getServicePackagesByClient(clientId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: servicePackages.id,
+        clientId: servicePackages.clientId,
+        dogId: servicePackages.dogId,
+        serviceId: servicePackages.serviceId,
+        packageName: servicePackages.packageName,
+        totalSessions: servicePackages.totalSessions,
+        usedSessions: servicePackages.usedSessions,
+        remainingSessions: servicePackages.remainingSessions,
+        purchaseDate: servicePackages.purchaseDate,
+        expiryDate: servicePackages.expiryDate,
+        price: servicePackages.price,
+        status: servicePackages.status,
+        notes: servicePackages.notes,
+        createdAt: servicePackages.createdAt,
+        dog: {
+          id: dogs.id,
+          name: dogs.name,
+          breed: dogs.breed,
+        },
+        service: {
+          id: services.id,
+          name: services.name,
+          type: services.type,
+        },
+      })
+      .from(servicePackages)
+      .leftJoin(dogs, eq(servicePackages.dogId, dogs.id))
+      .leftJoin(services, eq(servicePackages.serviceId, services.id))
+      .where(eq(servicePackages.clientId, clientId))
+      .orderBy(desc(servicePackages.createdAt));
+  }
+
+  async getActivePackagesByClient(clientId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: servicePackages.id,
+        clientId: servicePackages.clientId,
+        dogId: servicePackages.dogId,
+        serviceId: servicePackages.serviceId,
+        packageName: servicePackages.packageName,
+        totalSessions: servicePackages.totalSessions,
+        usedSessions: servicePackages.usedSessions,
+        remainingSessions: servicePackages.remainingSessions,
+        purchaseDate: servicePackages.purchaseDate,
+        expiryDate: servicePackages.expiryDate,
+        price: servicePackages.price,
+        status: servicePackages.status,
+        notes: servicePackages.notes,
+        createdAt: servicePackages.createdAt,
+        dog: {
+          id: dogs.id,
+          name: dogs.name,
+          breed: dogs.breed,
+        },
+        service: {
+          id: services.id,
+          name: services.name,
+          type: services.type,
+        },
+      })
+      .from(servicePackages)
+      .leftJoin(dogs, eq(servicePackages.dogId, dogs.id))
+      .leftJoin(services, eq(servicePackages.serviceId, services.id))
+      .where(
+        and(
+          eq(servicePackages.clientId, clientId),
+          or(
+            eq(servicePackages.status, 'active'),
+            eq(servicePackages.status, 'finishing')
+          )
+        )
+      )
+      .orderBy(desc(servicePackages.createdAt));
+  }
+
+  async getServicePackage(id: string): Promise<any | undefined> {
+    const [pkg] = await db
+      .select({
+        id: servicePackages.id,
+        clientId: servicePackages.clientId,
+        dogId: servicePackages.dogId,
+        serviceId: servicePackages.serviceId,
+        packageName: servicePackages.packageName,
+        totalSessions: servicePackages.totalSessions,
+        usedSessions: servicePackages.usedSessions,
+        remainingSessions: servicePackages.remainingSessions,
+        purchaseDate: servicePackages.purchaseDate,
+        expiryDate: servicePackages.expiryDate,
+        price: servicePackages.price,
+        status: servicePackages.status,
+        notes: servicePackages.notes,
+        createdAt: servicePackages.createdAt,
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+        dog: {
+          id: dogs.id,
+          name: dogs.name,
+          breed: dogs.breed,
+        },
+        service: {
+          id: services.id,
+          name: services.name,
+          type: services.type,
+        },
+      })
+      .from(servicePackages)
+      .leftJoin(clients, eq(servicePackages.clientId, clients.id))
+      .leftJoin(dogs, eq(servicePackages.dogId, dogs.id))
+      .leftJoin(services, eq(servicePackages.serviceId, services.id))
+      .where(eq(servicePackages.id, id));
+    return pkg;
+  }
+
+  async updateServicePackage(id: string, pkgData: Partial<InsertServicePackage>): Promise<ServicePackage> {
+    const [pkg] = await db
+      .update(servicePackages)
+      .set({ ...pkgData, updatedAt: new Date() })
+      .where(eq(servicePackages.id, id))
+      .returning();
+    return pkg;
+  }
+
+  async deleteServicePackage(id: string): Promise<void> {
+    await db.delete(servicePackages).where(eq(servicePackages.id, id));
+  }
+
+  async updatePackageStatus(id: string): Promise<ServicePackage> {
+    const [pkg] = await db.select().from(servicePackages).where(eq(servicePackages.id, id));
+    if (!pkg) throw new Error('Paquete no encontrado');
+
+    let newStatus: 'active' | 'finishing' | 'completed' | 'expired' = 'active';
+    
+    if (pkg.expiryDate && new Date() > new Date(pkg.expiryDate)) {
+      newStatus = 'expired';
+    } else if (pkg.remainingSessions === 0) {
+      newStatus = 'completed';
+    } else if (pkg.remainingSessions <= 3) {
+      newStatus = 'finishing';
+    }
+
+    const [updated] = await db
+      .update(servicePackages)
+      .set({ status: newStatus, updatedAt: new Date() })
+      .where(eq(servicePackages.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getPackagesWithAlerts(): Promise<any[]> {
+    return await db
+      .select({
+        id: servicePackages.id,
+        clientId: servicePackages.clientId,
+        packageName: servicePackages.packageName,
+        totalSessions: servicePackages.totalSessions,
+        usedSessions: servicePackages.usedSessions,
+        remainingSessions: servicePackages.remainingSessions,
+        status: servicePackages.status,
+        expiryDate: servicePackages.expiryDate,
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+      })
+      .from(servicePackages)
+      .leftJoin(clients, eq(servicePackages.clientId, clients.id))
+      .where(
+        or(
+          eq(servicePackages.status, 'finishing'),
+          eq(servicePackages.status, 'completed'),
+          eq(servicePackages.status, 'expired')
+        )
+      )
+      .orderBy(servicePackages.remainingSessions);
+  }
+
+  // Package Session operations (Control de Sesiones)
+  async createPackageSession(session: InsertPackageSession): Promise<PackageSession> {
+    const [newSession] = await db.insert(packageSessions).values(session).returning();
+    return newSession;
+  }
+
+  async getPackageSessionsByPackage(packageId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: packageSessions.id,
+        packageId: packageSessions.packageId,
+        clientId: packageSessions.clientId,
+        dogId: packageSessions.dogId,
+        appointmentId: packageSessions.appointmentId,
+        sessionDate: packageSessions.sessionDate,
+        sessionType: packageSessions.sessionType,
+        status: packageSessions.status,
+        notes: packageSessions.notes,
+        createdAt: packageSessions.createdAt,
+        dog: {
+          id: dogs.id,
+          name: dogs.name,
+        },
+        registeredByUser: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+      })
+      .from(packageSessions)
+      .leftJoin(dogs, eq(packageSessions.dogId, dogs.id))
+      .leftJoin(users, eq(packageSessions.registeredBy, users.id))
+      .where(eq(packageSessions.packageId, packageId))
+      .orderBy(desc(packageSessions.sessionDate));
+  }
+
+  async getPackageSessionsByClient(clientId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: packageSessions.id,
+        packageId: packageSessions.packageId,
+        clientId: packageSessions.clientId,
+        dogId: packageSessions.dogId,
+        sessionDate: packageSessions.sessionDate,
+        sessionType: packageSessions.sessionType,
+        status: packageSessions.status,
+        notes: packageSessions.notes,
+        createdAt: packageSessions.createdAt,
+        package: {
+          id: servicePackages.id,
+          packageName: servicePackages.packageName,
+        },
+        dog: {
+          id: dogs.id,
+          name: dogs.name,
+        },
+      })
+      .from(packageSessions)
+      .leftJoin(servicePackages, eq(packageSessions.packageId, servicePackages.id))
+      .leftJoin(dogs, eq(packageSessions.dogId, dogs.id))
+      .where(eq(packageSessions.clientId, clientId))
+      .orderBy(desc(packageSessions.sessionDate));
+  }
+
+  async consumeSession(
+    packageId: string,
+    sessionData: Omit<InsertPackageSession, 'packageId'>
+  ): Promise<{ session: PackageSession; package: ServicePackage }> {
+    const [pkg] = await db.select().from(servicePackages).where(eq(servicePackages.id, packageId));
+    if (!pkg) throw new Error('Paquete no encontrado');
+    if (pkg.remainingSessions <= 0) throw new Error('No hay sesiones disponibles en este paquete');
+    if (pkg.status === 'expired') throw new Error('El paquete ha expirado');
+    if (pkg.status === 'completed') throw new Error('El paquete ya fue completado');
+
+    const [newSession] = await db
+      .insert(packageSessions)
+      .values({ ...sessionData, packageId })
+      .returning();
+
+    const newUsedSessions = pkg.usedSessions + 1;
+    const newRemainingSessions = pkg.remainingSessions - 1;
+    
+    let newStatus: 'active' | 'finishing' | 'completed' | 'expired' = 'active';
+    if (newRemainingSessions === 0) {
+      newStatus = 'completed';
+    } else if (newRemainingSessions <= 3) {
+      newStatus = 'finishing';
+    }
+
+    const [updatedPkg] = await db
+      .update(servicePackages)
+      .set({
+        usedSessions: newUsedSessions,
+        remainingSessions: newRemainingSessions,
+        status: newStatus,
+        updatedAt: new Date(),
+      })
+      .where(eq(servicePackages.id, packageId))
+      .returning();
+
+    if (newRemainingSessions <= 5 && newRemainingSessions > 0) {
+      let alertLevel: 'yellow' | 'red' | 'critical' = 'yellow';
+      if (newRemainingSessions <= 1) alertLevel = 'critical';
+      else if (newRemainingSessions <= 3) alertLevel = 'red';
+
+      await db.insert(packageAlerts).values({
+        packageId,
+        clientId: pkg.clientId,
+        alertType: 'low_sessions',
+        alertLevel,
+        message: `Te quedan ${newRemainingSessions} sesión(es) en tu paquete "${pkg.packageName}"`,
+      });
+    }
+
+    if (newRemainingSessions === 0) {
+      await db.insert(packageAlerts).values({
+        packageId,
+        clientId: pkg.clientId,
+        alertType: 'package_completed',
+        alertLevel: 'critical',
+        message: `Tu paquete "${pkg.packageName}" ha sido completado. ¡Renuévalo para seguir disfrutando de nuestros servicios!`,
+      });
+    }
+
+    return { session: newSession, package: updatedPkg };
+  }
+
+  // Package Alert operations (Alertas y Notificaciones)
+  async createPackageAlert(alert: InsertPackageAlert): Promise<PackageAlert> {
+    const [newAlert] = await db.insert(packageAlerts).values(alert).returning();
+    return newAlert;
+  }
+
+  async getPackageAlertsByClient(clientId: string): Promise<PackageAlert[]> {
+    return await db
+      .select()
+      .from(packageAlerts)
+      .where(eq(packageAlerts.clientId, clientId))
+      .orderBy(desc(packageAlerts.createdAt));
+  }
+
+  async getUnreadAlertsByClient(clientId: string): Promise<PackageAlert[]> {
+    return await db
+      .select()
+      .from(packageAlerts)
+      .where(
+        and(
+          eq(packageAlerts.clientId, clientId),
+          eq(packageAlerts.isRead, false)
+        )
+      )
+      .orderBy(desc(packageAlerts.createdAt));
+  }
+
+  async getAllUnreadAlerts(): Promise<any[]> {
+    return await db
+      .select({
+        id: packageAlerts.id,
+        packageId: packageAlerts.packageId,
+        clientId: packageAlerts.clientId,
+        alertType: packageAlerts.alertType,
+        alertLevel: packageAlerts.alertLevel,
+        message: packageAlerts.message,
+        isRead: packageAlerts.isRead,
+        createdAt: packageAlerts.createdAt,
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+        package: {
+          id: servicePackages.id,
+          packageName: servicePackages.packageName,
+        },
+      })
+      .from(packageAlerts)
+      .leftJoin(clients, eq(packageAlerts.clientId, clients.id))
+      .leftJoin(servicePackages, eq(packageAlerts.packageId, servicePackages.id))
+      .where(eq(packageAlerts.isRead, false))
+      .orderBy(desc(packageAlerts.createdAt));
+  }
+
+  async markAlertAsRead(id: string): Promise<void> {
+    await db
+      .update(packageAlerts)
+      .set({ isRead: true })
+      .where(eq(packageAlerts.id, id));
+  }
+
+  async markAllAlertsAsRead(clientId: string): Promise<void> {
+    await db
+      .update(packageAlerts)
+      .set({ isRead: true })
+      .where(eq(packageAlerts.clientId, clientId));
+  }
+
+  // Package Dashboard metrics
+  async getPackageDashboardMetrics(): Promise<{
+    activePackages: number;
+    finishingPackages: number;
+    completedPackages: number;
+    expiredPackages: number;
+    clientsWithAlerts: number;
+  }> {
+    const [activeResult] = await db
+      .select({ count: count() })
+      .from(servicePackages)
+      .where(eq(servicePackages.status, 'active'));
+
+    const [finishingResult] = await db
+      .select({ count: count() })
+      .from(servicePackages)
+      .where(eq(servicePackages.status, 'finishing'));
+
+    const [completedResult] = await db
+      .select({ count: count() })
+      .from(servicePackages)
+      .where(eq(servicePackages.status, 'completed'));
+
+    const [expiredResult] = await db
+      .select({ count: count() })
+      .from(servicePackages)
+      .where(eq(servicePackages.status, 'expired'));
+
+    const alertClients = await db
+      .selectDistinct({ clientId: packageAlerts.clientId })
+      .from(packageAlerts)
+      .where(eq(packageAlerts.isRead, false));
+
+    return {
+      activePackages: activeResult?.count || 0,
+      finishingPackages: finishingResult?.count || 0,
+      completedPackages: completedResult?.count || 0,
+      expiredPackages: expiredResult?.count || 0,
+      clientsWithAlerts: alertClients.length,
+    };
   }
 }
 
