@@ -16,7 +16,8 @@ import {
   Settings,
   Wrench,
   FileText,
-  ClipboardList
+  ClipboardList,
+  Package
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -56,6 +57,7 @@ export default function Navigation() {
   ];
 
   const adminItems = [
+    { path: "/packages", label: "Paquetes", icon: Package, mobileLabel: "Paquetes" },
     { path: "/admin/users", label: "Gestión de Usuarios", icon: Settings, mobileLabel: "Usuarios" },
   ];
 

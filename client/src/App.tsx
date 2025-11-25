@@ -17,6 +17,7 @@ import Reports from "@/pages/reports";
 import Records from "@/pages/records";
 import RecordDetail from "@/pages/record-detail";
 import ExpedienteDetail from "@/pages/expediente-detail";
+import Packages from "@/pages/packages";
 import ClientPortal from "@/pages/client-portal";
 import TeacherPortal from "@/pages/teacher-portal";
 import Users from "@/pages/users";
@@ -64,6 +65,9 @@ function Router() {
           <Route path="/records/:dogId" component={RecordDetail} />
           <Route path="/expediente/:id" component={ExpedienteDetail} />
           <Route path="/expedientes" component={Records} />
+          {user?.role === 'admin' && (
+            <Route path="/packages" component={Packages} />
+          )}
           {user?.role === 'client' && (
             <Route path="/portal" component={ClientPortal} />
           )}
