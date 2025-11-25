@@ -778,6 +778,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client portal - Packages with session history
+  app.get('/api/client-portal/packages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'client') {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const client = await storage.getClientByUserId(userId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      const packages = await storage.getServicePackagesByClient(client.id);
+      
+      // For each package, get recent sessions
+      const packagesWithSessions = await Promise.all(
+        packages.map(async (pkg: any) => {
+          const sessions = await storage.getPackageSessionsByPackage(pkg.id);
+          return {
+            ...pkg,
+            sessions: sessions.slice(0, 10), // Last 10 sessions
+            totalSessionsRecorded: sessions.length,
+          };
+        })
+      );
+
+      res.json(packagesWithSessions);
+    } catch (error) {
+      console.error("Error fetching client packages with sessions:", error);
+      res.status(500).json({ message: "Failed to fetch packages" });
+    }
+  });
+
+  // Client portal - Dog progress timeline
+  app.get('/api/client-portal/dogs/:dogId/progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'client') {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const client = await storage.getClientByUserId(userId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      const { dogId } = req.params;
+      
+      // Verify the dog belongs to this client
+      const dog = await storage.getDog(dogId);
+      if (!dog || dog.clientId !== client.id) {
+        return res.status(403).json({ message: "Access denied to this dog's information" });
+      }
+
+      // Get all progress data for the dog
+      const [trainingSessions, progressEntries, medicalRecords] = await Promise.all([
+        storage.getTrainingSessionsByDog(dogId),
+        storage.getProgressEntriesByDog(dogId),
+        storage.getMedicalRecordsByDog(dogId),
+      ]);
+
+      // Combine and sort by date
+      const timeline: any[] = [];
+
+      trainingSessions.forEach((session: any) => {
+        timeline.push({
+          type: 'training',
+          date: session.sessionDate,
+          title: 'Sesión de Entrenamiento',
+          duration: session.durationMinutes,
+          trainer: session.trainerName,
+          exercises: session.exercisesCovered,
+          progress: session.progressNotes,
+          observations: session.observations,
+          data: session,
+        });
+      });
+
+      progressEntries.forEach((entry: any) => {
+        timeline.push({
+          type: 'progress',
+          date: entry.date,
+          title: entry.title || 'Nota de Progreso',
+          description: entry.description,
+          category: entry.category,
+          rating: entry.rating,
+          data: entry,
+        });
+      });
+
+      medicalRecords.forEach((record: any) => {
+        timeline.push({
+          type: 'medical',
+          date: record.recordDate,
+          title: record.recordType === 'vaccination' ? 'Vacunación' : 
+                 record.recordType === 'checkup' ? 'Chequeo' : 
+                 record.recordType === 'treatment' ? 'Tratamiento' : 'Registro Médico',
+          veterinarian: record.veterinarian,
+          diagnosis: record.diagnosis,
+          treatment: record.treatment,
+          notes: record.notes,
+          data: record,
+        });
+      });
+
+      // Sort by date descending (most recent first)
+      timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      res.json({
+        dog,
+        timeline,
+        summary: {
+          totalTrainingSessions: trainingSessions.length,
+          totalProgressEntries: progressEntries.length,
+          totalMedicalRecords: medicalRecords.length,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching dog progress:", error);
+      res.status(500).json({ message: "Failed to fetch dog progress" });
+    }
+  });
+
   // Object storage routes for serving pet images
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req, res) => {
     try {
