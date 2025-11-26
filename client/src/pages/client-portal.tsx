@@ -1062,7 +1062,7 @@ export default function ClientPortal() {
                     <SelectValue placeholder="Sin paquete" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin paquete</SelectItem>
+                    <SelectItem value="none">Sin paquete</SelectItem>
                     {packages.filter((pkg: any) => pkg.remainingSessions > 0).map((pkg: any) => (
                       <SelectItem key={pkg.id} value={pkg.id}>
                         {pkg.packageName} ({pkg.remainingSessions} sesiones restantes)

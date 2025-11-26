@@ -64,7 +64,7 @@ export default function Navigation() {
   // Filter navigation based on user role
   let filteredNavigation;
   if (user?.role === 'client') {
-    filteredNavigation = [{ path: "/portal", label: "Mi Portal", icon: User, mobileLabel: "Portal" }];
+    filteredNavigation = [{ path: "/client-portal", label: "Mi Portal", icon: User, mobileLabel: "Portal" }];
   } else if (user?.role === 'teacher') {
     filteredNavigation = [
       { path: "/teacher-portal", label: "Portal Entrenador", icon: User, mobileLabel: "Portal" },

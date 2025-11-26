@@ -11,14 +11,24 @@ import ClientModal from "@/components/client-modal";
 import BillingModal from "@/components/billing-modal";
 import ExpenseModal from "@/components/expense-modal";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [, setLocation] = useLocation();
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [showClientModal, setShowClientModal] = useState(false);
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+
+  // Redirect clients to their dedicated portal
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user?.role === 'client') {
+      setLocation('/client-portal');
+      return;
+    }
+  }, [isAuthenticated, isLoading, user, setLocation]);
 
   // Redirect to login if not authenticated
   useEffect(() => {

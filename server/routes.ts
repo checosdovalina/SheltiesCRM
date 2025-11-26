@@ -945,8 +945,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: notes || `Solicitud de cita del cliente`,
       };
 
-      // If package is selected, get the service from the package
-      if (packageId) {
+      // If package is selected (not "none"), get the service from the package
+      if (packageId && packageId !== 'none') {
         const pkg = await storage.getServicePackage(packageId);
         if (pkg && pkg.clientId === client.id && pkg.remainingSessions > 0) {
           appointmentData.serviceId = pkg.serviceId;
