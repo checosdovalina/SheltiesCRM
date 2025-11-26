@@ -68,9 +68,7 @@ function Router() {
           {user?.role === 'admin' && (
             <Route path="/packages" component={Packages} />
           )}
-          {user?.role === 'client' && (
-            <Route path="/portal" component={ClientPortal} />
-          )}
+          <Route path="/client-portal" component={ClientPortal} />
           {user?.role === 'teacher' && (
             <Route path="/teacher-portal" component={TeacherPortal} />
           )}
