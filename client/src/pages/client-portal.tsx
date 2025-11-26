@@ -249,7 +249,7 @@ export default function ClientPortal() {
       <Tabs defaultValue="pets" className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="pets" data-testid="tab-pets">
-            <Dog className="w-4 h-4 mr-2" />
+            <DogIcon className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Mis Mascotas</span>
             <span className="sm:hidden">Mascotas</span>
           </TabsTrigger>
@@ -303,7 +303,7 @@ export default function ClientPortal() {
                 <Card key={dog.id} data-testid={`pet-card-${dog.id}`}>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
-                      <Dog className="w-5 h-5 text-primary" />
+                      <DogIcon className="w-5 h-5 text-primary" />
                       <span data-testid={`pet-name-${dog.id}`}>{dog.name}</span>
                     </CardTitle>
                     {dog.breed && (
@@ -345,7 +345,7 @@ export default function ClientPortal() {
               <div className="col-span-full">
                 <Card>
                   <CardContent className="text-center py-12">
-                    <Dog className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <DogIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-foreground mb-2" data-testid="text-no-pets">
                       No hay mascotas registradas
                     </h3>
