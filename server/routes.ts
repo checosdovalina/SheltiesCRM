@@ -714,14 +714,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client portal routes (for client-specific data access)
   app.get('/api/client-portal/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const user = req.user;
       
       if (user?.role !== 'client') {
         return res.status(403).json({ message: "Access denied. Client role required." });
       }
 
-      const client = await storage.getClientByUserId(userId);
+      const client = await storage.getClientByUserId(user.id);
       if (!client) {
         return res.status(404).json({ message: "Client profile not found" });
       }
@@ -736,14 +735,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/client-portal/appointments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const user = req.user;
       
       if (user?.role !== 'client') {
         return res.status(403).json({ message: "Access denied. Client role required." });
       }
 
-      const client = await storage.getClientByUserId(userId);
+      const client = await storage.getClientByUserId(user.id);
       if (!client) {
         return res.status(404).json({ message: "Client not found" });
       }
@@ -758,14 +756,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/client-portal/invoices', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const user = req.user;
       
       if (user?.role !== 'client') {
         return res.status(403).json({ message: "Access denied. Client role required." });
       }
 
-      const client = await storage.getClientByUserId(userId);
+      const client = await storage.getClientByUserId(user.id);
       if (!client) {
         return res.status(404).json({ message: "Client not found" });
       }
@@ -781,14 +778,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client portal - Packages with session history
   app.get('/api/client-portal/packages', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const user = req.user;
       
       if (user?.role !== 'client') {
         return res.status(403).json({ message: "Access denied. Client role required." });
       }
 
-      const client = await storage.getClientByUserId(userId);
+      const client = await storage.getClientByUserId(user.id);
       if (!client) {
         return res.status(404).json({ message: "Client not found" });
       }
@@ -817,14 +813,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client portal - Dog progress timeline
   app.get('/api/client-portal/dogs/:dogId/progress', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const user = req.user;
       
       if (user?.role !== 'client') {
         return res.status(403).json({ message: "Access denied. Client role required." });
       }
 
-      const client = await storage.getClientByUserId(userId);
+      const client = await storage.getClientByUserId(user.id);
       if (!client) {
         return res.status(404).json({ message: "Client not found" });
       }
