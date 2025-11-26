@@ -901,6 +901,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client portal - Request appointment
+  app.post('/api/client-portal/request-appointment', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      
+      if (user?.role !== 'client') {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const client = await storage.getClientByUserId(user.id);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      const { dogId, packageId, preferredDate, preferredTime, notes } = req.body;
+
+      if (!dogId || !preferredDate) {
+        return res.status(400).json({ message: "Dog and preferred date are required" });
+      }
+
+      // Verify the dog belongs to this client
+      const dog = await storage.getDog(dogId);
+      if (!dog || dog.clientId !== client.id) {
+        return res.status(403).json({ message: "Dog not found or access denied" });
+      }
+
+      // Create appointment date with time
+      const appointmentDateTime = new Date(preferredDate);
+      if (preferredTime) {
+        const [hours, minutes] = preferredTime.split(':');
+        appointmentDateTime.setHours(parseInt(hours), parseInt(minutes || '0'));
+      } else {
+        appointmentDateTime.setHours(9, 0); // Default to 9 AM
+      }
+
+      // Create the appointment with pending status
+      const appointmentData: any = {
+        clientId: client.id,
+        dogId,
+        appointmentDate: appointmentDateTime,
+        status: 'pending',
+        notes: notes || `Solicitud de cita del cliente`,
+      };
+
+      // If package is selected, get the service from the package
+      if (packageId) {
+        const pkg = await storage.getServicePackage(packageId);
+        if (pkg && pkg.clientId === client.id && pkg.remainingSessions > 0) {
+          appointmentData.serviceId = pkg.serviceId;
+          appointmentData.packageId = packageId;
+          appointmentData.notes = `${notes || ''}\n[Usando paquete: ${pkg.packageName}]`.trim();
+        }
+      }
+
+      const appointment = await storage.createAppointment(appointmentData);
+
+      res.json({ 
+        message: "Appointment request submitted successfully",
+        appointment 
+      });
+    } catch (error) {
+      console.error("Error requesting appointment:", error);
+      res.status(500).json({ message: "Failed to request appointment" });
+    }
+  });
+
   // Object storage routes for serving pet images
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req, res) => {
     try {
