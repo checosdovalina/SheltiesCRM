@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,15 +9,21 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { 
   User, Dog as DogIcon, Calendar, CreditCard, Camera, FileText, Star, Package, 
   AlertTriangle, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, 
-  Activity, Stethoscope, GraduationCap, PlayCircle, ClipboardList
+  Activity, Stethoscope, GraduationCap, PlayCircle, ClipboardList, Plus, CalendarPlus
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function ClientPortal() {
   const { toast } = useToast();
@@ -79,12 +85,59 @@ export default function ClientPortal() {
 
   const [selectedDogForProgress, setSelectedDogForProgress] = useState<string | null>(null);
   const [expandedPackages, setExpandedPackages] = useState<Record<string, boolean>>({});
+  const [showRequestAppointment, setShowRequestAppointment] = useState(false);
+  const [appointmentForm, setAppointmentForm] = useState({
+    dogId: '',
+    packageId: '',
+    preferredDate: '',
+    preferredTime: '',
+    notes: ''
+  });
 
   const { data: dogProgress, isLoading: progressLoading } = useQuery<any>({
     queryKey: ["/api/client-portal/dogs", selectedDogForProgress, "progress"],
     enabled: isAuthenticated && user?.role === 'client' && !!selectedDogForProgress,
     retry: false,
   });
+
+  const requestAppointmentMutation = useMutation({
+    mutationFn: async (data: typeof appointmentForm) => {
+      const response = await apiRequest('/api/client-portal/request-appointment', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Solicitud enviada",
+        description: "Tu solicitud de cita ha sido enviada. Te confirmaremos pronto.",
+      });
+      setShowRequestAppointment(false);
+      setAppointmentForm({ dogId: '', packageId: '', preferredDate: '', preferredTime: '', notes: '' });
+      queryClient.invalidateQueries({ queryKey: ["/api/client-portal/appointments"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo enviar la solicitud",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleRequestAppointment = () => {
+    if (!appointmentForm.dogId || !appointmentForm.preferredDate) {
+      toast({
+        title: "Campos requeridos",
+        description: "Por favor selecciona una mascota y fecha preferida",
+        variant: "destructive",
+      });
+      return;
+    }
+    requestAppointmentMutation.mutate(appointmentForm);
+  };
 
   const { data: alerts, isLoading: alertsLoading } = useQuery<any[]>({
     queryKey: ["/api/clients", profile?.client?.id, "alerts", "unread"],
@@ -568,6 +621,18 @@ export default function ClientPortal() {
         {/* Appointments Tab */}
         <TabsContent value="appointments">
           <div className="space-y-4">
+            {/* Request Appointment Button */}
+            <div className="flex justify-end">
+              <Button 
+                onClick={() => setShowRequestAppointment(true)}
+                className="gap-2"
+                data-testid="btn-request-appointment"
+              >
+                <CalendarPlus className="w-4 h-4" />
+                Solicitar Cita
+              </Button>
+            </div>
+
             {appointmentsLoading ? (
               [...Array(5)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
@@ -950,6 +1015,143 @@ export default function ClientPortal() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Request Appointment Modal */}
+      <Dialog open={showRequestAppointment} onOpenChange={setShowRequestAppointment}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarPlus className="w-5 h-5 text-primary" />
+              Solicitar Cita
+            </DialogTitle>
+            <DialogDescription>
+              Completa el formulario para solicitar una cita. Te confirmaremos la disponibilidad.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Dog Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="dog">Mascota *</Label>
+              <Select 
+                value={appointmentForm.dogId} 
+                onValueChange={(value) => setAppointmentForm(prev => ({...prev, dogId: value}))}
+              >
+                <SelectTrigger data-testid="select-dog">
+                  <SelectValue placeholder="Selecciona una mascota" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profile?.dogs?.map((dog: any) => (
+                    <SelectItem key={dog.id} value={dog.id}>
+                      {dog.name} - {dog.breed}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Package Selection (optional) */}
+            {packages && packages.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="package">Usar paquete (opcional)</Label>
+                <Select 
+                  value={appointmentForm.packageId} 
+                  onValueChange={(value) => setAppointmentForm(prev => ({...prev, packageId: value}))}
+                >
+                  <SelectTrigger data-testid="select-package">
+                    <SelectValue placeholder="Sin paquete" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sin paquete</SelectItem>
+                    {packages.filter((pkg: any) => pkg.remainingSessions > 0).map((pkg: any) => (
+                      <SelectItem key={pkg.id} value={pkg.id}>
+                        {pkg.packageName} ({pkg.remainingSessions} sesiones restantes)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Preferred Date */}
+            <div className="space-y-2">
+              <Label htmlFor="preferredDate">Fecha preferida *</Label>
+              <Input 
+                type="date" 
+                id="preferredDate"
+                value={appointmentForm.preferredDate}
+                onChange={(e) => setAppointmentForm(prev => ({...prev, preferredDate: e.target.value}))}
+                min={new Date().toISOString().split('T')[0]}
+                data-testid="input-preferred-date"
+              />
+            </div>
+
+            {/* Preferred Time */}
+            <div className="space-y-2">
+              <Label htmlFor="preferredTime">Hora preferida</Label>
+              <Select 
+                value={appointmentForm.preferredTime} 
+                onValueChange={(value) => setAppointmentForm(prev => ({...prev, preferredTime: value}))}
+              >
+                <SelectTrigger data-testid="select-preferred-time">
+                  <SelectValue placeholder="Selecciona una hora" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="08:00">08:00 AM</SelectItem>
+                  <SelectItem value="09:00">09:00 AM</SelectItem>
+                  <SelectItem value="10:00">10:00 AM</SelectItem>
+                  <SelectItem value="11:00">11:00 AM</SelectItem>
+                  <SelectItem value="12:00">12:00 PM</SelectItem>
+                  <SelectItem value="13:00">01:00 PM</SelectItem>
+                  <SelectItem value="14:00">02:00 PM</SelectItem>
+                  <SelectItem value="15:00">03:00 PM</SelectItem>
+                  <SelectItem value="16:00">04:00 PM</SelectItem>
+                  <SelectItem value="17:00">05:00 PM</SelectItem>
+                  <SelectItem value="18:00">06:00 PM</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notas adicionales</Label>
+              <Textarea 
+                id="notes"
+                placeholder="¿Hay algo que debamos saber?"
+                value={appointmentForm.notes}
+                onChange={(e) => setAppointmentForm(prev => ({...prev, notes: e.target.value}))}
+                className="resize-none"
+                rows={3}
+                data-testid="input-notes"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowRequestAppointment(false)}
+              data-testid="btn-cancel-appointment"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleRequestAppointment}
+              disabled={requestAppointmentMutation.isPending}
+              data-testid="btn-submit-appointment"
+            >
+              {requestAppointmentMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Enviando...
+                </>
+              ) : (
+                'Enviar Solicitud'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
