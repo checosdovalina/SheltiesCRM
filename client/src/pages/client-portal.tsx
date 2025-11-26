@@ -6,7 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Dog, Calendar, CreditCard, Camera, FileText, Star, Package, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { 
+  User, Dog as DogIcon, Calendar, CreditCard, Camera, FileText, Star, Package, 
+  AlertTriangle, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, 
+  Activity, Stethoscope, GraduationCap, PlayCircle, ClipboardList
+} from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
@@ -65,8 +72,17 @@ export default function ClientPortal() {
   });
 
   const { data: packages, isLoading: packagesLoading } = useQuery<any[]>({
-    queryKey: ["/api/clients", profile?.client?.id, "packages"],
-    enabled: isAuthenticated && user?.role === 'client' && !!profile?.client?.id,
+    queryKey: ["/api/client-portal/packages"],
+    enabled: isAuthenticated && user?.role === 'client',
+    retry: false,
+  });
+
+  const [selectedDogForProgress, setSelectedDogForProgress] = useState<string | null>(null);
+  const [expandedPackages, setExpandedPackages] = useState<Record<string, boolean>>({});
+
+  const { data: dogProgress, isLoading: progressLoading } = useQuery<any>({
+    queryKey: ["/api/client-portal/dogs", selectedDogForProgress, "progress"],
+    enabled: isAuthenticated && user?.role === 'client' && !!selectedDogForProgress,
     retry: false,
   });
 
@@ -392,6 +408,7 @@ export default function ClientPortal() {
                   const progressPercentage = pkg.totalSessions > 0 
                     ? ((pkg.totalSessions - pkg.remainingSessions) / pkg.totalSessions) * 100 
                     : 0;
+                  const isExpanded = expandedPackages[pkg.id] || false;
                   
                   return (
                     <Card key={pkg.id} data-testid={`package-card-${pkg.id}`} className={
@@ -421,11 +438,11 @@ export default function ClientPortal() {
                           <div>
                             <div className="flex justify-between text-sm mb-2">
                               <span className="text-muted-foreground">Sesiones utilizadas</span>
-                              <span className="font-medium">{pkg.usedSessions} de {pkg.totalSessions}</span>
+                              <span className="font-medium">{pkg.usedSessions || 0} de {pkg.totalSessions}</span>
                             </div>
-                            <Progress value={progressPercentage} className="h-2" />
+                            <Progress value={progressPercentage} className="h-3" />
                             <div className="flex justify-between text-xs mt-1">
-                              <span className="text-muted-foreground">
+                              <span className="text-green-600 font-medium">
                                 Restantes: {pkg.remainingSessions}
                               </span>
                               <span className="text-muted-foreground">
@@ -438,7 +455,7 @@ export default function ClientPortal() {
                           <div className="pt-3 border-t border-border space-y-2">
                             {pkg.dog && (
                               <div className="flex items-center gap-2 text-sm">
-                                <Dog className="w-4 h-4 text-muted-foreground" />
+                                <DogIcon className="w-4 h-4 text-muted-foreground" />
                                 <span>Mascota: {pkg.dog.name}</span>
                               </div>
                             )}
@@ -456,6 +473,57 @@ export default function ClientPortal() {
                               </div>
                             )}
                           </div>
+
+                          {/* Sessions History Collapsible */}
+                          {pkg.sessions && pkg.sessions.length > 0 && (
+                            <Collapsible 
+                              open={isExpanded}
+                              onOpenChange={(open) => setExpandedPackages(prev => ({...prev, [pkg.id]: open}))}
+                            >
+                              <CollapsibleTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="w-full justify-between mt-2"
+                                  data-testid={`btn-toggle-sessions-${pkg.id}`}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <ClipboardList className="w-4 h-4" />
+                                    Ver historial de sesiones ({pkg.totalSessionsRecorded})
+                                  </span>
+                                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                </Button>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
+                                  {pkg.sessions.map((session: any, idx: number) => (
+                                    <div 
+                                      key={session.id || idx} 
+                                      className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg text-sm"
+                                      data-testid={`session-item-${session.id || idx}`}
+                                    >
+                                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <PlayCircle className="w-4 h-4 text-primary" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <div className="font-medium">
+                                          {session.sessionType === 'training' ? 'Entrenamiento' :
+                                           session.sessionType === 'evaluation' ? 'Evaluación' :
+                                           session.sessionType === 'follow-up' ? 'Seguimiento' : 'Sesión'}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {format(new Date(session.sessionDate), "dd/MM/yyyy", { locale: es })}
+                                        </div>
+                                      </div>
+                                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                        Completada
+                                      </Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          )}
 
                           {/* Warning for finishing packages */}
                           {pkg.status === 'finishing' && (
@@ -587,25 +655,223 @@ export default function ClientPortal() {
 
         {/* Progress Tab */}
         <TabsContent value="progress">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Star className="w-5 h-5" />
-                <span>Seguimiento de Progreso</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2" data-testid="text-progress-coming-soon">
-                  Próximamente
-                </h3>
-                <p className="text-muted-foreground">
-                  Aquí podrás ver fotos, videos y notas del progreso de tus mascotas durante el entrenamiento
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            {/* Dog Selector */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Activity className="w-5 h-5 text-primary" />
+                  <span>Progreso de tu Mascota</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {profile?.dogs && profile.dogs.length > 0 ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Selecciona una mascota para ver su progreso detallado:
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {profile.dogs.map((dog: any) => (
+                        <Button
+                          key={dog.id}
+                          variant={selectedDogForProgress === dog.id ? "default" : "outline"}
+                          className="h-auto p-4 flex flex-col items-center gap-2"
+                          onClick={() => setSelectedDogForProgress(dog.id)}
+                          data-testid={`btn-select-dog-${dog.id}`}
+                        >
+                          <Avatar className="w-12 h-12">
+                            <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                              {dog.name?.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{dog.name}</span>
+                          <span className="text-xs text-muted-foreground">{dog.breed}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <DogIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">No hay mascotas registradas</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Progress Timeline */}
+            {selectedDogForProgress && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-yellow-500" />
+                      Línea de Tiempo - {dogProgress?.dog?.name}
+                    </span>
+                    {dogProgress?.summary && (
+                      <div className="flex gap-2 text-xs">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          <GraduationCap className="w-3 h-3 mr-1" />
+                          {dogProgress.summary.totalTrainingSessions} entrenamientos
+                        </Badge>
+                        <Badge variant="outline" className="bg-green-50 text-green-700">
+                          <ClipboardList className="w-3 h-3 mr-1" />
+                          {dogProgress.summary.totalProgressEntries} notas
+                        </Badge>
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                          <Stethoscope className="w-3 h-3 mr-1" />
+                          {dogProgress.summary.totalMedicalRecords} médicos
+                        </Badge>
+                      </div>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {progressLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="flex gap-4 animate-pulse">
+                          <div className="w-10 h-10 bg-muted rounded-full"></div>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-muted rounded w-1/3"></div>
+                            <div className="h-3 bg-muted rounded w-2/3"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : dogProgress?.timeline && dogProgress.timeline.length > 0 ? (
+                    <ScrollArea className="h-[400px] pr-4">
+                      <div className="relative">
+                        <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-border"></div>
+                        <div className="space-y-6">
+                          {dogProgress.timeline.map((item: any, idx: number) => (
+                            <div key={idx} className="relative flex gap-4" data-testid={`timeline-item-${idx}`}>
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 ${
+                                item.type === 'training' ? 'bg-blue-100 text-blue-600' :
+                                item.type === 'progress' ? 'bg-green-100 text-green-600' :
+                                item.type === 'medical' ? 'bg-purple-100 text-purple-600' :
+                                'bg-gray-100 text-gray-600'
+                              }`}>
+                                {item.type === 'training' && <GraduationCap className="w-5 h-5" />}
+                                {item.type === 'progress' && <Star className="w-5 h-5" />}
+                                {item.type === 'medical' && <Stethoscope className="w-5 h-5" />}
+                              </div>
+                              <div className="flex-1 bg-muted/30 rounded-lg p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <h4 className="font-medium">{item.title}</h4>
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {format(new Date(item.date), "dd 'de' MMMM, yyyy", { locale: es })}
+                                    </p>
+                                  </div>
+                                  <Badge variant="outline" className={
+                                    item.type === 'training' ? 'bg-blue-50 text-blue-700' :
+                                    item.type === 'progress' ? 'bg-green-50 text-green-700' :
+                                    'bg-purple-50 text-purple-700'
+                                  }>
+                                    {item.type === 'training' ? 'Entrenamiento' :
+                                     item.type === 'progress' ? 'Progreso' : 'Médico'}
+                                  </Badge>
+                                </div>
+                                
+                                {/* Training Session Details */}
+                                {item.type === 'training' && (
+                                  <div className="space-y-2 text-sm">
+                                    {item.trainer && (
+                                      <p><strong>Entrenador:</strong> {item.trainer}</p>
+                                    )}
+                                    {item.duration && (
+                                      <p><strong>Duración:</strong> {item.duration} minutos</p>
+                                    )}
+                                    {item.exercises && (
+                                      <p><strong>Ejercicios:</strong> {item.exercises}</p>
+                                    )}
+                                    {item.progress && (
+                                      <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                                        <p className="text-green-700 dark:text-green-300">
+                                          <strong>Avance:</strong> {item.progress}
+                                        </p>
+                                      </div>
+                                    )}
+                                    {item.observations && (
+                                      <p className="text-muted-foreground italic">{item.observations}</p>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Progress Entry Details */}
+                                {item.type === 'progress' && (
+                                  <div className="space-y-2 text-sm">
+                                    {item.description && (
+                                      <p>{item.description}</p>
+                                    )}
+                                    {item.rating && (
+                                      <div className="flex items-center gap-1">
+                                        {[...Array(5)].map((_, i) => (
+                                          <Star 
+                                            key={i} 
+                                            className={`w-4 h-4 ${i < item.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                                          />
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Medical Record Details */}
+                                {item.type === 'medical' && (
+                                  <div className="space-y-2 text-sm">
+                                    {item.veterinarian && (
+                                      <p><strong>Veterinario:</strong> {item.veterinarian}</p>
+                                    )}
+                                    {item.diagnosis && (
+                                      <p><strong>Diagnóstico:</strong> {item.diagnosis}</p>
+                                    )}
+                                    {item.treatment && (
+                                      <p><strong>Tratamiento:</strong> {item.treatment}</p>
+                                    )}
+                                    {item.notes && (
+                                      <p className="text-muted-foreground italic">{item.notes}</p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </ScrollArea>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        Sin registros aún
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Aquí aparecerán los entrenamientos, evaluaciones y registros médicos de {dogProgress?.dog?.name || 'tu mascota'}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No dog selected message */}
+            {!selectedDogForProgress && profile?.dogs?.length > 0 && (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Activity className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    Selecciona una mascota
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Elige una de tus mascotas arriba para ver su línea de tiempo de progreso
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </TabsContent>
 
         {/* Billing Tab */}
