@@ -102,12 +102,8 @@ export default function ClientPortal() {
 
   const requestAppointmentMutation = useMutation({
     mutationFn: async (data: typeof appointmentForm) => {
-      const response = await apiRequest('/api/client-portal/request-appointment', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      return response;
+      const response = await apiRequest('POST', '/api/client-portal/request-appointment', data);
+      return response.json();
     },
     onSuccess: () => {
       toast({
