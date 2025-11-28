@@ -20,6 +20,7 @@ import ExpedienteDetail from "@/pages/expediente-detail";
 import Packages from "@/pages/packages";
 import ClientPortal from "@/pages/client-portal";
 import TeacherPortal from "@/pages/teacher-portal";
+import TeacherClasses from "@/pages/teacher-classes";
 import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
 import Navigation from "@/components/navigation";
@@ -69,6 +70,9 @@ function Router() {
             <Route path="/packages" component={Packages} />
           )}
           <Route path="/client-portal" component={ClientPortal} />
+          {(user?.role === 'teacher' || user?.role === 'admin') && (
+            <Route path="/mis-clases" component={TeacherClasses} />
+          )}
           {user?.role === 'teacher' && (
             <Route path="/teacher-portal" component={TeacherPortal} />
           )}

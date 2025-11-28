@@ -17,7 +17,8 @@ import {
   Wrench,
   FileText,
   ClipboardList,
-  Package
+  Package,
+  GraduationCap
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -68,6 +69,8 @@ export default function Navigation() {
   } else if (user?.role === 'teacher') {
     filteredNavigation = [
       { path: "/teacher-portal", label: "Portal Entrenador", icon: User, mobileLabel: "Portal" },
+      { path: "/mis-clases", label: "Mis Clases", icon: GraduationCap, mobileLabel: "Clases" },
+      { path: "/calendar", label: "Calendario", icon: CalendarDays, mobileLabel: "Calendario" },
       { path: "/records", label: "Expedientes", icon: FileText, mobileLabel: "Expedientes" },
     ];
   } else if (user?.role === 'admin') {
