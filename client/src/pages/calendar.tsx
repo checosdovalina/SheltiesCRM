@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, ChevronLeft, ChevronRight, Plus, Clock, CheckSquare, User, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Calendar, ChevronLeft, ChevronRight, Plus, Clock, CheckSquare, User, X, UserPlus } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import AppointmentModal from "@/components/appointment-modal";
 import TaskModal from "@/components/task-modal";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function CalendarPage() {
   const { toast } = useToast();
@@ -19,7 +21,43 @@ export default function CalendarPage() {
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<string>('all');
+  const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false);
+  const [appointmentToAssign, setAppointmentToAssign] = useState<any>(null);
+  const [assigningTeacherId, setAssigningTeacherId] = useState<string>('');
   const isAdmin = user?.role === 'admin';
+
+  // Mutation to assign teacher to appointment
+  const assignTeacherMutation = useMutation({
+    mutationFn: async ({ appointmentId, teacherId }: { appointmentId: string; teacherId: string }) => {
+      const response = await apiRequest('PUT', `/api/appointments/${appointmentId}/assign-teacher`, { teacherId });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profesor asignado",
+        description: "El profesor ha sido asignado a la cita exitosamente",
+      });
+      setShowAssignTeacherModal(false);
+      setAppointmentToAssign(null);
+      setAssigningTeacherId('');
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments/range"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo asignar el profesor",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleAssignTeacher = () => {
+    if (!appointmentToAssign || !assigningTeacherId) return;
+    assignTeacherMutation.mutate({
+      appointmentId: appointmentToAssign.id,
+      teacherId: assigningTeacherId
+    });
+  };
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -426,8 +464,29 @@ export default function CalendarPage() {
                                 {apt.client?.firstName} {apt.client?.lastName}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {apt.dog?.name} - {apt.service?.name}
+                                {apt.dog?.name} - {apt.service?.name || 'Sin servicio'}
                               </p>
+                              {apt.teacherId ? (
+                                <p className="text-xs text-chart-2 mt-1">
+                                  <User className="w-3 h-3 inline mr-1" />
+                                  Profesor: {teachers.find((t: any) => t.id === apt.teacherId)?.firstName || 'Asignado'}
+                                </p>
+                              ) : isAdmin && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-2 w-full text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAppointmentToAssign(apt);
+                                    setShowAssignTeacherModal(true);
+                                  }}
+                                  data-testid={`button-assign-teacher-${apt.id}`}
+                                >
+                                  <UserPlus className="w-3 h-3 mr-1" />
+                                  Asignar Profesor
+                                </Button>
+                              )}
                             </div>
                           ))}
                           {getTasksForDate(selectedDate).map((task: any) => (
@@ -613,6 +672,65 @@ export default function CalendarPage() {
         onOpenChange={setShowTaskModal}
         selectedDate={selectedDate}
       />
+
+      {/* Assign Teacher Modal */}
+      <Dialog open={showAssignTeacherModal} onOpenChange={setShowAssignTeacherModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asignar Profesor</DialogTitle>
+            <DialogDescription>
+              Selecciona un profesor para asignar a esta cita
+            </DialogDescription>
+          </DialogHeader>
+          {appointmentToAssign && (
+            <div className="space-y-4">
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">{appointmentToAssign.client?.firstName} {appointmentToAssign.client?.lastName}</p>
+                <p className="text-sm text-muted-foreground">
+                  {appointmentToAssign.dog?.name} - {new Date(appointmentToAssign.appointmentDate).toLocaleString('es-ES', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Seleccionar Profesor</label>
+                <Select value={assigningTeacherId} onValueChange={setAssigningTeacherId}>
+                  <SelectTrigger data-testid="select-assign-teacher">
+                    <SelectValue placeholder="Seleccionar profesor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teachers.map((teacher: any) => (
+                      <SelectItem key={teacher.id} value={teacher.id}>
+                        {teacher.firstName} {teacher.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAssignTeacherModal(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleAssignTeacher}
+                  disabled={!assigningTeacherId || assignTeacherMutation.isPending}
+                  data-testid="button-confirm-assign-teacher"
+                >
+                  {assignTeacherMutation.isPending ? 'Asignando...' : 'Asignar'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
