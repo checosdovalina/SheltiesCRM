@@ -335,7 +335,7 @@ export const appointments = pgTable("appointments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").references(() => clients.id).notNull(),
   dogId: varchar("dog_id").references(() => dogs.id).notNull(),
-  serviceId: varchar("service_id").references(() => services.id).notNull(),
+  serviceId: varchar("service_id").references(() => services.id),
   teacherId: varchar("teacher_id").references(() => users.id), // Assigned teacher
   plannedProtocolId: varchar("planned_protocol_id").references(() => protocols.id), // Protocolo planeado para esta cita
   appointmentDate: timestamp("appointment_date").notNull(),
