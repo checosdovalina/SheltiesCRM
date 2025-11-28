@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin, authenticateUser, registerAdmin } from "./auth";
-import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { ObjectStorageService, ObjectNotFoundError, objectStorageClient, parseObjectPath } from "./objectStorage";
 import {
   insertClientSchema,
   insertDogSchema,
@@ -668,13 +668,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const objectStorageService = new ObjectStorageService();
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       
-      // Extract the object path from the signed URL to return as the file URL
-      const url = new URL(uploadURL);
-      const objectPath = url.pathname;
+      // Normalize the object path to get the file URL
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
       
       res.json({ 
         uploadURL,
-        url: `/objects${objectPath}` 
+        url: `/objects${normalizedPath}` 
       });
     } catch (error) {
       console.error("Error getting upload URL:", error);
@@ -687,8 +686,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const objectPath = req.path;
       const objectStorageService = new ObjectStorageService();
-      const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
-      await objectStorageService.downloadObject(objectFile, res);
+      
+      // Extract the file path after /objects/
+      const filePath = objectPath.replace('/objects/', '');
+      const privateDir = objectStorageService.getPrivateObjectDir();
+      const fullPath = `${privateDir}/${filePath}`;
+      
+      const { bucketName, objectName } = parseObjectPath(fullPath);
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      const [exists] = await file.exists();
+      if (!exists) {
+        return res.status(404).json({ message: "File not found" });
+      }
+      
+      await objectStorageService.downloadObject(file, res);
     } catch (error) {
       console.error("Error serving object:", error);
       if (error instanceof ObjectNotFoundError) {
