@@ -943,10 +943,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all progress data for the dog including evidence
       const [trainingSessions, progressEntries, medicalRecords, evidenceList] = await Promise.all([
-        storage.getTrainingSessionsByDog(dogId),
-        storage.getProgressEntriesByDog(dogId),
-        storage.getMedicalRecordsByDog(dogId),
-        storage.getEvidenceByDog(dogId),
+        storage.getTrainingSessionsByDogId(dogId),
+        storage.getProgressEntriesByDogId(dogId),
+        storage.getMedicalRecordsByDogId(dogId),
+        storage.getEvidenceByDogId(dogId),
       ]);
 
       // Combine and sort by date
