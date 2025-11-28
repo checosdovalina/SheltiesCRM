@@ -138,6 +138,35 @@ export default function AppointmentModal({
     retry: false,
   });
 
+  // Fetch packages for selected client to filter services
+  const { data: clientPackages } = useQuery<any[]>({
+    queryKey: ["/api/clients", selectedClientId, "packages"],
+    enabled: !!selectedClientId && open,
+    retry: false,
+  });
+
+  // Filter services based on client's active packages
+  const filteredServices = (() => {
+    if (!Array.isArray(services)) return [];
+    
+    // If client has active packages, filter services to match package services
+    if (clientPackages && clientPackages.length > 0) {
+      const activePackages = clientPackages.filter((pkg: any) => 
+        pkg.status === 'active' && pkg.remainingSessions > 0
+      );
+      
+      if (activePackages.length > 0) {
+        const packageServiceIds = activePackages.map((pkg: any) => pkg.serviceId);
+        return services.filter((service: any) => 
+          packageServiceIds.includes(service.id)
+        );
+      }
+    }
+    
+    // If no active packages, show all services
+    return services;
+  })();
+
   // Additional effect to load dogs when editing appointment with different client
   useEffect(() => {
     if (appointment && appointment.clientId && open) {
@@ -296,18 +325,27 @@ export default function AppointmentModal({
               name="serviceId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Servicio</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <FormLabel>
+                    Servicio
+                    {clientPackages && clientPackages.filter((p: any) => p.status === 'active' && p.remainingSessions > 0).length > 0 && (
+                      <span className="ml-2 text-xs text-muted-foreground">(Filtrado por paquetes activos)</span>
+                    )}
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedClientId}>
                     <FormControl>
                       <SelectTrigger data-testid="select-service">
-                        <SelectValue placeholder="Seleccionar servicio..." />
+                        <SelectValue placeholder={!selectedClientId ? "Primero selecciona un cliente..." : "Seleccionar servicio..."} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {servicesLoading ? (
+                      {!selectedClientId ? (
+                        <SelectItem value="no-client" disabled>Primero selecciona un cliente</SelectItem>
+                      ) : servicesLoading ? (
                         <SelectItem value="loading" disabled>Cargando servicios...</SelectItem>
-                      ) : Array.isArray(services) && services
-                          .filter(service => service.id && service.id.trim() !== '')
+                      ) : filteredServices.length === 0 ? (
+                        <SelectItem value="no-services" disabled>No hay servicios disponibles</SelectItem>
+                      ) : filteredServices
+                          .filter((service: any) => service.id && service.id.trim() !== '')
                           .map((service: any) => (
                             <SelectItem key={service.id} value={service.id}>
                               {service.name} - ${Number(service.price).toLocaleString()}
