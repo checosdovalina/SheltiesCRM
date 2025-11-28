@@ -475,6 +475,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get appointments assigned to a specific teacher
+  app.get('/api/appointments/teacher/:teacherId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teacherId } = req.params;
+      const allAppointments = await storage.getAppointments();
+      const teacherAppointments = allAppointments.filter((apt: any) => apt.teacherId === teacherId);
+      res.json(teacherAppointments);
+    } catch (error) {
+      console.error("Error fetching teacher appointments:", error);
+      res.status(500).json({ message: "Failed to fetch teacher appointments" });
+    }
+  });
+
   app.get('/api/appointments/:id', isAuthenticated, async (req, res) => {
     try {
       const appointment = await storage.getAppointment(req.params.id);
