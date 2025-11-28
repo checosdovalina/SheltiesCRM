@@ -149,17 +149,25 @@ export default function AppointmentModal({
   const filteredServices = (() => {
     if (!Array.isArray(services)) return [];
     
-    // If client has active packages, filter services to match package services
+    // If client has active packages with specific services, filter
     if (clientPackages && clientPackages.length > 0) {
       const activePackages = clientPackages.filter((pkg: any) => 
         pkg.status === 'active' && pkg.remainingSessions > 0
       );
       
       if (activePackages.length > 0) {
-        const packageServiceIds = activePackages.map((pkg: any) => pkg.serviceId);
-        return services.filter((service: any) => 
-          packageServiceIds.includes(service.id)
-        );
+        // Get only packages that have a serviceId defined
+        const packagesWithService = activePackages.filter((pkg: any) => pkg.serviceId);
+        
+        if (packagesWithService.length > 0) {
+          // If there are packages with specific services, filter to those services
+          const packageServiceIds = packagesWithService.map((pkg: any) => pkg.serviceId);
+          return services.filter((service: any) => 
+            packageServiceIds.includes(service.id)
+          );
+        }
+        // If packages exist but none have serviceId, show all services
+        return services;
       }
     }
     
