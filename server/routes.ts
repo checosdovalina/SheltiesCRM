@@ -538,6 +538,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Assign teacher to appointment (admin only)
+  app.put('/api/appointments/:id/assign-teacher', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Solo administradores pueden asignar profesores" });
+      }
+
+      const { teacherId } = req.body;
+      if (!teacherId) {
+        return res.status(400).json({ message: "Teacher ID is required" });
+      }
+
+      const appointment = await storage.updateAppointment(req.params.id, { 
+        teacherId,
+        status: 'confirmed' // Auto-confirm when teacher is assigned
+      });
+      res.json(appointment);
+    } catch (error) {
+      console.error("Error assigning teacher:", error);
+      res.status(500).json({ message: "Failed to assign teacher" });
+    }
+  });
+
+  // Get appointments assigned to a teacher
+  app.get('/api/teacher/appointments', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user || (user.role !== 'teacher' && user.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const teacherId = user.role === 'admin' ? req.query.teacherId : user.id;
+      
+      if (!teacherId) {
+        return res.status(400).json({ message: "Teacher ID is required" });
+      }
+
+      const allAppointments = await storage.getAppointments();
+      const teacherAppointments = allAppointments.filter((apt: any) => apt.teacherId === teacherId);
+      
+      res.json(teacherAppointments);
+    } catch (error) {
+      console.error("Error fetching teacher appointments:", error);
+      res.status(500).json({ message: "Failed to fetch teacher appointments" });
+    }
+  });
+
   // Pet types routes
   app.get('/api/pet-types', isAuthenticated, async (req, res) => {
     try {
