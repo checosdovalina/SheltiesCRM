@@ -1247,7 +1247,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAssignedDogsByTeacher(teacherId: string): Promise<any[]> {
-    return await db
+    // Get dogs from formal teacher_assignments table
+    const assignedDogs = await db
       .select({
         id: dogs.id,
         name: dogs.name,
@@ -1273,6 +1274,35 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(teacherAssignments.assignedDate));
+
+    // Also get unique dogs from appointments assigned to this teacher
+    const dogsFromAppointments = await db
+      .selectDistinctOn([dogs.id], {
+        id: dogs.id,
+        name: dogs.name,
+        breed: dogs.breed,
+        age: dogs.age,
+        imageUrl: dogs.imageUrl,
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+        assignmentNotes: sql<string>`null`.as('assignmentNotes'),
+        assignedDate: appointments.appointmentDate,
+      })
+      .from(appointments)
+      .innerJoin(dogs, eq(appointments.dogId, dogs.id))
+      .innerJoin(clients, eq(dogs.clientId, clients.id))
+      .where(eq(appointments.teacherId, teacherId))
+      .orderBy(dogs.id, desc(appointments.appointmentDate));
+
+    // Combine both lists, removing duplicates by dog ID
+    const assignedDogIds = new Set(assignedDogs.map(d => d.id));
+    const uniqueDogsFromAppointments = dogsFromAppointments.filter(d => !assignedDogIds.has(d.id));
+    
+    return [...assignedDogs, ...uniqueDogsFromAppointments];
   }
 
   async getRecentNotesByTeacher(teacherId: string): Promise<InternalNote[]> {
