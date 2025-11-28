@@ -1233,9 +1233,9 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .from(appointments)
-      .innerJoin(dogs, eq(appointments.dogId, dogs.id))
-      .innerJoin(clients, eq(appointments.clientId, clients.id))
-      .innerJoin(services, eq(appointments.serviceId, services.id))
+      .leftJoin(dogs, eq(appointments.dogId, dogs.id))
+      .leftJoin(clients, eq(appointments.clientId, clients.id))
+      .leftJoin(services, eq(appointments.serviceId, services.id))
       .where(
         and(
           eq(appointments.teacherId, teacherId),
