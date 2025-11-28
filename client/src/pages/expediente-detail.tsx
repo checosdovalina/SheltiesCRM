@@ -45,6 +45,7 @@ import EvidenceModal from "@/components/evidence-modal";
 import ObservationsModal from "@/components/observations-modal";
 import { AssessmentModal } from "@/components/assessment-modal";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { Pencil, BookOpen } from "lucide-react";
 
 interface DogWithClient {
@@ -1212,33 +1213,54 @@ export default function ExpedienteDetail() {
                   {evidence.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {evidence.map((item) => (
-                        <Card key={item.id}>
+                        <Card key={item.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="p-4">
                             <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0">
-                                {item.type === 'photo' && <Camera className="h-8 w-8 text-primary" />}
-                                {item.type === 'video' && <Activity className="h-8 w-8 text-primary" />}
-                                {item.type === 'document' && <FileText className="h-8 w-8 text-primary" />}
-                                {item.type === 'note' && <FileText className="h-8 w-8 text-primary" />}
+                              <div className="flex-shrink-0 p-2 bg-primary/10 rounded-lg">
+                                {item.type === 'photo' && <Camera className="h-6 w-6 text-primary" />}
+                                {item.type === 'video' && <Activity className="h-6 w-6 text-primary" />}
+                                {item.type === 'document' && <FileText className="h-6 w-6 text-primary" />}
+                                {item.type === 'note' && <FileText className="h-6 w-6 text-primary" />}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold truncate">{item.title}</h4>
+                                <div className="flex items-center justify-between gap-2">
+                                  <h4 className="font-semibold">{item.title}</h4>
+                                  <Badge variant="outline" className="text-xs flex-shrink-0">
+                                    {item.type === 'photo' ? 'Foto' : 
+                                     item.type === 'video' ? 'Video' : 
+                                     item.type === 'document' ? 'Documento' : 'Nota'}
+                                  </Badge>
+                                </div>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  {format(new Date(item.createdAt), 'dd/MM/yyyy')}
+                                  {format(new Date(item.createdAt), "dd 'de' MMMM, yyyy", { locale: es })}
                                 </p>
                                 {item.description && (
-                                  <p className="text-sm mt-2 line-clamp-2">{item.description}</p>
+                                  <div className="mt-3 p-3 bg-muted/50 rounded-md">
+                                    <p className="text-sm whitespace-pre-wrap">{item.description}</p>
+                                  </div>
                                 )}
-                                {item.fileUrl && (
-                                  <a
-                                    href={item.fileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-primary hover:underline mt-2 inline-block"
-                                  >
-                                    Ver archivo →
-                                  </a>
-                                )}
+                                <div className="mt-3">
+                                  {item.fileUrl ? (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      asChild
+                                    >
+                                      <a
+                                        href={item.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        <Eye className="h-4 w-4 mr-1" />
+                                        Ver archivo
+                                      </a>
+                                    </Button>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground italic">
+                                      Sin archivo adjunto
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </CardContent>
