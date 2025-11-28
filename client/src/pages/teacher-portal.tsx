@@ -51,6 +51,7 @@ export default function TeacherPortal() {
   const [, setLocation] = useLocation();
   const [sessionModalOpen, setSessionModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
+  const [activeTab, setActiveTab] = useState("agenda");
 
   // Today's appointments query
   const { data: todayAppointments = [], isLoading: appointmentsLoading } = useQuery<AppointmentWithRelations[]>({
@@ -146,7 +147,11 @@ export default function TeacherPortal() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveTab("agenda")}
+          data-testid="card-today-appointments"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Citas Hoy</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -161,7 +166,11 @@ export default function TeacherPortal() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveTab("tasks")}
+          data-testid="card-new-tasks"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tareas Nuevas</CardTitle>
             <CheckSquare className="h-4 w-4 text-muted-foreground" />
@@ -176,7 +185,11 @@ export default function TeacherPortal() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveTab("dogs")}
+          data-testid="card-assigned-dogs"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Perros Asignados</CardTitle>
             <Dog className="h-4 w-4 text-muted-foreground" />
@@ -223,7 +236,7 @@ export default function TeacherPortal() {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="agenda" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="agenda" data-testid="tab-agenda">
             <Calendar className="w-4 h-4 mr-2" />
@@ -543,10 +556,22 @@ export default function TeacherPortal() {
                           </div>
                         </div>
                         <div className="mt-3 flex space-x-2">
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => setLocation(`/expediente/${dog.id}`)}
+                            data-testid={`button-view-expediente-${dog.id}`}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
                             Ver Expediente
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => setLocation(`/expediente/${dog.id}`)}
+                            data-testid={`button-view-file-${dog.id}`}
+                          >
                             <FileText className="w-4 h-4" />
                           </Button>
                         </div>
