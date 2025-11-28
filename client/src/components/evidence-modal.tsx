@@ -87,22 +87,36 @@ export default function EvidenceModal({
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/upload", {
+      // Step 1: Get the presigned upload URL from the server
+      const getUrlResponse = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
       });
 
-      if (!response.ok) {
+      if (!getUrlResponse.ok) {
+        throw new Error("Failed to get upload URL");
+      }
+
+      const { uploadURL, url: fileUrl } = await getUrlResponse.json();
+
+      // Step 2: Upload the file directly to the presigned URL
+      const uploadResponse = await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type || "application/octet-stream",
+        },
+      });
+
+      if (!uploadResponse.ok) {
         throw new Error("Upload failed");
       }
 
-      const data = await response.json();
-      setUploadedUrl(data.url);
-      form.setValue("fileUrl", data.url);
+      setUploadedUrl(fileUrl);
+      form.setValue("fileUrl", fileUrl);
       form.setValue("fileName", file.name);
       
       toast({

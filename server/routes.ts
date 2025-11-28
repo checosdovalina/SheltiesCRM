@@ -662,6 +662,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // General file upload route for evidence and other files
+  app.post('/api/upload', isAuthenticated, async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      
+      // Extract the object path from the signed URL to return as the file URL
+      const url = new URL(uploadURL);
+      const objectPath = url.pathname;
+      
+      res.json({ 
+        uploadURL,
+        url: `/objects${objectPath}` 
+      });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // Serve uploaded objects
+  app.get('/objects/*', isAuthenticated, async (req, res) => {
+    try {
+      const objectPath = req.path;
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+      await objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving object:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ message: "File not found" });
+      }
+      res.status(500).json({ message: "Failed to serve file" });
+    }
+  });
 
   // Invoice routes
   app.post('/api/invoices', isAuthenticated, async (req, res) => {
@@ -893,11 +928,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied to this dog's information" });
       }
 
-      // Get all progress data for the dog
-      const [trainingSessions, progressEntries, medicalRecords] = await Promise.all([
+      // Get all progress data for the dog including evidence
+      const [trainingSessions, progressEntries, medicalRecords, evidenceList] = await Promise.all([
         storage.getTrainingSessionsByDog(dogId),
         storage.getProgressEntriesByDog(dogId),
         storage.getMedicalRecordsByDog(dogId),
+        storage.getEvidenceByDog(dogId),
       ]);
 
       // Combine and sort by date
@@ -944,16 +980,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       });
 
+      evidenceList.forEach((evidence: any) => {
+        timeline.push({
+          type: 'evidence',
+          date: evidence.createdAt,
+          title: evidence.title,
+          description: evidence.description,
+          evidenceType: evidence.type,
+          fileUrl: evidence.fileUrl,
+          data: evidence,
+        });
+      });
+
       // Sort by date descending (most recent first)
       timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       res.json({
         dog,
         timeline,
+        evidence: evidenceList,
         summary: {
           totalTrainingSessions: trainingSessions.length,
           totalProgressEntries: progressEntries.length,
           totalMedicalRecords: medicalRecords.length,
+          totalEvidence: evidenceList.length,
         },
       });
     } catch (error) {
