@@ -17,7 +17,8 @@ import { Input } from "@/components/ui/input";
 import { 
   User, Dog as DogIcon, Calendar, CreditCard, Camera, FileText, Star, Package, 
   AlertTriangle, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, 
-  Activity, Stethoscope, GraduationCap, PlayCircle, ClipboardList, Plus, CalendarPlus
+  Activity, Stethoscope, GraduationCap, PlayCircle, ClipboardList, Plus, CalendarPlus,
+  Video, Image as ImageIcon, File, ExternalLink
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Progress } from "@/components/ui/progress";
@@ -783,6 +784,10 @@ export default function ClientPortal() {
                           <Stethoscope className="w-3 h-3 mr-1" />
                           {dogProgress.summary.totalMedicalRecords} médicos
                         </Badge>
+                        <Badge variant="outline" className="bg-orange-50 text-orange-700">
+                          <Camera className="w-3 h-3 mr-1" />
+                          {dogProgress.summary.totalEvidence} evidencias
+                        </Badge>
                       </div>
                     )}
                   </CardTitle>
@@ -811,11 +816,13 @@ export default function ClientPortal() {
                                 item.type === 'training' ? 'bg-blue-100 text-blue-600' :
                                 item.type === 'progress' ? 'bg-green-100 text-green-600' :
                                 item.type === 'medical' ? 'bg-purple-100 text-purple-600' :
+                                item.type === 'evidence' ? 'bg-orange-100 text-orange-600' :
                                 'bg-gray-100 text-gray-600'
                               }`}>
                                 {item.type === 'training' && <GraduationCap className="w-5 h-5" />}
                                 {item.type === 'progress' && <Star className="w-5 h-5" />}
                                 {item.type === 'medical' && <Stethoscope className="w-5 h-5" />}
+                                {item.type === 'evidence' && <Camera className="w-5 h-5" />}
                               </div>
                               <div className="flex-1 bg-muted/30 rounded-lg p-4">
                                 <div className="flex items-start justify-between mb-2">
@@ -829,10 +836,14 @@ export default function ClientPortal() {
                                   <Badge variant="outline" className={
                                     item.type === 'training' ? 'bg-blue-50 text-blue-700' :
                                     item.type === 'progress' ? 'bg-green-50 text-green-700' :
-                                    'bg-purple-50 text-purple-700'
+                                    item.type === 'medical' ? 'bg-purple-50 text-purple-700' :
+                                    item.type === 'evidence' ? 'bg-orange-50 text-orange-700' :
+                                    'bg-gray-50 text-gray-700'
                                   }>
                                     {item.type === 'training' ? 'Entrenamiento' :
-                                     item.type === 'progress' ? 'Progreso' : 'Médico'}
+                                     item.type === 'progress' ? 'Progreso' : 
+                                     item.type === 'medical' ? 'Médico' :
+                                     item.type === 'evidence' ? 'Evidencia' : 'Otro'}
                                   </Badge>
                                 </div>
                                 
@@ -894,6 +905,68 @@ export default function ClientPortal() {
                                     )}
                                     {item.notes && (
                                       <p className="text-muted-foreground italic">{item.notes}</p>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Evidence Details */}
+                                {item.type === 'evidence' && (
+                                  <div className="space-y-3 text-sm">
+                                    {item.evidenceType && (
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="text-xs">
+                                          {item.evidenceType === 'photo' && <ImageIcon className="w-3 h-3 mr-1" />}
+                                          {item.evidenceType === 'video' && <Video className="w-3 h-3 mr-1" />}
+                                          {item.evidenceType === 'document' && <File className="w-3 h-3 mr-1" />}
+                                          {item.evidenceType === 'photo' ? 'Foto' :
+                                           item.evidenceType === 'video' ? 'Video' :
+                                           item.evidenceType === 'document' ? 'Documento' : 'Archivo'}
+                                        </Badge>
+                                      </div>
+                                    )}
+                                    {item.description && (
+                                      <p>{item.description}</p>
+                                    )}
+                                    {item.fileUrl && (
+                                      <div className="mt-2">
+                                        {item.evidenceType === 'photo' ? (
+                                          <div className="rounded-lg overflow-hidden border bg-white">
+                                            <img 
+                                              src={item.fileUrl} 
+                                              alt={item.title || 'Evidencia'} 
+                                              className="max-w-full max-h-64 object-contain mx-auto"
+                                              onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.style.display = 'none';
+                                                const parent = target.parentElement;
+                                                if (parent) {
+                                                  parent.innerHTML = '<div class="p-4 text-center text-muted-foreground"><p>No se pudo cargar la imagen</p></div>';
+                                                }
+                                              }}
+                                            />
+                                          </div>
+                                        ) : item.evidenceType === 'video' ? (
+                                          <div className="rounded-lg overflow-hidden border bg-black">
+                                            <video 
+                                              src={item.fileUrl} 
+                                              controls 
+                                              className="max-w-full max-h-64 mx-auto"
+                                            >
+                                              Tu navegador no soporta el video.
+                                            </video>
+                                          </div>
+                                        ) : (
+                                          <a 
+                                            href={item.fileUrl} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 text-primary hover:underline"
+                                          >
+                                            <ExternalLink className="w-4 h-4" />
+                                            Ver archivo
+                                          </a>
+                                        )}
+                                      </div>
                                     )}
                                   </div>
                                 )}
