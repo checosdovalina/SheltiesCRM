@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,8 @@ import {
   Plus,
   Award,
   Edit,
-  CheckSquare
+  CheckSquare,
+  Eye
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -46,6 +48,7 @@ interface TeacherStats {
 
 export default function TeacherPortal() {
   const { user, isLoading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const [sessionModalOpen, setSessionModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
 
@@ -299,8 +302,14 @@ export default function TeacherPortal() {
                         <Badge variant={appointment.status === 'confirmed' ? 'default' : 'secondary'}>
                           {appointment.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
                         </Badge>
-                        <Button size="sm" variant="outline">
-                          Ver Detalles
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => appointment.dogId && setLocation(`/expediente/${appointment.dogId}`)}
+                          disabled={!appointment.dogId}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Ver Expediente
                         </Button>
                       </div>
                     </div>
