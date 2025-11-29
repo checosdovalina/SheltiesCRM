@@ -1,0 +1,57 @@
+==> Deploying...
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+Sat, 29 Nov 2025 00:47:39 GMT express-session deprecated req.secret; provide secret option at file:/opt/render/project/src/dist/index.js:1188:10
+12:47:40 AM [express] serving on port 10000
+Error: secret option required for sessions
+    at session (/opt/render/project/src/node_modules/express-session/index.js:204:12)
+    at Layer.handle [as handle_request] (/opt/render/project/src/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/opt/render/project/src/node_modules/express/lib/router/index.js:328:13)
+    at /opt/render/project/src/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/opt/render/project/src/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/render/project/src/node_modules/express/lib/router/index.js:280:10)
+    at file:///opt/render/project/src/dist/index.js:4596:3
+    at Layer.handle [as handle_request] (/opt/render/project/src/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/opt/render/project/src/node_modules/express/lib/router/index.js:328:13)
+    at /opt/render/project/src/node_modules/express/lib/router/index.js:286:9
+     ==> Your service is live 🎉
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+     ==> 
+     ==> Available at your primary URL https://sheltiescrm.onrender.com
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+Error: secret option required for sessions
+    at session (/opt/render/project/src/node_modules/express-session/index.js:204:12)
+    at Layer.handle [as handle_request] (/opt/render/project/src/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/opt/render/project/src/node_modules/express/lib/router/index.js:328:13)
+    at /opt/render/project/src/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/opt/render/project/src/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/render/project/src/node_modules/express/lib/router/index.js:280:10)
+    at file:///opt/render/project/src/dist/index.js:4596:3
+    at Layer.handle [as handle_request] (/opt/render/project/src/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/opt/render/project/src/node_modules/express/lib/router/index.js:328:13)
+    at /opt/render/project/src/node_modules/express/lib/router/index.js:286:9
+Error: secret option required for sessions
+    at session (/opt/render/project/src/node_modules/express-session/index.js:204:12)
+    at Layer.handle [as handle_request] (/opt/render/project/src/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/opt/render/project/src/node_modules/express/lib/router/index.js:328:13)
+    at /opt/render/project/src/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/opt/render/project/src/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/render/project/src/node_modules/express/lib/router/index.js:280:10)
+    at file:///opt/render/project/src/dist/index.js:4596:3
+    at Layer.handle [as handle_request] (/opt/render/project/src/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/opt/render/project/src/node_modules/express/lib/router/index.js:328:13)
+    at /opt/render/project/src/node_modules/express/lib/router/index.js:286:9
+Error: secret option required for sessions
+    at session (/opt/render/project/src/node_modules/express-session/index.js:204:12)
+    at Layer.handle [as handle_request] (/opt/render/project/src/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/opt/render/project/src/node_modules/express/lib/router/index.js:328:13)
+    at /opt/render/project/src/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/opt/render/project/src/node_modules/express/lib/router/index.js:346:12)
+    at next (/opt/render/project/src/node_modules/express/lib/router/index.js:280:10)
+    at file:///opt/render/project/src/dist/index.js:4596:3
+    at Layer.handle [as handle_request] (/opt/render/project/src/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/opt/render/project/src/node_modules/express/lib/router/index.js:328:13)
+    at /opt/render/project/src/node_modules/express/lib/router/index.js:286:9

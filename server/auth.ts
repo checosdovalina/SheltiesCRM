@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import session from 'express-session';
+import crypto from 'crypto';
 import type { Express, RequestHandler } from 'express';
 import connectPg from 'connect-pg-simple';
 import { storage } from './storage';
@@ -7,8 +8,20 @@ import type { User, LoginData, RegisterData } from '@shared/schema';
 
 const SALT_ROUNDS = 12;
 
+// Generate or get session secret
+function getSessionSecret(): string {
+  if (process.env.SESSION_SECRET) {
+    return process.env.SESSION_SECRET;
+  }
+  // Generate a random secret if not provided (for development or first-time setup)
+  const generatedSecret = crypto.randomBytes(32).toString('hex');
+  console.warn('WARNING: SESSION_SECRET not set. Generated temporary secret. For production, set SESSION_SECRET environment variable.');
+  return generatedSecret;
+}
+
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const isProduction = process.env.NODE_ENV === 'production';
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
@@ -18,17 +31,18 @@ export function getSession() {
   });
   
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: getSessionSecret(),
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Set to true in production with HTTPS
+      secure: isProduction, // true in production with HTTPS
       maxAge: sessionTtl,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/', // Ensure cookie is available for all paths
     },
+    proxy: isProduction, // Trust first proxy in production
   });
 }
 
