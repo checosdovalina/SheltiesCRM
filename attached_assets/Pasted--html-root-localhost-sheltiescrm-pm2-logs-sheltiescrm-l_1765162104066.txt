@@ -1,0 +1,65 @@
+</html>[root@localhost sheltiescrm]# pm2 logs sheltiescrm --lines 30
+[TAILING] Tailing last 30 lines for [sheltiescrm] process (change the value with --lines option)
+/root/.pm2/logs/sheltiescrm-error.log last 30 lines:
+0|shelties |     _closeFrameReceived: false,
+0|shelties |     _closeFrameSent: false,
+0|shelties |     _closeMessage: <Buffer >,
+0|shelties |     _closeTimer: null,
+0|shelties |     _errorEmitted: true,
+0|shelties |     _extensions: {},
+0|shelties |     _paused: false,
+0|shelties |     _protocol: '',
+0|shelties |     _readyState: 3,
+0|shelties |     _receiver: null,
+0|shelties |     _sender: null,
+0|shelties |     _socket: null,
+0|shelties |     _bufferedAmount: 0,
+0|shelties |     _isServer: false,
+0|shelties |     _redirects: 0,
+0|shelties |     _autoPong: true,
+0|shelties |     _url: 'wss://localhost/v2',
+0|shelties |     _req: null,
+0|shelties |     [Symbol(shapeMode)]: false,
+0|shelties |     [Symbol(kCapture)]: false
+0|shelties |   },
+0|shelties |   [Symbol(kType)]: 'error',
+0|shelties |   [Symbol(kError)]: AggregateError [ECONNREFUSED]: 
+0|shelties |       at internalConnectMultiple (node:net:1122:18)
+0|shelties |       at afterConnectMultiple (node:net:1689:7) {
+0|shelties |     code: 'ECONNREFUSED',
+0|shelties |     [errors]: [ [Error], [Error] ]
+0|shelties |   },
+0|shelties |   [Symbol(kMessage)]: ''
+0|shelties | }
+
+/root/.pm2/logs/sheltiescrm-out.log last 30 lines:
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 2:45:07 AM [express] serving on port 5000
