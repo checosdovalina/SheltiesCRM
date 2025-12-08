@@ -1,0 +1,69 @@
+lines 5
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [sheltiescrm](ids: [ 0 ])
+[PM2] [sheltiescrm](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ sheltiescrm        │ fork     │ 4    │ online    │ 0%       │ 17.6mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[TAILING] Tailing last 5 lines for [sheltiescrm] process (change the value with --lines option)
+/root/.pm2/logs/sheltiescrm-error.log last 5 lines:
+0|shelties |     code: 'ECONNREFUSED',
+0|shelties |     [errors]: [ [Error], [Error] ]
+0|shelties |   },
+0|shelties |   [Symbol(kMessage)]: ''
+0|shelties | }
+
+/root/.pm2/logs/sheltiescrm-out.log last 5 lines:
+0|shelties | 3:30:07 AM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+0|shelties | 3:30:07 AM [express] GET /api/auth/admin-exists 500 in 5ms :: {"message":"Error checking admin statu…
+0|shelties | 3:30:39 AM [express] POST /api/auth/login 401 in 4ms :: {"message":"Email o contraseña incorrectos"}
+0|shelties | 3:30:40 AM [express] POST /api/auth/login 401 in 4ms :: {"message":"Email o contraseña incorrectos"}
+0|shelties | 3:30:47 AM [express] POST /api/auth/login 401 in 4ms :: {"message":"Email o contraseña incorrectos"}
+
+0|sheltiescrm  | > rest-express@1.0.0 start
+0|sheltiescrm  | > NODE_ENV=production node dist/index.js
+0|sheltiescrm  | Error creating default services: ErrorEvent {
+0|sheltiescrm  |   [Symbol(kTarget)]: WebSocket {
+0|sheltiescrm  |     _events: [Object: null prototype] {
+0|sheltiescrm  |       error: [Function],
+0|sheltiescrm  |       message: [Function],
+0|sheltiescrm  |       close: [Function],
+0|sheltiescrm  |       open: [Function]
+0|sheltiescrm  |     },
+0|sheltiescrm  |     _eventsCount: 4,
+0|sheltiescrm  |     _maxListeners: undefined,
+0|sheltiescrm  |     _binaryType: 'arraybuffer',
+0|sheltiescrm  |     _closeCode: 1006,
+0|sheltiescrm  |     _closeFrameReceived: false,
+0|sheltiescrm  |     _closeFrameSent: false,
+0|sheltiescrm  |     _closeMessage: <Buffer >,
+0|sheltiescrm  |     _closeTimer: null,
+0|sheltiescrm  |     _errorEmitted: true,
+0|sheltiescrm  |     _extensions: {},
+0|sheltiescrm  |     _paused: false,
+0|sheltiescrm  |     _protocol: '',
+0|sheltiescrm  |     _readyState: 3,
+0|sheltiescrm  |     _receiver: null,
+0|sheltiescrm  |     _sender: null,
+0|sheltiescrm  |     _socket: null,
+0|sheltiescrm  |     _bufferedAmount: 0,
+0|sheltiescrm  |     _isServer: false,
+0|sheltiescrm  |     _redirects: 0,
+0|sheltiescrm  |     _autoPong: true,
+0|sheltiescrm  |     _url: 'wss://localhost/v2',
+0|sheltiescrm  |     _req: null,
+0|sheltiescrm  |     [Symbol(shapeMode)]: false,
+0|sheltiescrm  |     [Symbol(kCapture)]: false
+0|sheltiescrm  |   },
+0|sheltiescrm  |   [Symbol(kType)]: 'error',
+0|sheltiescrm  |   [Symbol(kError)]: AggregateError [ECONNREFUSED]: 
+0|sheltiescrm  |       at internalConnectMultiple (node:net:1122:18)
+0|sheltiescrm  |       at afterConnectMultiple (node:net:1689:7) {
+0|sheltiescrm  |     code: 'ECONNREFUSED',
+0|sheltiescrm  |     [errors]: [ [Error], [Error] ]
+0|sheltiescrm  |   },
+0|sheltiescrm  |   [Symbol(kMessage)]: ''
+0|sheltiescrm  | }
+0|sheltiescrm  | 3:33:09 AM [express] serving on port 5000
