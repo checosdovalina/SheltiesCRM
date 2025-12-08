@@ -1,0 +1,63 @@
+[root@localhost sheltiescrm]# grep -A 20 "export const users" /var/www/sheltiescrm/shared/schema.ts | head -25
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password"), // Optional temporarily for migration
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").default("client").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+--
+export const usersRelations = relations(users, ({ one }) => ({
+  client: one(clients, {
+    fields: [users.id],
+[root@localhost sheltiescrm]# cd /var/www/sheltiescrm
+node -e "
+const { Pool } = require('@neondatabase/serverless');
+const bcrypt = require('bcrypt');
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+async function test() {
+  const result = await pool.query(\"SELECT * FROM users WHERE email = 'admin@shelties.com'\");
+  const user = result.rows[0];
+  console.log('User found:', !!user);
+  console.log('Has password:', !!user?.password);
+  
+  if (user?.password) {
+    const match = await bcrypt.compare('admin123', user.password);
+    console.log('Password match:', match);
+  }
+  
+  await pool.end();
+}
+
+test().catch(console.error);
+"
+  console.log('User found:', cd /var/www/sheltiescrmuser);
+  console.log('Has password:', cd /var/www/sheltiescrmuser?.password);
+[eval]:10
+  console.log('User found:', cd /var/www/sheltiescrmuser);
+                                 ^^^
+
+SyntaxError: Unexpected token 'var'
+    at makeContextifyScript (node:internal/vm:185:14)
+    at node:internal/process/execution:107:22
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:101:62)
+    at evalScript (node:internal/process/execution:133:3)
+    at node:internal/main/eval_string:51:3
+
