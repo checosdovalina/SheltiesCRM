@@ -1,0 +1,60 @@
+eval "$(/opt/homebrew/bin/brew shellenv)"
+sergiodovalina@MacBook-Air-de-Sergio ~ % brew install libpq && brew link --force libpq
+==> Fetching downloads for: libpq
+✔︎ Bottle Manifest libpq (18.1)                     [Downloaded   16.5KB/ 16.5KB]
+✔︎ Bottle Manifest icu4c@78 (78.1)                  [Downloaded    9.7KB/  9.7KB]
+✔︎ Bottle Manifest ca-certificates (2025-12-02)     [Downloaded    2.0KB/  2.0KB]
+✔︎ Bottle Manifest openssl@3 (3.6.0)                [Downloaded   11.8KB/ 11.8KB]
+✔︎ Bottle Manifest krb5 (1.22.1)                    [Downloaded   16.3KB/ 16.3KB]
+✔︎ Bottle ca-certificates (2025-12-02)              [Downloaded  131.8KB/131.8KB]
+✔︎ Bottle krb5 (1.22.1)                             [Downloaded    1.3MB/  1.3MB]
+✔︎ Bottle libpq (18.1)                              [Downloaded    7.9MB/  7.9MB]
+✔︎ Bottle icu4c@78 (78.1)                           [Downloaded   32.0MB/ 32.0MB]
+✔︎ Bottle openssl@3 (3.6.0)                         [Downloaded   10.9MB/ 10.9MB]
+==> Installing dependencies for libpq: icu4c@78, ca-certificates, openssl@3 and krb5
+==> Installing libpq dependency: icu4c@78
+==> Pouring icu4c@78--78.1.arm64_sequoia.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/icu4c@78/78.1: 279 files, 87.9MB
+==> Installing libpq dependency: ca-certificates
+==> Pouring ca-certificates--2025-12-02.all.bottle.tar.gz
+==> Regenerating CA certificate bundle from keychain, this may take a while...
+🍺  /opt/homebrew/Cellar/ca-certificates/2025-12-02: 4 files, 236.4KB
+==> Installing libpq dependency: openssl@3
+==> Pouring openssl@3--3.6.0.arm64_sequoia.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/openssl@3/3.6.0: 7,609 files, 37.7MB
+==> Installing libpq dependency: krb5
+==> Pouring krb5--1.22.1.arm64_sequoia.bottle.1.tar.gz
+🍺  /opt/homebrew/Cellar/krb5/1.22.1: 163 files, 5.9MB
+==> Installing libpq
+==> Pouring libpq--18.1.arm64_sequoia.bottle.tar.gz
+==> Caveats
+libpq is keg-only, which means it was not symlinked into /opt/homebrew,
+because it conflicts with PostgreSQL.
+
+If you need to have libpq first in your PATH, run:
+  echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
+
+For compilers to find libpq you may need to set:
+  export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
+  export CPPFLAGS="-I/opt/homebrew/opt/libpq/include"
+==> Summary
+🍺  /opt/homebrew/Cellar/libpq/18.1: 2,423 files, 35.4MB
+==> Running `brew cleanup libpq`...
+Disable this behaviour by setting `HOMEBREW_NO_INSTALL_CLEANUP=1`.
+Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`).
+==> Caveats
+==> libpq
+libpq is keg-only, which means it was not symlinked into /opt/homebrew,
+because it conflicts with PostgreSQL.
+
+If you need to have libpq first in your PATH, run:
+  echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
+
+For compilers to find libpq you may need to set:
+  export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
+  export CPPFLAGS="-I/opt/homebrew/opt/libpq/include"
+Linking /opt/homebrew/Cellar/libpq/18.1... 380 symlinks created.
+
+If you need to have this software first in your PATH instead consider running:
+  echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
+sergiodovalina@MacBook-Air-de-Sergio ~ % 
