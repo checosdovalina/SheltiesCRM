@@ -30,6 +30,9 @@ export function getSession() {
     tableName: "sessions",
   });
   
+  // Check if we have HTTPS (via X-Forwarded-Proto header from reverse proxy)
+  const useSecureCookies = isProduction && process.env.USE_HTTPS === 'true';
+  
   return session({
     secret: getSessionSecret(),
     store: sessionStore,
@@ -37,9 +40,9 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: isProduction, // true in production with HTTPS
+      secure: useSecureCookies, // Only true when HTTPS is configured
       maxAge: sessionTtl,
-      sameSite: isProduction ? 'none' : 'lax',
+      sameSite: useSecureCookies ? 'none' : 'lax',
       path: '/', // Ensure cookie is available for all paths
     },
     proxy: isProduction, // Trust first proxy in production
