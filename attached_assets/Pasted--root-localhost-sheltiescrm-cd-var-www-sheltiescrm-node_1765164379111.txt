@@ -1,0 +1,146 @@
+[root@localhost sheltiescrm]# cd /var/www/sheltiescrm
+node -e "
+const { Pool } = require('@neondatabase/serverless');
+const bcrypt = require('bcrypt');
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+async function test() {
+  const result = await pool.query(\"SELECT * FROM users WHERE email = 'admin@shelties.com'\");
+  const user = result.rows[0];
+  console.log('User found:', !!user);
+  console.log('Has password:', !!user?.password);
+  
+  if (user?.password) {
+    const match = await bcrypt.compare('admin123', user.password);
+    console.log('Password match:', match);
+  }
+  
+  await pool.end();
+}
+
+test().catch(console.error);
+"
+  console.log('User found:', cd /var/www/sheltiescrmuser);
+  console.log('Has password:', cd /var/www/sheltiescrmuser?.password);
+[eval]:10
+  console.log('User found:', cd /var/www/sheltiescrmuser);
+                                 ^^^
+
+SyntaxError: Unexpected token 'var'
+    at makeContextifyScript (node:internal/vm:185:14)
+    at node:internal/process/execution:107:22
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:101:62)
+    at evalScript (node:internal/process/execution:133:3)
+    at node:internal/main/eval_string:51:3
+
+Node.js v20.19.6
+[root@localhost sheltiescrm]# cat > /tmp/test-auth.js << 'EOF'
+const { Pool } = require('@neondatabase/serverless');
+const bcrypt = require('bcrypt');
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+async function test() {
+  const result = await pool.query("SELECT * FROM users WHERE email = 'admin@shelties.com'");
+  const user = result.rows[0];
+  console.log('User found:', !!user);
+  console.log('Has password:', !!user?.password);
+  
+  if (user?.password) {
+    const match = await bcrypt.compare('admin123', user.password);
+    console.log('Password match:', match);
+  }
+  
+  await pool.end();
+}
+
+test().catch(console.error);
+EOF
+[root@localhost sheltiescrm]# cd /var/www/sheltiescrm && node /tmp/test-auth.js
+node:internal/modules/cjs/loader:1210
+  throw err;
+  ^
+
+Error: Cannot find module '@neondatabase/serverless'
+Require stack:
+- /tmp/test-auth.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/tmp/test-auth.js:1:18)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/tmp/test-auth.js' ]
+}
+
+Node.js v20.19.6
+[root@localhost sheltiescrm]# cat > /tmp/test-auth.js << 'EOF'
+const { Client } = require('pg');
+const bcrypt = require('bcrypt');
+
+const client = new Client({ connectionString: process.env.DATABASE_URL });
+
+async function test() {
+  await client.connect();
+  const result = await client.query("SELECT * FROM users WHERE email = 'admin@shelties.com'");
+  const user = result.rows[0];
+  console.log('User found:', !!user);
+  console.log('Has password:', !!user?.password);
+  
+  if (user?.password) {
+    const match = await bcrypt.compare('admin123', user.password);
+    console.log('Password match:', match);
+  }
+  
+  await client.end();
+}
+
+test().catch(console.error);
+EOF
+[root@localhost sheltiescrm]# npm install pg
+
+changed 5 packages, and audited 616 packages in 2s
+
+82 packages are looking for funding
+  run `npm fund` for details
+
+12 vulnerabilities (3 low, 7 moderate, 2 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+[root@localhost sheltiescrm]# cd /var/www/sheltiescrm && node /tmp/test-auth.js
+node:internal/modules/cjs/loader:1210
+  throw err;
+  ^
+
+Error: Cannot find module 'pg'
+Require stack:
+- /tmp/test-auth.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/tmp/test-auth.js:1:20)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/tmp/test-auth.js' ]
+}
+
+Node.js v20.19.6
+[root@localhost sheltiescrm]# 
