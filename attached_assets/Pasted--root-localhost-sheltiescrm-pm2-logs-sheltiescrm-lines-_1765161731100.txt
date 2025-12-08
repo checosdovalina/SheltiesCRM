@@ -1,0 +1,107 @@
+[root@localhost sheltiescrm]# pm2 logs sheltiescrm --lines 50
+[TAILING] Tailing last 50 lines for [sheltiescrm] process (change the value with --lines option)
+/root/.pm2/logs/sheltiescrm-out.log last 50 lines:
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+0|shelties | 
+0|shelties | > rest-express@1.0.0 start
+0|shelties | > NODE_ENV=production node dist/index.js
+0|shelties | 
+
+/root/.pm2/logs/sheltiescrm-error.log last 50 lines:
+0|shelties |     at file:///var/www/sheltiescrm/dist/index.js:1164:9
+0|shelties |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|shelties |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|shelties |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|shelties | 
+0|shelties | Node.js v20.19.6
+0|shelties | file:///var/www/sheltiescrm/dist/index.js:1164
+0|shelties |   throw new Error(
+0|shelties |         ^
+0|shelties | 
+0|shelties | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|shelties |     at file:///var/www/sheltiescrm/dist/index.js:1164:9
+0|shelties |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|shelties |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|shelties |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|shelties | 
+0|shelties | Node.js v20.19.6
+0|shelties | file:///var/www/sheltiescrm/dist/index.js:1164
+0|shelties |   throw new Error(
+0|shelties |         ^
+0|shelties | 
+0|shelties | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|shelties |     at file:///var/www/sheltiescrm/dist/index.js:1164:9
+0|shelties |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|shelties |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|shelties |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|shelties | 
+0|shelties | Node.js v20.19.6
+0|shelties | file:///var/www/sheltiescrm/dist/index.js:1164
+0|shelties |   throw new Error(
+0|shelties |         ^
+0|shelties | 
+0|shelties | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|shelties |     at file:///var/www/sheltiescrm/dist/index.js:1164:9
+0|shelties |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|shelties |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|shelties |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|shelties | 
+0|shelties | Node.js v20.19.6
+0|shelties | file:///var/www/sheltiescrm/dist/index.js:1164
+0|shelties |   throw new Error(
+0|shelties |         ^
+0|shelties | 
+0|shelties | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|shelties |     at file:///var/www/sheltiescrm/dist/index.js:1164:9
+0|shelties |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|shelties |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|shelties |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|shelties | 
+0|shelties | Node.js v20.19.6
+
+
