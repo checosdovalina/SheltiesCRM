@@ -80,23 +80,43 @@ export function EvidenceModal({ dogId, trigger }: EvidenceModalProps) {
         setUploading(true);
         try {
           // Get upload URL
-          const uploadResponse = await apiRequest("POST", "/api/objects/upload");
-          const { uploadURL } = await uploadResponse.json();
+          const uploadResponse = await apiRequest("POST", "/api/upload");
+          const { uploadURL, useLocalUpload } = await uploadResponse.json();
 
-          // Upload file
-          const uploadResult = await fetch(uploadURL, {
-            method: "PUT",
-            body: data.file as File,
-            headers: {
-              "Content-Type": (data.file as File).type,
-            },
-          });
+          if (useLocalUpload) {
+            // Local upload using FormData
+            const formData = new FormData();
+            formData.append('file', data.file as File);
 
-          if (!uploadResult.ok) {
-            throw new Error("Error al subir el archivo");
+            const uploadResult = await fetch(uploadURL, {
+              method: "POST",
+              credentials: "include",
+              body: formData,
+            });
+
+            if (!uploadResult.ok) {
+              throw new Error("Error al subir el archivo");
+            }
+
+            const result = await uploadResult.json();
+            fileUrl = result.url;
+          } else {
+            // Cloud upload using PUT
+            const uploadResult = await fetch(uploadURL, {
+              method: "PUT",
+              body: data.file as File,
+              headers: {
+                "Content-Type": (data.file as File).type,
+              },
+            });
+
+            if (!uploadResult.ok) {
+              throw new Error("Error al subir el archivo");
+            }
+
+            fileUrl = uploadURL.split("?")[0]; // Remove query parameters
           }
 
-          fileUrl = uploadURL.split("?")[0]; // Remove query parameters
           fileName = (data.file as File).name;
           fileSize = (data.file as File).size;
           mimeType = (data.file as File).type;

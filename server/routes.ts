@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin, authenticateUser, registerAdmin } from "./auth";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient, parseObjectPath } from "./objectStorage";
+import { localStorageService, isReplitEnvironment } from "./localStorage";
+import multer from "multer";
+import path from "path";
 import {
   insertClientSchema,
   insertDogSchema,
@@ -650,44 +653,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Dog image upload route
+  // Configure multer for local file uploads
+  const uploadDir = process.env.UPLOAD_DIR || "./uploads";
+  const multerStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const type = (req as any).uploadType || "evidence";
+      const dir = path.join(uploadDir, type === "dog-images" ? "dog-images" : "evidence");
+      cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueId = require("crypto").randomUUID();
+      const ext = path.extname(file.originalname);
+      cb(null, `${uniqueId}${ext}`);
+    }
+  });
+  const upload = multer({ storage: multerStorage, limits: { fileSize: 50 * 1024 * 1024 } });
+
+  // Dog image upload route - supports both Replit and local storage
   app.post('/api/dogs/upload-image', isAuthenticated, async (req, res) => {
     try {
-      const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      res.json({ uploadURL });
+      if (isReplitEnvironment()) {
+        const objectStorageService = new ObjectStorageService();
+        const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+        res.json({ uploadURL, useLocalUpload: false });
+      } else {
+        res.json({ 
+          uploadURL: '/api/local-upload/dog-image',
+          useLocalUpload: true 
+        });
+      }
     } catch (error) {
       console.error("Error getting dog image upload URL:", error);
-      res.status(500).json({ message: "Failed to get upload URL" });
+      res.json({ 
+        uploadURL: '/api/local-upload/dog-image',
+        useLocalUpload: true 
+      });
+    }
+  });
+
+  // Local upload endpoint for dog images
+  app.post('/api/local-upload/dog-image', isAuthenticated, (req: any, res, next) => {
+    req.uploadType = "dog-images";
+    next();
+  }, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      const fileUrl = `/uploads/dog-images/${req.file.filename}`;
+      res.json({ url: fileUrl, filename: req.file.filename });
+    } catch (error) {
+      console.error("Error uploading dog image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
     }
   });
 
   // General file upload route for evidence and other files
   app.post('/api/upload', isAuthenticated, async (req, res) => {
     try {
-      const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      
-      // Normalize the object path to get the file URL
-      const normalizedPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
-      
-      res.json({ 
-        uploadURL,
-        url: `/objects${normalizedPath}` 
-      });
+      if (isReplitEnvironment()) {
+        const objectStorageService = new ObjectStorageService();
+        const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+        const normalizedPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+        res.json({ 
+          uploadURL,
+          url: `/objects${normalizedPath}`,
+          useLocalUpload: false
+        });
+      } else {
+        res.json({ 
+          uploadURL: '/api/local-upload/evidence',
+          useLocalUpload: true 
+        });
+      }
     } catch (error) {
       console.error("Error getting upload URL:", error);
-      res.status(500).json({ message: "Failed to get upload URL" });
+      res.json({ 
+        uploadURL: '/api/local-upload/evidence',
+        useLocalUpload: true 
+      });
     }
   });
 
-  // Serve uploaded objects
+  // Local upload endpoint for evidence files
+  app.post('/api/local-upload/evidence', isAuthenticated, (req: any, res, next) => {
+    req.uploadType = "evidence";
+    next();
+  }, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      const fileUrl = `/uploads/evidence/${req.file.filename}`;
+      res.json({ url: fileUrl, filename: req.file.filename });
+    } catch (error) {
+      console.error("Error uploading evidence:", error);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
+  // Serve uploaded objects - supports both Replit and local storage
   app.get('/objects/*', isAuthenticated, async (req, res) => {
     try {
+      if (!isReplitEnvironment()) {
+        return res.status(404).json({ message: "Use /uploads/* for local files" });
+      }
       const objectPath = req.path;
       const objectStorageService = new ObjectStorageService();
       
-      // Extract the file path after /objects/
       const filePath = objectPath.replace('/objects/', '');
       const privateDir = objectStorageService.getPrivateObjectDir();
       const fullPath = `${privateDir}/${filePath}`;

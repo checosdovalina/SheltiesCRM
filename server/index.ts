@@ -2,10 +2,27 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
+import path from "path";
+import fs from "fs";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Create uploads directory if it doesn't exist
+const uploadDir = process.env.UPLOAD_DIR || "./uploads";
+const dogImagesDir = path.join(uploadDir, "dog-images");
+const evidenceDir = path.join(uploadDir, "evidence");
+
+if (!fs.existsSync(dogImagesDir)) {
+  fs.mkdirSync(dogImagesDir, { recursive: true });
+}
+if (!fs.existsSync(evidenceDir)) {
+  fs.mkdirSync(evidenceDir, { recursive: true });
+}
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(uploadDir));
 
 app.use((req, res, next) => {
   const start = Date.now();

@@ -56,24 +56,44 @@ export function SimpleImageUploader({
         throw new Error("No se pudo obtener la URL de subida");
       }
 
-      const { uploadURL } = await response.json();
+      const { uploadURL, useLocalUpload } = await response.json();
 
-      const uploadResponse = await fetch(uploadURL, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
+      let imageUrl: string;
 
-      if (!uploadResponse.ok) {
-        throw new Error("No se pudo subir la imagen");
+      if (useLocalUpload) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadResponse = await fetch(uploadURL, {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("No se pudo subir la imagen");
+        }
+
+        const result = await uploadResponse.json();
+        imageUrl = result.url;
+      } else {
+        const uploadResponse = await fetch(uploadURL, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type,
+          },
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("No se pudo subir la imagen");
+        }
+
+        const url = new URL(uploadURL);
+        const pathParts = url.pathname.split('/');
+        const imagePath = pathParts.slice(2).join('/');
+        imageUrl = `/objects/uploads/${imagePath}`;
       }
-
-      const url = new URL(uploadURL);
-      const pathParts = url.pathname.split('/');
-      const imagePath = pathParts.slice(2).join('/');
-      const imageUrl = `/objects/uploads/${imagePath}`;
 
       onImageUploaded(imageUrl);
       
