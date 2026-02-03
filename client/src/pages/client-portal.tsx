@@ -25,6 +25,7 @@ import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import PaymentModal from "@/components/payment-modal";
 
 export default function ClientPortal() {
   const { toast } = useToast();
@@ -87,6 +88,7 @@ export default function ClientPortal() {
   const [selectedDogForProgress, setSelectedDogForProgress] = useState<string | null>(null);
   const [expandedPackages, setExpandedPackages] = useState<Record<string, boolean>>({});
   const [showRequestAppointment, setShowRequestAppointment] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [appointmentForm, setAppointmentForm] = useState({
     dogId: '',
     packageId: '',
@@ -1011,6 +1013,27 @@ export default function ClientPortal() {
         {/* Billing Tab */}
         <TabsContent value="billing">
           <div className="space-y-4">
+            {/* Payment Action Button */}
+            <Card className="bg-gradient-to-r from-accent/10 to-primary/10 border-accent/20">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">¿Realizaste un pago?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Envía tu comprobante de pago para registro y verificación
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowPaymentModal(true)}
+                    className="bg-accent hover:bg-accent/90"
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Enviar Comprobante
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {invoicesLoading ? (
               [...Array(3)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
@@ -1221,6 +1244,14 @@ export default function ClientPortal() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        clientId={profile?.client?.id}
+        isAdmin={false}
+      />
     </div>
   );
 }
