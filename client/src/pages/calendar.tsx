@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Calendar, ChevronLeft, ChevronRight, Plus, Clock, CheckSquare, User, X, UserPlus } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Plus, Clock, CheckSquare, User, X, UserPlus, PawPrint } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import AppointmentModal from "@/components/appointment-modal";
 import TaskModal from "@/components/task-modal";
@@ -24,6 +24,7 @@ export default function CalendarPage() {
   const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false);
   const [appointmentToAssign, setAppointmentToAssign] = useState<any>(null);
   const [assigningTeacherId, setAssigningTeacherId] = useState<string>('');
+  const [showDayDetailsModal, setShowDayDetailsModal] = useState(false);
   const isAdmin = user?.role === 'admin';
 
   // Mutation to assign teacher to appointment
@@ -273,7 +274,8 @@ export default function CalendarPage() {
                       <SelectItem value="all">Todos los profesores</SelectItem>
                       {teachers.map((teacher: any) => (
                         <SelectItem key={teacher.id} value={teacher.id}>
-                          {teacher.firstName} {teacher.lastName}
+                          {teacher.displayName || `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() || teacher.username}
+                          {teacher.isAdmin && <span className="ml-1 text-xs text-muted-foreground">(Admin)</span>}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -358,7 +360,14 @@ export default function CalendarPage() {
                       className={`bg-background p-1 h-24 cursor-pointer hover:bg-muted/50 transition-colors ${
                         isToday ? 'ring-2 ring-primary' : ''
                       } ${isSelected ? 'bg-primary/10' : ''}`}
-                      onClick={() => setSelectedDate(day)}
+                      onClick={() => {
+                        setSelectedDate(day);
+                        const dayAppts = getAppointmentsForDate(day);
+                        const dayTsks = getTasksForDate(day);
+                        if (dayAppts.length > 0 || dayTsks.length > 0) {
+                          setShowDayDetailsModal(true);
+                        }
+                      }}
                       data-testid={`calendar-day-${day.getDate()}`}
                     >
                       <div className={`text-sm font-medium mb-1 ${
@@ -371,12 +380,12 @@ export default function CalendarPage() {
                           <div
                             key={apt.id}
                             className={`text-xs px-1 py-0.5 rounded truncate ${getStatusColor(apt.status)}`}
-                            title={`${apt.client?.firstName} ${apt.client?.lastName} - ${apt.service?.name}`}
+                            title={`${apt.dog?.name || 'Sin mascota'} (${apt.client?.firstName} ${apt.client?.lastName}) - ${apt.service?.name}`}
                           >
                             {new Date(apt.appointmentDate).toLocaleTimeString('es-ES', {
                               hour: '2-digit',
                               minute: '2-digit'
-                            })} {apt.client?.firstName}
+                            })} {apt.dog?.name || apt.client?.firstName}
                           </div>
                         ))}
                         {dayTasks.slice(0, totalItems > 1 ? 1 : 2).map((task: any) => (
@@ -461,10 +470,13 @@ export default function CalendarPage() {
                                 </Badge>
                               </div>
                               <p className="text-sm font-medium text-foreground">
-                                {apt.client?.firstName} {apt.client?.lastName}
+                                {apt.dog?.name || 'Sin mascota'}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {apt.dog?.name} - {apt.service?.name || 'Sin servicio'}
+                                Propietario: {apt.client?.firstName} {apt.client?.lastName}
+                              </p>
+                              <p className="text-xs text-primary/80">
+                                {apt.service?.name || 'Sin servicio'}
                               </p>
                               {apt.teacherId ? (
                                 <p className="text-xs text-chart-2 mt-1">
@@ -727,6 +739,173 @@ export default function CalendarPage() {
                   {assignTeacherMutation.isPending ? 'Asignando...' : 'Asignar'}
                 </Button>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Day Details Modal */}
+      <Dialog open={showDayDetailsModal} onOpenChange={setShowDayDetailsModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              {selectedDate?.toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </DialogTitle>
+            <DialogDescription>
+              Actividades programadas para este día
+              {selectedTeacher !== 'all' && selectedTeacherData && (
+                <span className="block mt-1">
+                  Profesor: {selectedTeacherData.firstName} {selectedTeacherData.lastName}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDate && (
+            <div className="space-y-4 mt-4">
+              {/* Appointments Section */}
+              {getAppointmentsForDate(selectedDate).length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Citas ({getAppointmentsForDate(selectedDate).length})
+                  </h4>
+                  <div className="space-y-3">
+                    {getAppointmentsForDate(selectedDate).map((apt: any) => (
+                      <div 
+                        key={apt.id} 
+                        className="p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <PawPrint className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">
+                                {apt.dog?.name || 'Sin mascota'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Propietario: {apt.client?.firstName} {apt.client?.lastName}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className={getStatusColor(apt.status)}>
+                              {apt.status === 'confirmed' ? 'Confirmada' : 
+                               apt.status === 'pending' ? 'Pendiente' :
+                               apt.status === 'completed' ? 'Completada' :
+                               apt.status === 'cancelled' ? 'Cancelada' : apt.status}
+                            </Badge>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(apt.appointmentDate).toLocaleTimeString('es-ES', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+                          <p className="text-xs text-primary/80">
+                            {apt.service?.name || 'Sin servicio'}
+                          </p>
+                          {apt.teacherId ? (
+                            <p className="text-xs text-chart-2">
+                              <User className="w-3 h-3 inline mr-1" />
+                              {teachers.find((t: any) => t.id === apt.teacherId)?.displayName || 
+                               `${teachers.find((t: any) => t.id === apt.teacherId)?.firstName || ''} ${teachers.find((t: any) => t.id === apt.teacherId)?.lastName || ''}`.trim() || 
+                               'Asignado'}
+                            </p>
+                          ) : isAdmin && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                setAppointmentToAssign(apt);
+                                setShowDayDetailsModal(false);
+                                setShowAssignTeacherModal(true);
+                              }}
+                            >
+                              <UserPlus className="w-3 h-3 mr-1" />
+                              Asignar
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tasks Section */}
+              {getTasksForDate(selectedDate).length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <CheckSquare className="w-4 h-4 text-chart-2" />
+                    Tareas ({getTasksForDate(selectedDate).length})
+                  </h4>
+                  <div className="space-y-3">
+                    {getTasksForDate(selectedDate).map((task: any) => (
+                      <div 
+                        key={task.id} 
+                        className="p-4 border border-border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getTaskColor(task.priority).replace('text-', 'bg-').replace('/20', '/30')}`}>
+                              <CheckSquare className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">
+                                {task.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {task.type === 'class' ? 'Clase' :
+                                 task.type === 'training' ? 'Entrenamiento' :
+                                 task.type === 'meeting' ? 'Reunión' :
+                                 task.type === 'administrative' ? 'Administrativo' : 'Otro'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className={getTaskColor(task.priority)}>
+                              {task.priority === 'urgent' ? 'Urgente' : 
+                               task.priority === 'high' ? 'Alta' :
+                               task.priority === 'medium' ? 'Media' : 'Baja'}
+                            </Badge>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(task.startDate).toLocaleTimeString('es-ES', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        {task.description && (
+                          <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
+                            {task.description}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No activities message */}
+              {getAppointmentsForDate(selectedDate).length === 0 && getTasksForDate(selectedDate).length === 0 && (
+                <div className="text-center py-8">
+                  <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">No hay actividades programadas para este día</p>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

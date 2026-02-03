@@ -147,13 +147,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get teachers for appointment assignment
+  // Get teachers for appointment assignment (includes admins who can act as trainers)
   app.get('/api/teachers', isAuthenticated, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
+      // Include both teachers and admins as potential trainers
       const teachers = users
-        .filter(user => user.role === 'teacher')
-        .map(({ password, ...teacher }) => teacher);
+        .filter(user => user.role === 'teacher' || user.role === 'admin')
+        .map(({ password, ...teacher }) => ({
+          ...teacher,
+          displayName: `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() || teacher.username,
+          isAdmin: teacher.role === 'admin'
+        }));
       res.json(teachers);
     } catch (error) {
       console.error("Error fetching teachers:", error);
