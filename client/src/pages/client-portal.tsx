@@ -18,7 +18,7 @@ import {
   User, Dog as DogIcon, Calendar, CreditCard, Camera, FileText, Star, Package, 
   AlertTriangle, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, 
   Activity, Stethoscope, GraduationCap, PlayCircle, ClipboardList, Plus, CalendarPlus,
-  Video, Image as ImageIcon, File, ExternalLink, Receipt
+  Video, Image as ImageIcon, File, ExternalLink, Receipt, Eye, Printer
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Progress } from "@/components/ui/progress";
@@ -95,6 +95,8 @@ export default function ClientPortal() {
   const [expandedPackages, setExpandedPackages] = useState<Record<string, boolean>>({});
   const [showRequestAppointment, setShowRequestAppointment] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showInvoiceDetail, setShowInvoiceDetail] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [appointmentForm, setAppointmentForm] = useState({
     dogId: '',
     packageId: '',
@@ -1088,10 +1090,23 @@ export default function ClientPortal() {
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-foreground" data-testid={`invoice-amount-${invoice.id}`}>
-                          ${Number(invoice.amount).toLocaleString()}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-foreground" data-testid={`invoice-amount-${invoice.id}`}>
+                            ${Number(invoice.amount).toLocaleString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedInvoice(invoice);
+                            setShowInvoiceDetail(true);
+                          }}
+                          data-testid={`button-view-invoice-${invoice.id}`}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -1343,6 +1358,204 @@ export default function ClientPortal() {
         clientId={profile?.client?.id}
         isAdmin={false}
       />
+
+      {/* Invoice Detail Modal */}
+      <Dialog open={showInvoiceDetail} onOpenChange={setShowInvoiceDetail}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Factura {selectedInvoice?.invoiceNumber}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedInvoice && (
+            <div id="client-invoice-print-content" className="space-y-6">
+              {/* Header */}
+              <div className="flex justify-between items-start border-b pb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-primary">Instituto Shelties</h2>
+                  <p className="text-sm text-muted-foreground">Escuela de Entrenamiento Canino</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-lg">{selectedInvoice.invoiceNumber}</p>
+                  <Badge className={
+                    selectedInvoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                    selectedInvoice.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                    selectedInvoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                    selectedInvoice.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }>
+                    {selectedInvoice.status === 'paid' ? 'Pagada' :
+                     selectedInvoice.status === 'draft' ? 'Borrador' :
+                     selectedInvoice.status === 'sent' ? 'Enviada' :
+                     selectedInvoice.status === 'overdue' ? 'Vencida' :
+                     selectedInvoice.status === 'cancelled' ? 'Cancelada' : selectedInvoice.status}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold text-sm text-muted-foreground mb-1">Fecha de Emisión</h3>
+                  <p>{new Date(selectedInvoice.createdAt).toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}</p>
+                </div>
+                {selectedInvoice.dueDate && (
+                  <div className="text-right">
+                    <h3 className="font-semibold text-sm text-muted-foreground mb-1">Fecha de Vencimiento</h3>
+                    <p>{new Date(selectedInvoice.dueDate).toLocaleDateString('es-ES', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Items Table */}
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="text-left p-3 text-sm font-semibold">Descripción</th>
+                      <th className="text-center p-3 text-sm font-semibold w-20">Cant.</th>
+                      <th className="text-right p-3 text-sm font-semibold w-28">Precio</th>
+                      <th className="text-right p-3 text-sm font-semibold w-28">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedInvoice.items?.map((item: any, idx: number) => (
+                      <tr key={idx} className="border-t">
+                        <td className="p-3">{item.description}</td>
+                        <td className="p-3 text-center">{item.quantity}</td>
+                        <td className="p-3 text-right">${Number(item.unitPrice).toLocaleString()}</td>
+                        <td className="p-3 text-right">${Number(item.totalPrice).toLocaleString()}</td>
+                      </tr>
+                    )) || (
+                      <tr className="border-t">
+                        <td className="p-3">{selectedInvoice.notes || 'Servicio'}</td>
+                        <td className="p-3 text-center">1</td>
+                        <td className="p-3 text-right">${Number(selectedInvoice.amount).toLocaleString()}</td>
+                        <td className="p-3 text-right">${Number(selectedInvoice.amount).toLocaleString()}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                  <tfoot className="bg-muted">
+                    <tr className="border-t">
+                      <td colSpan={3} className="p-3 text-right font-bold">Total:</td>
+                      <td className="p-3 text-right font-bold text-lg">${Number(selectedInvoice.amount).toLocaleString()}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Notes */}
+              {selectedInvoice.notes && (
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-sm text-muted-foreground mb-1">Notas</h3>
+                  <p className="text-sm">{selectedInvoice.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowInvoiceDetail(false)}
+            >
+              Cerrar
+            </Button>
+            <Button
+              onClick={() => {
+                const printWindow = window.open('', '_blank');
+                if (printWindow && selectedInvoice) {
+                  printWindow.document.write(`
+                    <html>
+                      <head>
+                        <title>Factura ${selectedInvoice.invoiceNumber}</title>
+                        <style>
+                          body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+                          h2 { color: #16a34a; margin: 0; }
+                          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 20px; }
+                          .badge { background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+                          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+                          table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+                          th { background: #f3f4f6; text-align: left; padding: 12px; font-size: 14px; }
+                          td { padding: 12px; border-top: 1px solid #e5e7eb; }
+                          .text-right { text-align: right; }
+                          .text-center { text-align: center; }
+                          .font-bold { font-weight: bold; }
+                          .total-row { background: #f3f4f6; }
+                          @media print { body { padding: 20px; } }
+                        </style>
+                      </head>
+                      <body>
+                        <div class="header">
+                          <div>
+                            <h2>Instituto Shelties</h2>
+                            <p style="color: #6b7280; font-size: 14px;">Escuela de Entrenamiento Canino</p>
+                          </div>
+                          <div style="text-align: right;">
+                            <p style="font-weight: bold; font-size: 18px;">${selectedInvoice.invoiceNumber}</p>
+                            <span class="badge">${selectedInvoice.status === 'paid' ? 'Pagada' : selectedInvoice.status === 'draft' ? 'Borrador' : selectedInvoice.status}</span>
+                          </div>
+                        </div>
+                        <div class="grid">
+                          <div>
+                            <p style="color: #6b7280; font-size: 12px;">Fecha de Emisión</p>
+                            <p>${new Date(selectedInvoice.createdAt).toLocaleDateString('es-ES')}</p>
+                          </div>
+                          ${selectedInvoice.dueDate ? `
+                          <div style="text-align: right;">
+                            <p style="color: #6b7280; font-size: 12px;">Fecha de Vencimiento</p>
+                            <p>${new Date(selectedInvoice.dueDate).toLocaleDateString('es-ES')}</p>
+                          </div>
+                          ` : ''}
+                        </div>
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Descripción</th>
+                              <th class="text-center" style="width: 80px;">Cant.</th>
+                              <th class="text-right" style="width: 100px;">Precio</th>
+                              <th class="text-right" style="width: 100px;">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>${selectedInvoice.notes || 'Servicio'}</td>
+                              <td class="text-center">1</td>
+                              <td class="text-right">$${Number(selectedInvoice.amount).toLocaleString()}</td>
+                              <td class="text-right">$${Number(selectedInvoice.amount).toLocaleString()}</td>
+                            </tr>
+                          </tbody>
+                          <tfoot>
+                            <tr class="total-row">
+                              <td colspan="3" class="text-right font-bold">Total:</td>
+                              <td class="text-right font-bold">$${Number(selectedInvoice.amount).toLocaleString()}</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </body>
+                    </html>
+                  `);
+                  printWindow.document.close();
+                  printWindow.print();
+                }
+              }}
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
