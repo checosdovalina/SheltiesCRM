@@ -156,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .filter(user => user.role === 'teacher' || user.role === 'admin')
         .map(({ password, ...teacher }) => ({
           ...teacher,
-          displayName: `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() || teacher.username,
+          displayName: `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() || teacher.email,
           isAdmin: teacher.role === 'admin'
         }));
       res.json(teachers);
@@ -442,14 +442,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const appointment = await storage.createAppointment(appointmentData);
       console.log("[DEBUG] Created appointment:", JSON.stringify(appointment, null, 2));
       res.json(appointment);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating appointment:", error);
-      if (error.name === 'ZodError') {
-        const fieldErrors = error.errors.map(err => `${err.path.join('.')}: ${err.message}`);
+      if (error?.name === 'ZodError') {
+        const fieldErrors = error.errors.map((err: any) => `${err.path.join('.')}: ${err.message}`);
         return res.status(400).json({ message: `Error de validación: ${fieldErrors.join(', ')}` });
       }
       res.status(400).json({ 
-        message: error.message || "No se pudo crear la cita. Verifique que todos los campos obligatorios estén completos." 
+        message: error?.message || "No se pudo crear la cita. Verifique que todos los campos obligatorios estén completos." 
       });
     }
   });
@@ -1467,7 +1467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Sort by session date descending
       const sortedSessions = allSessions.sort((a, b) => 
-        new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime()
+        new Date(b.sessionDate || 0).getTime() - new Date(a.sessionDate || 0).getTime()
       );
       
       res.json(sortedSessions);
