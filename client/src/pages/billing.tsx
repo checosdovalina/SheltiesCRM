@@ -323,7 +323,7 @@ export default function Billing() {
           </TabsTrigger>
           <TabsTrigger value="payments" className="flex items-center gap-2">
             <Receipt className="w-4 h-4" />
-            Pagos Pendientes
+            Pagos Recibidos
             {(pendingPayments?.length || 0) > 0 && (
               <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
                 {pendingPayments?.length}
@@ -500,7 +500,7 @@ export default function Billing() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Receipt className="w-5 h-5" />
-                Pagos Pendientes de Revisión
+                Historial de Pagos Recibidos
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -516,10 +516,14 @@ export default function Billing() {
                     </div>
                   ))}
                 </div>
-              ) : (pendingPayments?.length || 0) > 0 ? (
+              ) : (allPayments?.length || 0) > 0 ? (
                 <div className="space-y-4">
-                  {pendingPayments?.map((payment: any) => (
-                    <div key={payment.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  {allPayments?.map((payment: any) => (
+                    <div key={payment.id} className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors ${
+                      payment.status === 'approved' ? 'border-green-200 bg-green-50/50' :
+                      payment.status === 'rejected' ? 'border-red-200 bg-red-50/50' :
+                      'border-orange-200 bg-orange-50/50'
+                    }`}>
                       {payment.receiptImage ? (
                         <div 
                           className="w-20 h-20 rounded border cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
@@ -542,11 +546,17 @@ export default function Billing() {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-lg text-accent">
+                          <span className="font-bold text-lg">
                             ${Number(payment.amount).toLocaleString()}
                           </span>
-                          <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20">
-                            Pendiente
+                          <Badge className={
+                            payment.status === 'approved' ? 'bg-green-100 text-green-800 hover:bg-green-100' :
+                            payment.status === 'rejected' ? 'bg-red-100 text-red-800 hover:bg-red-100' :
+                            'bg-orange-100 text-orange-800 hover:bg-orange-100'
+                          }>
+                            {payment.status === 'approved' ? 'Aprobado' :
+                             payment.status === 'rejected' ? 'Rechazado' :
+                             'Pendiente'}
                           </Badge>
                         </div>
                         <p className="text-sm font-medium">
@@ -557,44 +567,51 @@ export default function Billing() {
                            payment.paymentMethod === 'cash' ? 'Efectivo' :
                            payment.paymentMethod === 'card' ? 'Tarjeta' : 'Otro'}
                           {' · '}
-                          {new Date(payment.submittedAt).toLocaleDateString('es-ES', {
+                          {payment.submittedAt ? new Date(payment.submittedAt).toLocaleDateString('es-ES', {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',
                             hour: '2-digit',
                             minute: '2-digit'
-                          })}
+                          }) : 'Fecha no disponible'}
                         </p>
                         {payment.notes && (
                           <p className="text-xs text-muted-foreground mt-1 italic">
                             "{payment.notes}"
                           </p>
                         )}
+                        {payment.rejectionReason && (
+                          <p className="text-xs text-red-600 mt-1">
+                            Motivo: {payment.rejectionReason}
+                          </p>
+                        )}
                       </div>
                       
-                      <div className="flex gap-2 w-full sm:w-auto">
-                        <Button
-                          size="sm"
-                          className="flex-1 sm:flex-none bg-accent hover:bg-accent/90"
-                          onClick={() => approvePaymentMutation.mutate(payment.id)}
-                          disabled={approvePaymentMutation.isPending}
-                        >
-                          <Check className="w-4 h-4 mr-1" />
-                          Aprobar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="flex-1 sm:flex-none"
-                          onClick={() => {
-                            setPaymentToReject(payment);
-                            setShowRejectModal(true);
-                          }}
-                        >
-                          <X className="w-4 h-4 mr-1" />
-                          Rechazar
-                        </Button>
-                      </div>
+                      {payment.status === 'pending' && (
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          <Button
+                            size="sm"
+                            className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700"
+                            onClick={() => approvePaymentMutation.mutate(payment.id)}
+                            disabled={approvePaymentMutation.isPending}
+                          >
+                            <Check className="w-4 h-4 mr-1" />
+                            Aprobar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1 sm:flex-none"
+                            onClick={() => {
+                              setPaymentToReject(payment);
+                              setShowRejectModal(true);
+                            }}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Rechazar
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -602,10 +619,10 @@ export default function Billing() {
                 <div className="text-center py-12">
                   <Receipt className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-foreground mb-2">
-                    No hay pagos pendientes
+                    No hay pagos registrados
                   </h3>
                   <p className="text-muted-foreground">
-                    Los pagos enviados por clientes aparecerán aquí para su revisión
+                    Los pagos enviados por clientes aparecerán aquí
                   </p>
                 </div>
               )}
