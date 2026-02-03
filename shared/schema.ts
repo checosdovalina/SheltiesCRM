@@ -415,6 +415,46 @@ export const invoiceItems = pgTable("invoice_items", {
 export type InvoiceItem = typeof invoiceItems.$inferSelect;
 export type InsertInvoiceItem = typeof invoiceItems.$inferInsert;
 
+// Payments - for client payment registration with receipt image
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "approved", 
+  "rejected"
+]);
+
+export const paymentMethodEnum = pgEnum("payment_method", [
+  "transfer",
+  "cash",
+  "card",
+  "other"
+]);
+
+export const payments = pgTable("payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  invoiceId: varchar("invoice_id").references(() => invoices.id),
+  clientId: varchar("client_id").references(() => clients.id).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: paymentMethodEnum("payment_method").default("transfer"),
+  receiptImage: text("receipt_image"), // URL of the payment proof image
+  status: paymentStatusEnum("status").default("pending"),
+  notes: text("notes"),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  approvedById: varchar("approved_by_id").references(() => users.id),
+  rejectionReason: text("rejection_reason"),
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  submittedAt: true,
+  approvedAt: true,
+  approvedById: true,
+  rejectionReason: true,
+});
+
 // Expenses
 export const expenseCategories = pgEnum("expense_category", [
   "supplies",
@@ -486,6 +526,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   dogs: many(dogs),
   appointments: many(appointments),
   invoices: many(invoices),
+  payments: many(payments),
 }));
 
 export const dogsRelations = relations(dogs, ({ one, many }) => ({
@@ -541,6 +582,7 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
     references: [clients.id],
   }),
   items: many(invoiceItems),
+  payments: many(payments),
 }));
 
 export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
@@ -555,6 +597,21 @@ export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
   service: one(services, {
     fields: [invoiceItems.serviceId],
     references: [services.id],
+  }),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  invoice: one(invoices, {
+    fields: [payments.invoiceId],
+    references: [invoices.id],
+  }),
+  client: one(clients, {
+    fields: [payments.clientId],
+    references: [clients.id],
+  }),
+  approvedBy: one(users, {
+    fields: [payments.approvedById],
+    references: [users.id],
   }),
 }));
 

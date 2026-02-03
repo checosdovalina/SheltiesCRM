@@ -7,6 +7,7 @@ import {
   appointments,
   invoices,
   invoiceItems,
+  payments,
   expenses,
   progressEntries,
   medicalRecords,
@@ -36,6 +37,8 @@ import {
   type InsertInvoice,
   type InvoiceItem,
   type InsertInvoiceItem,
+  type Payment,
+  type InsertPayment,
   type Expense,
   type InsertExpense,
   type ProgressEntry,
@@ -150,6 +153,16 @@ export interface IStorage {
   // Invoice item operations
   createInvoiceItem(item: InsertInvoiceItem): Promise<InvoiceItem>;
   getInvoiceItemsByInvoiceId(invoiceId: string): Promise<any[]>;
+
+  // Payment operations
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  getPayments(): Promise<any[]>;
+  getPaymentsByClientId(clientId: string): Promise<any[]>;
+  getPendingPayments(): Promise<any[]>;
+  getPayment(id: string): Promise<any | undefined>;
+  updatePayment(id: string, payment: Partial<InsertPayment>): Promise<Payment>;
+  approvePayment(id: string, approvedById: string): Promise<Payment>;
+  rejectPayment(id: string, rejectionReason: string): Promise<Payment>;
 
   // Expense operations
   createExpense(expense: InsertExpense): Promise<Expense>;
@@ -835,6 +848,145 @@ export class DatabaseStorage implements IStorage {
       .from(invoiceItems)
       .leftJoin(services, eq(invoiceItems.serviceId, services.id))
       .where(eq(invoiceItems.invoiceId, invoiceId));
+  }
+
+  // Payment operations
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const [newPayment] = await db.insert(payments).values(payment).returning();
+    return newPayment;
+  }
+
+  async getPayments(): Promise<any[]> {
+    return await db
+      .select({
+        id: payments.id,
+        invoiceId: payments.invoiceId,
+        clientId: payments.clientId,
+        amount: payments.amount,
+        paymentMethod: payments.paymentMethod,
+        receiptImage: payments.receiptImage,
+        status: payments.status,
+        notes: payments.notes,
+        submittedAt: payments.submittedAt,
+        approvedAt: payments.approvedAt,
+        approvedById: payments.approvedById,
+        rejectionReason: payments.rejectionReason,
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+      })
+      .from(payments)
+      .leftJoin(clients, eq(payments.clientId, clients.id))
+      .orderBy(desc(payments.submittedAt));
+  }
+
+  async getPaymentsByClientId(clientId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: payments.id,
+        invoiceId: payments.invoiceId,
+        amount: payments.amount,
+        paymentMethod: payments.paymentMethod,
+        receiptImage: payments.receiptImage,
+        status: payments.status,
+        notes: payments.notes,
+        submittedAt: payments.submittedAt,
+        approvedAt: payments.approvedAt,
+        rejectionReason: payments.rejectionReason,
+      })
+      .from(payments)
+      .where(eq(payments.clientId, clientId))
+      .orderBy(desc(payments.submittedAt));
+  }
+
+  async getPendingPayments(): Promise<any[]> {
+    return await db
+      .select({
+        id: payments.id,
+        invoiceId: payments.invoiceId,
+        clientId: payments.clientId,
+        amount: payments.amount,
+        paymentMethod: payments.paymentMethod,
+        receiptImage: payments.receiptImage,
+        status: payments.status,
+        notes: payments.notes,
+        submittedAt: payments.submittedAt,
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+      })
+      .from(payments)
+      .leftJoin(clients, eq(payments.clientId, clients.id))
+      .where(eq(payments.status, 'pending'))
+      .orderBy(desc(payments.submittedAt));
+  }
+
+  async getPayment(id: string): Promise<any | undefined> {
+    const [payment] = await db
+      .select({
+        id: payments.id,
+        invoiceId: payments.invoiceId,
+        clientId: payments.clientId,
+        amount: payments.amount,
+        paymentMethod: payments.paymentMethod,
+        receiptImage: payments.receiptImage,
+        status: payments.status,
+        notes: payments.notes,
+        submittedAt: payments.submittedAt,
+        approvedAt: payments.approvedAt,
+        approvedById: payments.approvedById,
+        rejectionReason: payments.rejectionReason,
+        client: {
+          id: clients.id,
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+          email: clients.email,
+        },
+      })
+      .from(payments)
+      .leftJoin(clients, eq(payments.clientId, clients.id))
+      .where(eq(payments.id, id));
+    return payment;
+  }
+
+  async updatePayment(id: string, paymentData: Partial<InsertPayment>): Promise<Payment> {
+    const [payment] = await db
+      .update(payments)
+      .set(paymentData)
+      .where(eq(payments.id, id))
+      .returning();
+    return payment;
+  }
+
+  async approvePayment(id: string, approvedById: string): Promise<Payment> {
+    const [payment] = await db
+      .update(payments)
+      .set({ 
+        status: 'approved', 
+        approvedAt: new Date(), 
+        approvedById 
+      })
+      .where(eq(payments.id, id))
+      .returning();
+    return payment;
+  }
+
+  async rejectPayment(id: string, rejectionReason: string): Promise<Payment> {
+    const [payment] = await db
+      .update(payments)
+      .set({ 
+        status: 'rejected', 
+        rejectionReason 
+      })
+      .where(eq(payments.id, id))
+      .returning();
+    return payment;
   }
 
   // Expense operations

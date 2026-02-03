@@ -23,6 +23,7 @@ import {
   insertServicePackageSchema,
   insertPackageSessionSchema,
   insertPackageAlertSchema,
+  insertPaymentSchema,
   createUserSchema,
   loginSchema,
   registerSchema,
@@ -959,6 +960,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching client invoices:", error);
       res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  // ==================== PAYMENT ENDPOINTS ====================
+
+  // Get all payments (admin only)
+  app.get('/api/payments', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const payments = await storage.getPayments();
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ message: "Failed to fetch payments" });
+    }
+  });
+
+  // Get pending payments (admin only)
+  app.get('/api/payments/pending', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const payments = await storage.getPendingPayments();
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching pending payments:", error);
+      res.status(500).json({ message: "Failed to fetch pending payments" });
+    }
+  });
+
+  // Get single payment (admin only)
+  app.get('/api/payments/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const payment = await storage.getPayment(req.params.id);
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+      res.json(payment);
+    } catch (error) {
+      console.error("Error fetching payment:", error);
+      res.status(500).json({ message: "Failed to fetch payment" });
+    }
+  });
+
+  // Create payment (for clients to register their payments)
+  app.post('/api/payments', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      let clientId = req.body.clientId;
+      
+      // If user is a client, get their client ID
+      if (user?.role === 'client') {
+        const client = await storage.getClientByUserId(user.id);
+        if (!client) {
+          return res.status(404).json({ message: "Client not found" });
+        }
+        clientId = client.id;
+      }
+      
+      if (!clientId) {
+        return res.status(400).json({ message: "Client ID is required" });
+      }
+
+      const paymentData = insertPaymentSchema.parse({
+        ...req.body,
+        clientId,
+      });
+
+      const payment = await storage.createPayment(paymentData);
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Error creating payment:", error);
+      res.status(500).json({ message: "Failed to create payment" });
+    }
+  });
+
+  // Approve payment (admin only)
+  app.put('/api/payments/:id/approve', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const user = req.user;
+      const payment = await storage.approvePayment(req.params.id, user.id);
+      
+      // If payment is linked to an invoice, update invoice status to paid
+      if (payment.invoiceId) {
+        await storage.updateInvoice(payment.invoiceId, { 
+          status: 'paid', 
+          paidDate: new Date() 
+        });
+      }
+      
+      res.json(payment);
+    } catch (error) {
+      console.error("Error approving payment:", error);
+      res.status(500).json({ message: "Failed to approve payment" });
+    }
+  });
+
+  // Reject payment (admin only)
+  app.put('/api/payments/:id/reject', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { rejectionReason } = req.body;
+      if (!rejectionReason) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+      const payment = await storage.rejectPayment(req.params.id, rejectionReason);
+      res.json(payment);
+    } catch (error) {
+      console.error("Error rejecting payment:", error);
+      res.status(500).json({ message: "Failed to reject payment" });
+    }
+  });
+
+  // Client portal - Get my payments
+  app.get('/api/client-portal/payments', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      
+      if (user?.role !== 'client') {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const client = await storage.getClientByUserId(user.id);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      const payments = await storage.getPaymentsByClientId(client.id);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching client payments:", error);
+      res.status(500).json({ message: "Failed to fetch payments" });
+    }
+  });
+
+  // Client portal - Submit payment with receipt image
+  app.post('/api/client-portal/payments', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      
+      if (user?.role !== 'client') {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const client = await storage.getClientByUserId(user.id);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      const paymentData = insertPaymentSchema.parse({
+        ...req.body,
+        clientId: client.id,
+        status: 'pending',
+      });
+
+      const payment = await storage.createPayment(paymentData);
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Error submitting payment:", error);
+      res.status(500).json({ message: "Failed to submit payment" });
     }
   });
 
