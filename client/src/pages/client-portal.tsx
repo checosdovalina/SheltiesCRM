@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,7 +18,7 @@ import {
   User, Dog as DogIcon, Calendar, CreditCard, Camera, FileText, Star, Package, 
   AlertTriangle, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, 
   Activity, Stethoscope, GraduationCap, PlayCircle, ClipboardList, Plus, CalendarPlus,
-  Video, Image as ImageIcon, File, ExternalLink
+  Video, Image as ImageIcon, File, ExternalLink, Receipt
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Progress } from "@/components/ui/progress";
@@ -81,6 +81,12 @@ export default function ClientPortal() {
 
   const { data: packages, isLoading: packagesLoading } = useQuery<any[]>({
     queryKey: ["/api/client-portal/packages"],
+    enabled: isAuthenticated && user?.role === 'client',
+    retry: false,
+  });
+
+  const { data: myPayments, isLoading: paymentsLoading } = useQuery<any[]>({
+    queryKey: ["/api/client-portal/payments"],
     enabled: isAuthenticated && user?.role === 'client',
     retry: false,
   });
@@ -1104,6 +1110,91 @@ export default function ClientPortal() {
                 </CardContent>
               </Card>
             )}
+
+            {/* My Payments Section */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="w-5 h-5 text-primary" />
+                  Mis Comprobantes de Pago
+                </CardTitle>
+                <CardDescription>
+                  Historial de pagos enviados y su estado de verificación
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {paymentsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(2)].map((_, i) => (
+                      <div key={i} className="animate-pulse flex items-center gap-4 p-4 border rounded-lg">
+                        <div className="w-12 h-12 bg-muted rounded"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-muted rounded w-1/3"></div>
+                          <div className="h-3 bg-muted rounded w-1/2"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : myPayments && myPayments.length > 0 ? (
+                  <div className="space-y-3">
+                    {myPayments.map((payment: any) => (
+                      <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-4">
+                          {payment.receiptImageUrl ? (
+                            <a href={payment.receiptImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+                              <img 
+                                src={payment.receiptImageUrl} 
+                                alt="Comprobante" 
+                                className="w-12 h-12 object-cover rounded border hover:opacity-80 transition-opacity"
+                              />
+                            </a>
+                          ) : (
+                            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                              <Receipt className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium">${Number(payment.amount).toLocaleString('es-MX')}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(payment.paymentDate).toLocaleDateString('es-MX', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </p>
+                            {payment.notes && (
+                              <p className="text-xs text-muted-foreground mt-1">{payment.notes}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge className={
+                            payment.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            payment.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }>
+                            {payment.status === 'approved' ? 'Aprobado' :
+                             payment.status === 'rejected' ? 'Rechazado' :
+                             'Pendiente'}
+                          </Badge>
+                          {payment.rejectionReason && (
+                            <p className="text-xs text-red-600 mt-1">{payment.rejectionReason}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Receipt className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">No has enviado comprobantes de pago</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Usa el botón "Enviar Comprobante" para registrar tu pago
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
