@@ -165,8 +165,9 @@ export default function PaymentModal({
 
         const url = new URL(uploadURL);
         const pathParts = url.pathname.split('/');
-        const imagePath = pathParts.slice(2).join('/');
-        imageUrl = `/objects/uploads/${imagePath}`;
+        // Extract only the unique file ID from the path
+        const fileId = pathParts[pathParts.length - 1];
+        imageUrl = `/objects/uploads/${fileId}`;
       }
 
       form.setValue("receiptImage", imageUrl);
