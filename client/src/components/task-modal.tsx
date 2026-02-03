@@ -26,13 +26,17 @@ interface TaskModalProps {
   onOpenChange: (open: boolean) => void;
   task?: any;
   selectedDate?: Date | null;
+  selectedTimeSlot?: number | null;
+  selectedTeacherId?: string | null;
 }
 
 export default function TaskModal({ 
   open, 
   onOpenChange, 
   task, 
-  selectedDate 
+  selectedDate,
+  selectedTimeSlot,
+  selectedTeacherId
 }: TaskModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -80,13 +84,16 @@ export default function TaskModal({
         });
       } else {
         const defaultDate = selectedDate || new Date();
+        const defaultTime = selectedTimeSlot !== null && selectedTimeSlot !== undefined
+          ? `${selectedTimeSlot.toString().padStart(2, '0')}:00`
+          : "09:00";
         form.reset({
           title: "",
           description: "",
           type: "other",
-          assignedTo: "",
+          assignedTo: selectedTeacherId || "",
           startDate: defaultDate.toISOString().split('T')[0],
-          startTime: "09:00",
+          startTime: defaultTime,
           endDate: "",
           endTime: "",
           status: "pending",
@@ -95,9 +102,9 @@ export default function TaskModal({
         });
       }
     }
-  }, [task, selectedDate, open, form]);
+  }, [task, selectedDate, selectedTimeSlot, selectedTeacherId, open, form]);
 
-  const { data: teachers, isLoading: teachersLoading } = useQuery({
+  const { data: teachers, isLoading: teachersLoading } = useQuery<any[]>({
     queryKey: ["/api/teachers"],
     enabled: open,
     retry: false,

@@ -30,13 +30,17 @@ interface AppointmentModalProps {
   onOpenChange: (open: boolean) => void;
   appointment?: any;
   selectedDate?: Date | null;
+  selectedTimeSlot?: number | null;
+  selectedTeacherId?: string | null;
 }
 
 export default function AppointmentModal({ 
   open, 
   onOpenChange, 
   appointment, 
-  selectedDate 
+  selectedDate,
+  selectedTimeSlot,
+  selectedTeacherId
 }: AppointmentModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -91,21 +95,24 @@ export default function AppointmentModal({
         form.reset(formData);
       } else {
         const defaultDate = selectedDate || new Date();
+        const defaultTime = selectedTimeSlot !== null && selectedTimeSlot !== undefined
+          ? `${selectedTimeSlot.toString().padStart(2, '0')}:00`
+          : "09:00";
         form.reset({
           clientId: "",
           dogId: "",
           serviceId: "",
           appointmentDate: defaultDate.toISOString().split('T')[0],
-          appointmentTime: "09:00",
+          appointmentTime: defaultTime,
           status: "pending",
           notes: "",
           price: "",
-          teacherId: "",
+          teacherId: selectedTeacherId || "",
           plannedProtocolId: "",
         });
       }
     }
-  }, [appointment, selectedDate, open, form]);
+  }, [appointment, selectedDate, selectedTimeSlot, selectedTeacherId, open, form]);
 
   const { data: clients, isLoading: clientsLoading } = useQuery({
     queryKey: ["/api/clients"],

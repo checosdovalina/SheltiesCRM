@@ -25,6 +25,8 @@ export default function CalendarPage() {
   const [appointmentToAssign, setAppointmentToAssign] = useState<any>(null);
   const [assigningTeacherId, setAssigningTeacherId] = useState<string>('');
   const [showDayDetailsModal, setShowDayDetailsModal] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<number | null>(null);
+  const [showSlotActionModal, setShowSlotActionModal] = useState(false);
   const isAdmin = user?.role === 'admin';
 
   // Mutation to assign teacher to appointment
@@ -589,7 +591,11 @@ export default function CalendarPage() {
                         return freeSlots.map(hour => (
                           <div 
                             key={hour}
-                            className="flex items-center justify-between p-2 rounded bg-chart-2/10 border border-chart-2/20"
+                            className="flex items-center justify-between p-2 rounded bg-chart-2/10 border border-chart-2/20 cursor-pointer hover:bg-chart-2/20 transition-colors"
+                            onClick={() => {
+                              setSelectedTimeSlot(hour);
+                              setShowSlotActionModal(true);
+                            }}
                           >
                             <span className="text-sm text-chart-2 font-medium">
                               {hour.toString().padStart(2, '0')}:00 - {(hour + 1).toString().padStart(2, '0')}:00
@@ -674,15 +680,25 @@ export default function CalendarPage() {
       {/* Appointment Modal */}
       <AppointmentModal 
         open={showAppointmentModal} 
-        onOpenChange={setShowAppointmentModal}
+        onOpenChange={(open) => {
+          setShowAppointmentModal(open);
+          if (!open) setSelectedTimeSlot(null);
+        }}
         selectedDate={selectedDate}
+        selectedTimeSlot={selectedTimeSlot}
+        selectedTeacherId={selectedTeacher !== 'all' ? selectedTeacher : null}
       />
 
       {/* Task Modal */}
       <TaskModal 
         open={showTaskModal} 
-        onOpenChange={setShowTaskModal}
+        onOpenChange={(open) => {
+          setShowTaskModal(open);
+          if (!open) setSelectedTimeSlot(null);
+        }}
         selectedDate={selectedDate}
+        selectedTimeSlot={selectedTimeSlot}
+        selectedTeacherId={selectedTeacher !== 'all' ? selectedTeacher : null}
       />
 
       {/* Assign Teacher Modal */}
@@ -908,6 +924,60 @@ export default function CalendarPage() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Slot Action Modal - Choose to create appointment or task */}
+      <Dialog open={showSlotActionModal} onOpenChange={setShowSlotActionModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-primary" />
+              Agendar en este horario
+            </DialogTitle>
+            <DialogDescription>
+              {selectedDate && selectedTimeSlot !== null && (
+                <>
+                  {selectedDate.toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    day: 'numeric',
+                    month: 'long'
+                  })} a las {selectedTimeSlot.toString().padStart(2, '0')}:00
+                  {selectedTeacher !== 'all' && selectedTeacherData && (
+                    <span className="block mt-1">
+                      Asignado a: {selectedTeacherData.firstName} {selectedTeacherData.lastName}
+                    </span>
+                  )}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/10 hover:border-primary"
+              onClick={() => {
+                setShowSlotActionModal(false);
+                setShowAppointmentModal(true);
+              }}
+            >
+              <Clock className="w-8 h-8 text-primary" />
+              <span className="text-sm font-medium">Nueva Cita</span>
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-chart-2/10 hover:border-chart-2"
+              onClick={() => {
+                setShowSlotActionModal(false);
+                setShowTaskModal(true);
+              }}
+            >
+              <CheckSquare className="w-8 h-8 text-chart-2" />
+              <span className="text-sm font-medium">Nueva Tarea</span>
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
