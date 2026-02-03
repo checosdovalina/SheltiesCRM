@@ -1,0 +1,58 @@
+[root@localhost sheltiescrm]# git pull origin main
+npm run build
+pm2 restart sheltiescrm
+remote: Enumerating objects: 4, done.
+remote: Counting objects: 100% (4/4), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 4 (delta 2), reused 4 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (4/4), 1.61 KiB | 1.61 MiB/s, done.
+From https://github.com/checosdovalina/SheltiesCRM
+ * branch            main       -> FETCH_HEAD
+   c39784a..fdd40b0  main       -> origin/main
+Updating 38c9368..fdd40b0
+error: Your local changes to the following files would be overwritten by merge:
+	client/src/components/EvidenceModal.tsx
+	client/src/components/SimpleImageUploader.tsx
+	package-lock.json
+	package.json
+	server/index.ts
+	server/routes.ts
+Please commit your changes or stash them before you merge.
+error: The following untracked working tree files would be overwritten by merge:
+	server/localStorage.ts
+Please move or remove them before you merge.
+Aborting
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+transforming (3) src/main.tsxBrowserslist: browsers data (caniuse-lite) is 16 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2960 modules transformed.
+../dist/public/index.html                                             2.20 kB │ gzip:   0.86 kB
+../dist/public/assets/logo-shelties-2_1756234700564-BEzgD2e5.png     18.36 kB
+../dist/public/assets/logo shelties_1756234743860-b3IsEVri.png       18.45 kB
+../dist/public/assets/index-k-Iit28r.css                             81.18 kB │ gzip:  13.97 kB
+../dist/public/assets/index-C0p7N-zT.js                           1,258.73 kB │ gzip: 334.54 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 6.95s
+
+  dist/index.js  172.6kb
+
+⚡ Done in 11ms
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [sheltiescrm](ids: [ 0 ])
+[PM2] [sheltiescrm](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 3  │ comite-app         │ fork     │ 14   │ online    │ 0%       │ 119.5mb  │
+│ 0  │ sheltiescrm        │ fork     │ 124  │ online    │ 0%       │ 18.8mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[root@localhost sheltiescrm]# 
