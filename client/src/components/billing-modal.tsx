@@ -131,13 +131,13 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
     mutationFn: async (data: InvoiceFormValues) => {
       const { dueDate, items: formItems, ...rest } = data;
       
-      // Create invoice first - convert strings to numbers for API
+      // Create invoice - keep clientId as string (UUID), amount as string for decimal
       const invoiceData = {
-        clientId: Number(rest.clientId),
-        amount: Number(rest.amount),
+        clientId: rest.clientId,
+        amount: rest.amount,
         status: rest.status,
         notes: rest.notes,
-        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+        dueDate: dueDate ? new Date(dueDate) : null,
       };
 
       const url = invoice ? `/api/invoices/${invoice.id}` : "/api/invoices";
