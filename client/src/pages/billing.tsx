@@ -30,6 +30,7 @@ export default function Billing() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
+  const [paymentForInvoice, setPaymentForInvoice] = useState<any>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -612,6 +613,25 @@ export default function Billing() {
                           </Button>
                         </div>
                       )}
+                      {payment.status === 'approved' && !payment.invoiceId && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full sm:w-auto"
+                          onClick={() => {
+                            setPaymentForInvoice(payment);
+                            setShowBillingModal(true);
+                          }}
+                        >
+                          <FileText className="w-4 h-4 mr-1" />
+                          Crear Factura
+                        </Button>
+                      )}
+                      {payment.invoiceId && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          Facturado
+                        </Badge>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -634,7 +654,11 @@ export default function Billing() {
       {/* Billing Modal */}
       <BillingModal 
         open={showBillingModal} 
-        onOpenChange={setShowBillingModal}
+        onOpenChange={(open) => {
+          setShowBillingModal(open);
+          if (!open) setPaymentForInvoice(null);
+        }}
+        paymentData={paymentForInvoice}
       />
 
       {/* Payment Modal */}

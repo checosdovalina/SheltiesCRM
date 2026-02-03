@@ -39,9 +39,10 @@ interface BillingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invoice?: any;
+  paymentData?: any; // Pre-fill from approved payment
 }
 
-export default function BillingModal({ open, onOpenChange, invoice }: BillingModalProps) {
+export default function BillingModal({ open, onOpenChange, invoice, paymentData }: BillingModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [items, setItems] = useState([{
@@ -81,6 +82,28 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
         if (invoice.items) {
           setItems(invoice.items);
         }
+      } else if (paymentData) {
+        // Pre-fill from approved payment
+        const defaultDueDate = new Date();
+        defaultDueDate.setDate(defaultDueDate.getDate() + 30);
+        const paymentAmount = Number(paymentData.amount) || 0;
+        const newItems = [{
+          appointmentId: "",
+          serviceId: "",
+          description: `Pago recibido - ${paymentData.paymentMethod === 'transfer' ? 'Transferencia' : paymentData.paymentMethod === 'cash' ? 'Efectivo' : paymentData.paymentMethod === 'card' ? 'Tarjeta' : 'Otro'}`,
+          quantity: 1,
+          unitPrice: paymentAmount,
+          totalPrice: paymentAmount,
+        }];
+        form.reset({
+          clientId: paymentData.clientId || "",
+          amount: String(paymentAmount),
+          status: "paid",
+          dueDate: defaultDueDate.toISOString().split('T')[0],
+          notes: paymentData.notes || "",
+          items: newItems,
+        });
+        setItems(newItems);
       } else {
         const defaultDueDate = new Date();
         defaultDueDate.setDate(defaultDueDate.getDate() + 30);
@@ -102,7 +125,7 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
         }]);
       }
     }
-  }, [invoice, open, form]);
+  }, [invoice, paymentData, open, form]);
 
   const { data: clients, isLoading: clientsLoading } = useQuery<any[]>({
     queryKey: ["/api/clients"],
