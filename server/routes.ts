@@ -832,7 +832,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice routes
   app.post('/api/invoices', isAuthenticated, async (req, res) => {
     try {
-      const invoiceData = insertInvoiceSchema.parse(req.body);
+      // Convert dueDate string to Date if needed
+      const body = {
+        ...req.body,
+        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+      };
+      const invoiceData = insertInvoiceSchema.parse(body);
       const invoice = await storage.createInvoice(invoiceData);
       res.json(invoice);
     } catch (error) {
