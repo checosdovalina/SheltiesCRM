@@ -185,8 +185,8 @@ export default function TrainingSessionModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {assignedDogs.filter(dog => dog.id && dog.id.trim() !== '').map((dog: any) => (
-                        <SelectItem key={dog.id} value={dog.id}>
+                      {assignedDogs.filter(dog => dog.id).map((dog: any) => (
+                        <SelectItem key={dog.id} value={String(dog.id)}>
                           {dog.name} - {dog.client?.firstName || ''} {dog.client?.lastName || ''}
                         </SelectItem>
                       ))}

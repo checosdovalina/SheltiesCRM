@@ -17,8 +17,12 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { z } from "zod";
 import { Plus, Trash2, Calculator } from "lucide-react";
 
-const invoiceFormSchema = insertInvoiceSchema.extend({
+const invoiceFormSchema = z.object({
+  clientId: z.string().min(1, "Selecciona un cliente"),
+  amount: z.string().min(1, "El monto es requerido"),
+  status: z.enum(["draft", "pending", "sent", "paid", "overdue", "cancelled", "partial"]).default("draft"),
   dueDate: z.string().optional(),
+  notes: z.string().optional(),
   items: z.array(z.object({
     appointmentId: z.string().optional(),
     serviceId: z.string().optional(),
@@ -28,6 +32,8 @@ const invoiceFormSchema = insertInvoiceSchema.extend({
     totalPrice: z.number().min(0, "El total debe ser mayor o igual a 0"),
   })).min(1, "Debe agregar al menos un item"),
 });
+
+type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 
 interface BillingModalProps {
   open: boolean;
@@ -47,11 +53,11 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
     totalPrice: 0,
   }]);
 
-  const form = useForm<z.infer<typeof invoiceFormSchema>>({
+  const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       clientId: "",
-      amount: 0,
+      amount: "0",
       status: "draft",
       dueDate: "",
       notes: "",
@@ -65,8 +71,8 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
       if (invoice) {
         const dueDateStr = invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : "";
         form.reset({
-          clientId: invoice.clientId || "",
-          amount: Number(invoice.amount) || 0,
+          clientId: String(invoice.clientId) || "",
+          amount: String(invoice.amount) || "0",
           status: invoice.status || "draft",
           dueDate: dueDateStr,
           notes: invoice.notes || "",
@@ -80,7 +86,7 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
         defaultDueDate.setDate(defaultDueDate.getDate() + 30);
         form.reset({
           clientId: "",
-          amount: 0,
+          amount: "0",
           status: "draft",
           dueDate: defaultDueDate.toISOString().split('T')[0],
           notes: "",
@@ -98,36 +104,39 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
     }
   }, [invoice, open, form]);
 
-  const { data: clients, isLoading: clientsLoading } = useQuery({
+  const { data: clients, isLoading: clientsLoading } = useQuery<any[]>({
     queryKey: ["/api/clients"],
     enabled: open,
     retry: false,
   });
 
-  const { data: services, isLoading: servicesLoading } = useQuery({
+  const { data: services, isLoading: servicesLoading } = useQuery<any[]>({
     queryKey: ["/api/services"],
     enabled: open,
     retry: false,
   });
 
   const selectedClientId = form.watch("clientId");
-  const { data: appointments } = useQuery({
+  const { data: appointments } = useQuery<any[]>({
     queryKey: ["/api/appointments"],
     enabled: !!selectedClientId && open,
     retry: false,
   });
 
-  const clientAppointments = appointments?.filter((apt: any) => 
-    apt.client?.id === selectedClientId && apt.status === "completed"
-  ) || [];
+  const clientAppointments = (appointments || []).filter((apt: any) => 
+    String(apt.client?.id) === selectedClientId && apt.status === "completed"
+  );
 
   const createInvoiceMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof invoiceFormSchema>) => {
+    mutationFn: async (data: InvoiceFormValues) => {
       const { dueDate, items: formItems, ...rest } = data;
       
-      // Create invoice first
+      // Create invoice first - convert strings to numbers for API
       const invoiceData = {
-        ...rest,
+        clientId: Number(rest.clientId),
+        amount: Number(rest.amount),
+        status: rest.status,
+        notes: rest.notes,
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
       };
 
@@ -194,7 +203,7 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
     
     // Update total invoice amount
     const totalAmount = newItems.reduce((sum, item) => sum + item.totalPrice, 0);
-    form.setValue('amount', totalAmount);
+    form.setValue('amount', String(totalAmount));
   };
 
   const updateItemDescription = (index: number, value: string) => {
@@ -205,11 +214,11 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
   };
 
   const selectAppointment = (index: number, appointmentId: string) => {
-    const appointment = clientAppointments.find((apt: any) => apt.id === appointmentId);
+    const appointment = clientAppointments.find((apt: any) => String(apt.id) === appointmentId);
     if (appointment) {
       const newItems = [...items];
       newItems[index].appointmentId = appointmentId;
-      newItems[index].serviceId = appointment.service?.id || "";
+      newItems[index].serviceId = String(appointment.service?.id) || "";
       newItems[index].description = `${appointment.service?.name} - ${appointment.dog?.name}`;
       newItems[index].unitPrice = Number(appointment.price) || 0;
       newItems[index].totalPrice = newItems[index].quantity * newItems[index].unitPrice;
@@ -218,12 +227,12 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
       
       // Update total invoice amount
       const totalAmount = newItems.reduce((sum, item) => sum + item.totalPrice, 0);
-      form.setValue('amount', totalAmount);
+      form.setValue('amount', String(totalAmount));
     }
   };
 
   const selectService = (index: number, serviceId: string) => {
-    const service = services?.find((svc: any) => svc.id === serviceId);
+    const service = (services || []).find((svc: any) => String(svc.id) === serviceId);
     if (service) {
       const newItems = [...items];
       newItems[index].serviceId = serviceId;
@@ -235,7 +244,7 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
       
       // Update total invoice amount
       const totalAmount = newItems.reduce((sum, item) => sum + item.totalPrice, 0);
-      form.setValue('amount', totalAmount);
+      form.setValue('amount', String(totalAmount));
     }
   };
 
@@ -260,11 +269,11 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
       
       // Update total invoice amount
       const totalAmount = newItems.reduce((sum, item) => sum + item.totalPrice, 0);
-      form.setValue('amount', totalAmount);
+      form.setValue('amount', String(totalAmount));
     }
   };
 
-  const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
+  const onSubmit = (data: InvoiceFormValues) => {
     createInvoiceMutation.mutate(data);
   };
 
@@ -305,8 +314,8 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
                       <SelectContent>
                         {clientsLoading ? (
                           <SelectItem value="loading" disabled>Cargando clientes...</SelectItem>
-                        ) : clients?.map((client: any) => (
-                          <SelectItem key={client.id} value={client.id}>
+                        ) : (clients || []).map((client: any) => (
+                          <SelectItem key={client.id} value={String(client.id)}>
                             {client.firstName} {client.lastName}
                           </SelectItem>
                         ))}
@@ -375,7 +384,7 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
                               </SelectItem>
                             ) : (
                               clientAppointments.map((apt: any) => (
-                                <SelectItem key={apt.id} value={apt.id}>
+                                <SelectItem key={apt.id} value={String(apt.id)}>
                                   {apt.service?.name} - {apt.dog?.name} (${Number(apt.price).toLocaleString()})
                                 </SelectItem>
                               ))
@@ -398,8 +407,8 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
                           <SelectContent>
                             {servicesLoading ? (
                               <SelectItem value="loading" disabled>Cargando servicios...</SelectItem>
-                            ) : services?.map((service: any) => (
-                              <SelectItem key={service.id} value={service.id}>
+                            ) : (services || []).map((service: any) => (
+                              <SelectItem key={service.id} value={String(service.id)}>
                                 {service.name} - ${Number(service.price).toLocaleString()}
                               </SelectItem>
                             ))}

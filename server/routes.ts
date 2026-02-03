@@ -714,6 +714,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Payment receipt image upload endpoint
+  app.post('/api/payments/upload-receipt', isAuthenticated, async (req, res) => {
+    try {
+      if (isReplitEnvironment()) {
+        const objectStorageService = new ObjectStorageService();
+        const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+        res.json({ uploadURL, useLocalUpload: false });
+      } else {
+        res.json({ 
+          uploadURL: '/api/local-upload/payment-receipt',
+          useLocalUpload: true 
+        });
+      }
+    } catch (error) {
+      console.error("Error getting payment receipt upload URL:", error);
+      res.json({ 
+        uploadURL: '/api/local-upload/payment-receipt',
+        useLocalUpload: true 
+      });
+    }
+  });
+
+  // Local upload endpoint for payment receipts
+  app.post('/api/local-upload/payment-receipt', isAuthenticated, (req: any, res, next) => {
+    req.uploadType = "payment-receipts";
+    next();
+  }, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      const fileUrl = `/uploads/payment-receipts/${req.file.filename}`;
+      res.json({ url: fileUrl, filename: req.file.filename });
+    } catch (error) {
+      console.error("Error uploading payment receipt:", error);
+      res.status(500).json({ message: "Failed to upload receipt" });
+    }
+  });
+
   // General file upload route for evidence and other files
   app.post('/api/upload', isAuthenticated, async (req, res) => {
     try {
