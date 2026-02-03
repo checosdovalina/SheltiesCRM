@@ -240,16 +240,19 @@ export default function PaymentModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Factura (opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                    <Select 
+                      onValueChange={(value) => field.onChange(value === "none" ? "" : value)} 
+                      value={field.value || "none"}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar factura" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Sin factura asociada</SelectItem>
-                        {invoices?.filter((inv: any) => inv.status !== 'paid').map((invoice: any) => (
-                          <SelectItem key={invoice.id} value={invoice.id}>
+                        <SelectItem value="none">Sin factura asociada</SelectItem>
+                        {(invoices || []).filter((inv: any) => inv.status !== 'paid').map((invoice: any) => (
+                          <SelectItem key={invoice.id} value={String(invoice.id)}>
                             {invoice.invoiceNumber} - ${invoice.amount} ({invoice.client?.firstName} {invoice.client?.lastName})
                           </SelectItem>
                         ))}
