@@ -363,39 +363,7 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                       <div className="md:col-span-3">
                         <label className="text-sm font-medium text-foreground mb-2 block">
-                          Cita Completada
-                        </label>
-                        <Select
-                          value={item.appointmentId}
-                          onValueChange={(value) => selectAppointment(index, value)}
-                          disabled={!selectedClientId}
-                        >
-                          <SelectTrigger data-testid={`select-appointment-${index}`}>
-                            <SelectValue placeholder="Seleccionar cita..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {!selectedClientId ? (
-                              <SelectItem value="no-client" disabled>
-                                Primero selecciona un cliente
-                              </SelectItem>
-                            ) : clientAppointments.length === 0 ? (
-                              <SelectItem value="no-appointments" disabled>
-                                No hay citas completadas
-                              </SelectItem>
-                            ) : (
-                              clientAppointments.map((apt: any) => (
-                                <SelectItem key={apt.id} value={String(apt.id)}>
-                                  {apt.service?.name} - {apt.dog?.name} (${Number(apt.price).toLocaleString()})
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="md:col-span-3">
-                        <label className="text-sm font-medium text-foreground mb-2 block">
-                          O Servicio Manual
+                          Servicio
                         </label>
                         <Select
                           value={item.serviceId}
@@ -412,6 +380,38 @@ export default function BillingModal({ open, onOpenChange, invoice }: BillingMod
                                 {service.name} - ${Number(service.price).toLocaleString()}
                               </SelectItem>
                             ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="md:col-span-3">
+                        <label className="text-sm font-medium text-foreground mb-2 block">
+                          Cita (opcional)
+                        </label>
+                        <Select
+                          value={item.appointmentId}
+                          onValueChange={(value) => selectAppointment(index, value)}
+                          disabled={!selectedClientId}
+                        >
+                          <SelectTrigger data-testid={`select-appointment-${index}`}>
+                            <SelectValue placeholder="Vincular a cita..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {!selectedClientId ? (
+                              <SelectItem value="no-client" disabled>
+                                Primero selecciona un cliente
+                              </SelectItem>
+                            ) : clientAppointments.length === 0 ? (
+                              <SelectItem value="no-appointments" disabled>
+                                Sin citas completadas
+                              </SelectItem>
+                            ) : (
+                              clientAppointments.map((apt: any) => (
+                                <SelectItem key={apt.id} value={String(apt.id)}>
+                                  {apt.service?.name} - {apt.dog?.name} (${Number(apt.price).toLocaleString()})
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
