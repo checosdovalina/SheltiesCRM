@@ -1,0 +1,57 @@
+transforming (1) index.htmlBrowserslist: browsers data (caniuse-lite) is 16 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2960 modules transformed.
+../dist/public/index.html                                             2.20 kB │ gzip:   0.86 kB
+../dist/public/assets/logo-shelties-2_1756234700564-BEzgD2e5.png     18.36 kB
+../dist/public/assets/logo shelties_1756234743860-b3IsEVri.png       18.45 kB
+../dist/public/assets/index-k-Iit28r.css                             81.18 kB │ gzip:  13.97 kB
+../dist/public/assets/index-C0p7N-zT.js                           1,258.73 kB │ gzip: 334.54 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 6.94s
+
+  dist/index.js  172.9kb
+
+⚡ Done in 14ms
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [sheltiescrm](ids: [ 0 ])
+[PM2] [sheltiescrm](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 3  │ comite-app         │ fork     │ 14   │ online    │ 0%       │ 119.5mb  │
+│ 0  │ sheltiescrm        │ fork     │ 113  │ online    │ 0%       │ 15.6mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[TAILING] Tailing last 10 lines for [sheltiescrm] process (change the value with --lines option)
+/root/.pm2/logs/sheltiescrm-error.log last 10 lines:
+0|shelties |     at isAuthenticated (file:///var/www/sheltiescrm/dist/index.js:1274:5)
+0|shelties |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|shelties | Error getting dog image upload URL: Error: PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' tool and set PRIVATE_OBJECT_DIR env var.
+0|shelties |     at ObjectStorageService.getPrivateObjectDir (file:///var/www/sheltiescrm/dist/index.js:2672:13)
+0|shelties |     at ObjectStorageService.getObjectEntityUploadURL (file:///var/www/sheltiescrm/dist/index.js:2680:35)
+0|shelties |     at file:///var/www/sheltiescrm/dist/index.js:3398:52
+0|shelties |     at Layer.handle [as handle_request] (/var/www/sheltiescrm/node_modules/express/lib/router/layer.js:95:5)
+0|shelties |     at next (/var/www/sheltiescrm/node_modules/express/lib/router/route.js:149:13)
+0|shelties |     at isAuthenticated (file:///var/www/sheltiescrm/dist/index.js:1274:5)
+0|shelties |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+/root/.pm2/logs/sheltiescrm-out.log last 10 lines:
+0|shelties | 2:25:22 AM [express] GET /api/appointments 304 in 6ms :: [{"id":"7ddfc028-5b4f-43b9-a493-1a154d0fc32…
+0|shelties | 2:25:25 AM [express] GET /api/clients 304 in 6ms :: [{"id":"e9a4da64-06df-4b92-8cd9-ac8034ad8c49","u…
+0|shelties | 2:25:25 AM [express] GET /api/clients/e9a4da64-06df-4b92-8cd9-ac8034ad8c49/dogs 200 in 7ms :: [{"id"…
+0|shelties | 2:25:25 AM [express] GET /api/clients/10912fb8-3863-4ca7-846a-0b45517fe6a5/dogs 304 in 6ms :: [{"id"…
+0|shelties | 2:25:25 AM [express] GET /api/clients/862fd466-efa1-4d26-9069-14b75e871757/dogs 304 in 14ms :: [{"id…
+0|shelties | 2:25:25 AM [express] GET /api/clients/0d1285a9-6afc-4d97-9103-122f9ecc7f70/dogs 304 in 16ms :: [{"id…
+0|shelties | 2:25:39 AM [express] GET /api/protocols 304 in 13ms :: []
+0|shelties | 2:25:39 AM [express] GET /api/pet-types 200 in 4ms :: [{"id":"2e2a7821-9a74-41de-8a72-dff0d9c40d3c",…
+0|shelties | 2:25:53 AM [express] POST /api/dogs/upload-image 500 in 17ms :: {"message":"Failed to get upload URL…
+0|shelties | 2:26:03 AM [express] POST /api/dogs/upload-image 500 in 13ms :: {"message":"Failed to get upload URL…
+
+0|sheltiescrm  | > rest-express@1.0.0 start
+0|sheltiescrm  | > NODE_ENV=production node dist/index.js
+0|sheltiescrm  | 2:32:04 AM [express] serving on port 5000
+
