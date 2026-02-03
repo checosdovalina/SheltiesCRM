@@ -6,6 +6,7 @@ import path from "path";
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "./uploads";
 const DOG_IMAGES_DIR = path.join(UPLOAD_DIR, "dog-images");
 const EVIDENCE_DIR = path.join(UPLOAD_DIR, "evidence");
+const PAYMENT_RECEIPTS_DIR = path.join(UPLOAD_DIR, "payment-receipts");
 
 function ensureDirectoryExists(dir: string) {
   if (!fs.existsSync(dir)) {
@@ -15,6 +16,7 @@ function ensureDirectoryExists(dir: string) {
 
 ensureDirectoryExists(DOG_IMAGES_DIR);
 ensureDirectoryExists(EVIDENCE_DIR);
+ensureDirectoryExists(PAYMENT_RECEIPTS_DIR);
 
 export class LocalStorageService {
   getDogImageUploadPath(): { fileId: string; filePath: string } {
