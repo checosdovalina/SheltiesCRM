@@ -1140,10 +1140,10 @@ export default function ClientPortal() {
                     {myPayments.map((payment: any) => (
                       <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                         <div className="flex items-center gap-4">
-                          {payment.receiptImageUrl ? (
-                            <a href={payment.receiptImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+                          {payment.receiptImage ? (
+                            <a href={payment.receiptImage} target="_blank" rel="noopener noreferrer" className="block">
                               <img 
-                                src={payment.receiptImageUrl} 
+                                src={payment.receiptImage} 
                                 alt="Comprobante" 
                                 className="w-12 h-12 object-cover rounded border hover:opacity-80 transition-opacity"
                               />
@@ -1156,11 +1156,11 @@ export default function ClientPortal() {
                           <div>
                             <p className="font-medium">${Number(payment.amount).toLocaleString('es-MX')}</p>
                             <p className="text-sm text-muted-foreground">
-                              {new Date(payment.paymentDate).toLocaleDateString('es-MX', {
+                              {payment.submittedAt ? new Date(payment.submittedAt).toLocaleDateString('es-MX', {
                                 year: 'numeric',
                                 month: 'long',
                                 day: 'numeric'
-                              })}
+                              }) : 'Fecha no disponible'}
                             </p>
                             {payment.notes && (
                               <p className="text-xs text-muted-foreground mt-1">{payment.notes}</p>
