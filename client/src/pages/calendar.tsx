@@ -168,9 +168,9 @@ export default function CalendarPage() {
       );
     });
     
-    // Filter by teacher if selected
+    // Filter by teacher if selected (use teacherId, not assignedTo)
     if (selectedTeacher !== 'all') {
-      filtered = filtered.filter((apt: any) => apt.assignedTo === selectedTeacher);
+      filtered = filtered.filter((apt: any) => apt.teacherId === selectedTeacher);
     }
     
     return filtered;
@@ -187,7 +187,7 @@ export default function CalendarPage() {
       );
     });
     
-    // Filter by teacher if selected
+    // Filter by teacher if selected (use assignedTo for tasks)
     if (selectedTeacher !== 'all') {
       filtered = filtered.filter((task: any) => task.assignedTo === selectedTeacher);
     }
@@ -361,7 +361,7 @@ export default function CalendarPage() {
                       key={day.toISOString()}
                       className={`bg-background p-1 h-24 cursor-pointer hover:bg-muted/50 transition-colors ${
                         isToday ? 'ring-2 ring-primary' : ''
-                      } ${isSelected ? 'bg-primary/10' : ''}`}
+                      } ${isSelected ? 'bg-primary/20 ring-2 ring-primary/50' : ''}`}
                       onClick={() => {
                         setSelectedDate(day);
                         const dayAppts = getAppointmentsForDate(day);
@@ -549,8 +549,8 @@ export default function CalendarPage() {
                 </CardContent>
               </Card>
 
-              {/* Available Time Slots - Only when teacher is selected */}
-              {isAdmin && selectedTeacher !== 'all' && selectedTeacherData && (
+              {/* Available Time Slots - Always show when date is selected */}
+              {isAdmin && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -558,7 +558,9 @@ export default function CalendarPage() {
                       Espacios Disponibles
                     </CardTitle>
                     <CardDescription>
-                      Horarios libres de {selectedTeacherData.firstName}
+                      {selectedTeacher !== 'all' && selectedTeacherData 
+                        ? `Horarios libres de ${selectedTeacherData.firstName}`
+                        : 'Horarios libres del día'}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
