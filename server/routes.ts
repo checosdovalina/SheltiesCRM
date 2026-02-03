@@ -1059,8 +1059,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Client ID is required" });
       }
 
-      const paymentData = insertPaymentSchema.parse({
+      // Clean up invoice ID - convert empty string to null
+      const cleanedBody = {
         ...req.body,
+        invoiceId: req.body.invoiceId && req.body.invoiceId.trim() !== '' ? req.body.invoiceId : null,
+      };
+
+      const paymentData = insertPaymentSchema.parse({
+        ...cleanedBody,
         clientId,
       });
 
@@ -1144,8 +1150,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Client not found" });
       }
 
-      const paymentData = insertPaymentSchema.parse({
+      // Clean up invoice ID - convert empty string to null
+      const cleanedBody = {
         ...req.body,
+        invoiceId: req.body.invoiceId && req.body.invoiceId.trim() !== '' ? req.body.invoiceId : null,
+      };
+
+      const paymentData = insertPaymentSchema.parse({
+        ...cleanedBody,
         clientId: client.id,
         status: 'pending',
       });
