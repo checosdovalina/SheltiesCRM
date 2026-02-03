@@ -6,6 +6,7 @@ import { ObjectStorageService, ObjectNotFoundError, objectStorageClient, parseOb
 import { localStorageService, isReplitEnvironment } from "./localStorage";
 import multer from "multer";
 import path from "path";
+import { randomUUID } from "crypto";
 import {
   insertClientSchema,
   insertDogSchema,
@@ -664,11 +665,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const multerStorage = multer.diskStorage({
     destination: (req, file, cb) => {
       const type = (req as any).uploadType || "evidence";
-      const dir = path.join(uploadDir, type === "dog-images" ? "dog-images" : "evidence");
+      let subDir = "evidence";
+      if (type === "dog-images") subDir = "dog-images";
+      else if (type === "payment-receipts") subDir = "payment-receipts";
+      const dir = path.join(uploadDir, subDir);
       cb(null, dir);
     },
     filename: (req, file, cb) => {
-      const uniqueId = require("crypto").randomUUID();
+      const uniqueId = randomUUID();
       const ext = path.extname(file.originalname);
       cb(null, `${uniqueId}${ext}`);
     }
