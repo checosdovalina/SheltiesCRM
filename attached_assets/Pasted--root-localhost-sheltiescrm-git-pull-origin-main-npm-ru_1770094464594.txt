@@ -1,0 +1,59 @@
+[root@localhost sheltiescrm]# git pull origin main
+npm run build
+pm2 restart sheltiescrm
+remote: Enumerating objects: 26, done.
+remote: Counting objects: 100% (26/26), done.
+remote: Compressing objects: 100% (8/8), done.
+remote: Total 22 (delta 17), reused 19 (delta 14), pack-reused 0 (from 0)
+Unpacking objects: 100% (22/22), 1.15 MiB | 6.30 MiB/s, done.
+From https://github.com/checosdovalina/SheltiesCRM
+ * branch            main       -> FETCH_HEAD
+   c702395..9ac469b  main       -> origin/main
+Updating c702395..9ac469b
+Fast-forward
+ ...6-02-02_a_la(s)_10.37.54_p.m._1770093491003.png | Bin 0 -> 477172 bytes
+ ...6-02-02_a_la(s)_10.47.20_p.m._1770094072616.png | Bin 0 -> 526759 bytes
+ ...6-02-02_a_la(s)_10.51.04_p.m._1770094284650.png | Bin 0 -> 445613 bytes
+ ...rtProcessId-on-app-sheltiescr_1770093537418.txt |  56 +++++++++++++++++++++
+ ...rtProcessId-on-app-sheltiescr_1770094167484.txt |  48 ++++++++++++++++++
+ server/localStorage.ts                             |   2 +
+ 6 files changed, 106 insertions(+)
+ create mode 100644 attached_assets/Captura_de_pantalla_2026-02-02_a_la(s)_10.37.54_p.m._1770093491003.png
+ create mode 100644 attached_assets/Captura_de_pantalla_2026-02-02_a_la(s)_10.47.20_p.m._1770094072616.png
+ create mode 100644 attached_assets/Captura_de_pantalla_2026-02-02_a_la(s)_10.51.04_p.m._1770094284650.png
+ create mode 100644 attached_assets/Pasted--PM2-Applying-action-restartProcessId-on-app-sheltiescr_1770093537418.txt
+ create mode 100644 attached_assets/Pasted--PM2-Applying-action-restartProcessId-on-app-sheltiescr_1770094167484.txt
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+transforming (3) src/main.tsxBrowserslist: browsers data (caniuse-lite) is 16 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2961 modules transformed.
+../dist/public/index.html                                             2.20 kB │ gzip:   0.86 kB
+../dist/public/assets/logo-shelties-2_1756234700564-BEzgD2e5.png     18.36 kB
+../dist/public/assets/logo shelties_1756234743860-b3IsEVri.png       18.45 kB
+../dist/public/assets/index-BA2jsohH.css                             82.76 kB │ gzip:  14.19 kB
+../dist/public/assets/index-8NgZn-6Y.js                           1,302.85 kB │ gzip: 342.83 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 7.06s
+
+  dist/index.js  186.5kb
+
+⚡ Done in 10ms
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [sheltiescrm](ids: [ 4 ])
+[PM2] [sheltiescrm](4) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 3  │ comite-app         │ fork     │ 14   │ online    │ 0%       │ 119.4mb  │
+│ 4  │ sheltiescrm        │ fork     │ 2    │ online    │ 0%       │ 18.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[root@localhost sheltiescrm]# 
