@@ -20,6 +20,10 @@ if (!fs.existsSync(dogImagesDir)) {
 if (!fs.existsSync(evidenceDir)) {
   fs.mkdirSync(evidenceDir, { recursive: true });
 }
+const galleryDir = path.join(uploadDir, "gallery");
+if (!fs.existsSync(galleryDir)) {
+  fs.mkdirSync(galleryDir, { recursive: true });
+}
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(uploadDir));

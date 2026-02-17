@@ -68,6 +68,12 @@ import {
   petTypes,
   PetType,
   InsertPetType,
+  galleryDays,
+  galleryItems,
+  type GalleryDay,
+  type InsertGalleryDay,
+  type GalleryItem,
+  type InsertGalleryItem,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sql, count, or, inArray } from "drizzle-orm";
@@ -277,6 +283,17 @@ export interface IStorage {
   createPackageTemplate(template: InsertPackageTemplate): Promise<PackageTemplate>;
   updatePackageTemplate(id: string, template: Partial<InsertPackageTemplate>): Promise<PackageTemplate>;
   deletePackageTemplate(id: string): Promise<void>;
+
+  // Gallery operations (Galería)
+  createGalleryDay(day: InsertGalleryDay): Promise<GalleryDay>;
+  getGalleryDays(): Promise<GalleryDay[]>;
+  getGalleryDay(id: number): Promise<GalleryDay | undefined>;
+  getGalleryDayBySlug(slug: string): Promise<GalleryDay | undefined>;
+  updateGalleryDay(id: number, day: Partial<InsertGalleryDay>): Promise<GalleryDay>;
+  deleteGalleryDay(id: number): Promise<void>;
+  createGalleryItem(item: InsertGalleryItem): Promise<GalleryItem>;
+  getGalleryItemsByDay(dayId: number): Promise<GalleryItem[]>;
+  deleteGalleryItem(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2391,6 +2408,48 @@ export class DatabaseStorage implements IStorage {
 
   async deletePackageTemplate(id: string): Promise<void> {
     await db.delete(packageTemplates).where(eq(packageTemplates.id, id));
+  }
+
+  // Gallery operations
+  async createGalleryDay(day: InsertGalleryDay): Promise<GalleryDay> {
+    const [newDay] = await db.insert(galleryDays).values(day).returning();
+    return newDay;
+  }
+
+  async getGalleryDays(): Promise<GalleryDay[]> {
+    return await db.select().from(galleryDays).orderBy(desc(galleryDays.date));
+  }
+
+  async getGalleryDay(id: number): Promise<GalleryDay | undefined> {
+    const [day] = await db.select().from(galleryDays).where(eq(galleryDays.id, id));
+    return day;
+  }
+
+  async getGalleryDayBySlug(slug: string): Promise<GalleryDay | undefined> {
+    const [day] = await db.select().from(galleryDays).where(eq(galleryDays.shareSlug, slug));
+    return day;
+  }
+
+  async updateGalleryDay(id: number, day: Partial<InsertGalleryDay>): Promise<GalleryDay> {
+    const [updated] = await db.update(galleryDays).set(day).where(eq(galleryDays.id, id)).returning();
+    return updated;
+  }
+
+  async deleteGalleryDay(id: number): Promise<void> {
+    await db.delete(galleryDays).where(eq(galleryDays.id, id));
+  }
+
+  async createGalleryItem(item: InsertGalleryItem): Promise<GalleryItem> {
+    const [newItem] = await db.insert(galleryItems).values(item).returning();
+    return newItem;
+  }
+
+  async getGalleryItemsByDay(dayId: number): Promise<GalleryItem[]> {
+    return await db.select().from(galleryItems).where(eq(galleryItems.dayId, dayId)).orderBy(galleryItems.sortOrder);
+  }
+
+  async deleteGalleryItem(id: number): Promise<void> {
+    await db.delete(galleryItems).where(eq(galleryItems.id, id));
   }
 }
 

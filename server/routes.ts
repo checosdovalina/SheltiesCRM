@@ -28,6 +28,8 @@ import {
   createUserSchema,
   loginSchema,
   registerSchema,
+  insertGalleryDaySchema,
+  insertGalleryItemSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -668,6 +670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let subDir = "evidence";
       if (type === "dog-images") subDir = "dog-images";
       else if (type === "payment-receipts") subDir = "payment-receipts";
+      else if (type === "gallery") subDir = "gallery";
       const dir = path.join(uploadDir, subDir);
       cb(null, dir);
     },
@@ -2251,6 +2254,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking all alerts as read:", error);
       res.status(500).json({ message: "Error al marcar las alertas como leídas" });
+    }
+  });
+
+  // ==========================================
+  // Gallery Routes (Galería)
+  // ==========================================
+
+  const isAdminOrTeacher = (req: any, res: any, next: any) => {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'teacher')) {
+      return res.status(403).json({ message: "Acceso denegado. Se requiere rol de admin o profesor." });
+    }
+    next();
+  };
+
+  app.get('/api/gallery-days', isAuthenticated, async (req, res) => {
+    try {
+      const days = await storage.getGalleryDays();
+      res.json(days);
+    } catch (error) {
+      console.error("Error fetching gallery days:", error);
+      res.status(500).json({ message: "Error al obtener los días de galería" });
+    }
+  });
+
+  app.post('/api/gallery-days', isAuthenticated, isAdminOrTeacher, async (req, res) => {
+    try {
+      const data = insertGalleryDaySchema.parse(req.body);
+      const day = await storage.createGalleryDay(data);
+      res.json(day);
+    } catch (error) {
+      console.error("Error creating gallery day:", error);
+      res.status(500).json({ message: "Error al crear el día de galería" });
+    }
+  });
+
+  app.put('/api/gallery-days/:id', isAuthenticated, isAdminOrTeacher, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { title, description, date, coverImageUrl } = req.body;
+      const day = await storage.updateGalleryDay(id, { title, description, date, coverImageUrl });
+      res.json(day);
+    } catch (error) {
+      console.error("Error updating gallery day:", error);
+      res.status(500).json({ message: "Error al actualizar el día de galería" });
+    }
+  });
+
+  app.delete('/api/gallery-days/:id', isAuthenticated, isAdminOrTeacher, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteGalleryDay(id);
+      res.json({ message: "Día de galería eliminado" });
+    } catch (error) {
+      console.error("Error deleting gallery day:", error);
+      res.status(500).json({ message: "Error al eliminar el día de galería" });
+    }
+  });
+
+  app.get('/api/gallery-days/:id/items', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const items = await storage.getGalleryItemsByDay(id);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching gallery items:", error);
+      res.status(500).json({ message: "Error al obtener los items de galería" });
+    }
+  });
+
+  app.post('/api/gallery-items', isAuthenticated, isAdminOrTeacher, async (req, res) => {
+    try {
+      const data = insertGalleryItemSchema.parse(req.body);
+      const item = await storage.createGalleryItem(data);
+      res.json(item);
+    } catch (error) {
+      console.error("Error creating gallery item:", error);
+      res.status(500).json({ message: "Error al crear el item de galería" });
+    }
+  });
+
+  app.delete('/api/gallery-items/:id', isAuthenticated, isAdminOrTeacher, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteGalleryItem(id);
+      res.json({ message: "Item de galería eliminado" });
+    } catch (error) {
+      console.error("Error deleting gallery item:", error);
+      res.status(500).json({ message: "Error al eliminar el item de galería" });
+    }
+  });
+
+  // Gallery file upload
+  app.post('/api/gallery/upload', isAuthenticated, isAdminOrTeacher, async (req, res) => {
+    try {
+      if (isReplitEnvironment()) {
+        const objectStorageService = new ObjectStorageService();
+        const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+        res.json({ uploadURL, useLocalUpload: false });
+      } else {
+        res.json({ 
+          uploadURL: '/api/local-upload/gallery',
+          useLocalUpload: true 
+        });
+      }
+    } catch (error) {
+      console.error("Error getting gallery upload URL:", error);
+      res.json({ 
+        uploadURL: '/api/local-upload/gallery',
+        useLocalUpload: true 
+      });
+    }
+  });
+
+  app.post('/api/local-upload/gallery', isAuthenticated, isAdminOrTeacher, (req: any, res, next) => {
+    req.uploadType = "gallery";
+    next();
+  }, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No se subió ningún archivo" });
+      }
+      const fileUrl = `/uploads/gallery/${req.file.filename}`;
+      res.json({ url: fileUrl, filename: req.file.filename });
+    } catch (error) {
+      console.error("Error uploading gallery file:", error);
+      res.status(500).json({ message: "Error al subir el archivo" });
+    }
+  });
+
+  // Public gallery endpoints (no auth required)
+  app.get('/api/public/gallery/:slug', async (req, res) => {
+    try {
+      const day = await storage.getGalleryDayBySlug(req.params.slug);
+      if (!day) {
+        return res.status(404).json({ message: "Galería no encontrada" });
+      }
+      const items = await storage.getGalleryItemsByDay(day.id);
+      res.json({
+        id: day.id,
+        title: day.title,
+        description: day.description,
+        date: day.date,
+        coverImageUrl: day.coverImageUrl,
+        items: items.map(i => ({
+          id: i.id,
+          mediaType: i.mediaType,
+          fileUrl: i.fileUrl,
+          caption: i.caption,
+          sortOrder: i.sortOrder,
+        })),
+      });
+    } catch (error) {
+      console.error("Error fetching public gallery:", error);
+      res.status(500).json({ message: "Error al obtener la galería pública" });
     }
   });
 

@@ -1214,3 +1214,57 @@ export const assessmentsRelations = relations(assessments, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// Gallery tables
+export const galleryDays = pgTable("gallery_days", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  date: varchar("date").notNull(),
+  shareSlug: varchar("share_slug").unique().notNull(),
+  coverImageUrl: varchar("cover_image_url"),
+  createdById: varchar("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type GalleryDay = typeof galleryDays.$inferSelect;
+export type InsertGalleryDay = typeof galleryDays.$inferInsert;
+
+export const insertGalleryDaySchema = createInsertSchema(galleryDays).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const galleryItems = pgTable("gallery_items", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  dayId: integer("day_id").references(() => galleryDays.id, { onDelete: "cascade" }).notNull(),
+  mediaType: varchar("media_type").notNull().default("image"),
+  fileUrl: varchar("file_url").notNull(),
+  thumbnailUrl: varchar("thumbnail_url"),
+  caption: text("caption"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type GalleryItem = typeof galleryItems.$inferSelect;
+export type InsertGalleryItem = typeof galleryItems.$inferInsert;
+
+export const insertGalleryItemSchema = createInsertSchema(galleryItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const galleryDaysRelations = relations(galleryDays, ({ one, many }) => ({
+  createdBy: one(users, {
+    fields: [galleryDays.createdById],
+    references: [users.id],
+  }),
+  items: many(galleryItems),
+}));
+
+export const galleryItemsRelations = relations(galleryItems, ({ one }) => ({
+  day: one(galleryDays, {
+    fields: [galleryItems.dayId],
+    references: [galleryDays.id],
+  }),
+}));

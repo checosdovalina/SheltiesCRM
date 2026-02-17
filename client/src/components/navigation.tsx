@@ -18,7 +18,8 @@ import {
   FileText,
   ClipboardList,
   Package,
-  GraduationCap
+  GraduationCap,
+  ImageIcon
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -55,6 +56,7 @@ export default function Navigation() {
     { path: "/records", label: "Expedientes", icon: FileText, mobileLabel: "Expedientes" },
     { path: "/billing", label: "Facturación", icon: CreditCard, mobileLabel: "Facturas" },
     { path: "/reports", label: "Reportes", icon: BarChart3, mobileLabel: "Reportes" },
+    { path: "/gallery", label: "Galería", icon: ImageIcon, mobileLabel: "Galería" },
   ];
 
   const adminItems = [
@@ -72,6 +74,7 @@ export default function Navigation() {
       { path: "/mis-clases", label: "Mis Clases", icon: GraduationCap, mobileLabel: "Clases" },
       { path: "/calendar", label: "Calendario", icon: CalendarDays, mobileLabel: "Calendario" },
       { path: "/records", label: "Expedientes", icon: FileText, mobileLabel: "Expedientes" },
+      { path: "/gallery", label: "Galería", icon: ImageIcon, mobileLabel: "Galería" },
     ];
   } else if (user?.role === 'admin') {
     filteredNavigation = [...navigationItems, ...adminItems];
