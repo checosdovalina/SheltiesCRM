@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -29,6 +29,11 @@ import Navigation from "@/components/navigation";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [location] = useLocation();
+
+  if (location.startsWith("/galeria/")) {
+    return <PublicGallery />;
+  }
 
   if (isLoading) {
     return (
@@ -46,7 +51,6 @@ function Router() {
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
-        <Route path="/galeria/:slug" component={PublicGallery} />
         <Route component={NotFound} />
       </Switch>
     );
@@ -83,7 +87,6 @@ function Router() {
             <Route path="/admin/users" component={Users} />
           )}
           <Route path="/gallery" component={Gallery} />
-          <Route path="/galeria/:slug" component={PublicGallery} />
           <Route component={NotFound} />
         </Switch>
       </main>

@@ -1,19 +1,30 @@
-import { useState } from "react";
-import { useParams } from "wouter";
+import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Image, Video, Calendar, ArrowLeft } from "lucide-react";
+import { Image, Video, Calendar } from "lucide-react";
 import type { GalleryDay, GalleryItem } from "@shared/schema";
 import logoSheltiesSmall from "@assets/logo shelties_1756234743860.png";
 
 type GalleryDayWithItems = GalleryDay & { items: GalleryItem[] };
 
+function publicUrl(url: string): string {
+  if (url.startsWith("/objects/")) {
+    return url + (url.includes("?") ? "&" : "?") + "public=1";
+  }
+  return url;
+}
+
 export default function PublicGallery() {
-  const params = useParams<{ slug: string }>();
+  const [location] = useLocation();
+  const slug = useMemo(() => {
+    const parts = location.split("/");
+    return parts[parts.length - 1] || parts[parts.length - 2];
+  }, [location]);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery<GalleryDayWithItems>({
-    queryKey: ["/api/public/gallery", params.slug],
-    enabled: !!params.slug,
+    queryKey: ["/api/public/gallery", slug],
+    enabled: !!slug,
   });
 
   if (isLoading) {
@@ -79,14 +90,14 @@ export default function PublicGallery() {
               >
                 {item.mediaType === "video" ? (
                   <video
-                    src={item.fileUrl}
+                    src={publicUrl(item.fileUrl)}
                     className="w-full h-full object-cover"
                     controls
                     preload="metadata"
                   />
                 ) : (
                   <img
-                    src={item.fileUrl}
+                    src={publicUrl(item.fileUrl)}
                     alt={item.caption || data.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
@@ -136,7 +147,7 @@ export default function PublicGallery() {
             </button>
           )}
           <img
-            src={data.items[lightboxIndex].fileUrl}
+            src={publicUrl(data.items[lightboxIndex].fileUrl)}
             alt=""
             className="max-w-[90vw] max-h-[90vh] object-contain"
             onClick={(e) => e.stopPropagation()}

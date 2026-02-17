@@ -805,28 +805,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Serve uploaded objects - supports both Replit and local storage
-  app.get('/objects/*', isAuthenticated, async (req, res) => {
+  // Allow public access with ?public=1 query param (for public gallery)
+  app.get('/objects/*', async (req: any, res, next) => {
+    if (req.query.public === '1') {
+      return next();
+    }
+    return isAuthenticated(req, res, next);
+  }, async (req, res) => {
     try {
       if (!isReplitEnvironment()) {
         return res.status(404).json({ message: "Use /uploads/* for local files" });
       }
-      const objectPath = req.path;
       const objectStorageService = new ObjectStorageService();
-      
-      const filePath = objectPath.replace('/objects/', '');
-      const privateDir = objectStorageService.getPrivateObjectDir();
-      const fullPath = `${privateDir}/${filePath}`;
-      
-      const { bucketName, objectName } = parseObjectPath(fullPath);
-      const bucket = objectStorageClient.bucket(bucketName);
-      const file = bucket.file(objectName);
-      
-      const [exists] = await file.exists();
-      if (!exists) {
-        return res.status(404).json({ message: "File not found" });
-      }
-      
-      await objectStorageService.downloadObject(file, res);
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      await objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error serving object:", error);
       if (error instanceof ObjectNotFoundError) {

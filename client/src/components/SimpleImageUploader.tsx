@@ -91,8 +91,8 @@ export function SimpleImageUploader({
 
         const url = new URL(uploadURL);
         const pathParts = url.pathname.split('/');
-        const imagePath = pathParts.slice(2).join('/');
-        imageUrl = `/objects/uploads/${imagePath}`;
+        const imagePath = pathParts.slice(3).join('/');
+        imageUrl = `/objects/${imagePath}`;
       }
 
       onImageUploaded(imageUrl);

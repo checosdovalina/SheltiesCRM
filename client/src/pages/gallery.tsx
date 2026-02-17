@@ -283,13 +283,18 @@ function GalleryDayDetail({
           const localData = await localRes.json();
           fileUrl = localData.url;
         } else {
-          await fetch(uploadData.uploadURL, {
+          const uploadResponse = await fetch(uploadData.uploadURL, {
             method: "PUT",
             body: file,
             headers: { "Content-Type": file.type },
           });
-          const urlParts = new URL(uploadData.uploadURL);
-          fileUrl = urlParts.pathname;
+          if (!uploadResponse.ok) {
+            throw new Error("Error al subir archivo");
+          }
+          const url = new URL(uploadData.uploadURL);
+          const pathParts = url.pathname.split('/');
+          const objectPath = pathParts.slice(3).join('/');
+          fileUrl = `/objects/${objectPath}`;
         }
 
         await apiRequest("POST", "/api/gallery-items", {
