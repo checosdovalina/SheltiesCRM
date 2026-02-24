@@ -204,6 +204,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clientData = insertClientSchema.parse(req.body);
       const client = await storage.createClient(clientData);
+
+      // Auto-create user account if email provided and no user exists with that email
+      if (client.email) {
+        let user = await storage.getUserByEmail(client.email);
+        if (!user) {
+          user = await storage.createUser({
+            email: client.email,
+            firstName: client.firstName || undefined,
+            lastName: client.lastName || undefined,
+            role: 'client',
+          });
+        }
+        // Link user to client
+        const updatedClient = await storage.updateClient(client.id, { userId: user.id });
+        return res.json(updatedClient);
+      }
+
       res.json(client);
     } catch (error) {
       console.error("Error creating client:", error);
