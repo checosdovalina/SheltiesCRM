@@ -151,6 +151,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sync existing clients to user accounts
+  app.post('/api/admin/sync-clients', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const allClients = await storage.getClients();
+      const results = { created: 0, linked: 0, skipped: 0, errors: [] as string[] };
+
+      for (const client of allClients) {
+        if (client.userId) {
+          results.skipped++;
+          continue;
+        }
+        if (!client.email) {
+          results.skipped++;
+          continue;
+        }
+        try {
+          let user = await storage.getUserByEmail(client.email);
+          if (!user) {
+            user = await storage.createUser({
+              email: client.email,
+              firstName: client.firstName || undefined,
+              lastName: client.lastName || undefined,
+              role: 'client',
+            });
+            results.created++;
+          } else {
+            results.linked++;
+          }
+          await storage.updateClient(client.id, { userId: user.id });
+        } catch (err: any) {
+          results.errors.push(`${client.email}: ${err.message}`);
+        }
+      }
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error syncing clients:", error);
+      res.status(500).json({ message: "Failed to sync clients" });
+    }
+  });
+
   // Get teachers for appointment assignment (includes admins who can act as trainers)
   app.get('/api/teachers', isAuthenticated, async (req, res) => {
     try {

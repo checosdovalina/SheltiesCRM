@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Key, Edit, Users } from "lucide-react";
+import { Plus, Key, Edit, Users, RefreshCw } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -172,6 +172,27 @@ export default function UsersPage() {
     },
   });
 
+  // Sync existing clients mutation
+  const syncClientsMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/admin/sync-clients", {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Sincronización completada",
+        description: `Creados: ${data.created}, Vinculados: ${data.linked}, Omitidos: ${data.skipped}${data.errors?.length ? `. Errores: ${data.errors.length}` : ""}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al sincronizar clientes",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateUser = (data: CreateUserForm) => {
     createUserMutation.mutate(data);
   };
@@ -232,10 +253,20 @@ export default function UsersPage() {
             Administra usuarios del sistema y asigna contraseñas
           </p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} data-testid="button-create-user">
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Usuario
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => syncClientsMutation.mutate()}
+            disabled={syncClientsMutation.isPending}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncClientsMutation.isPending ? "animate-spin" : ""}`} />
+            Sincronizar Clientes
+          </Button>
+          <Button onClick={() => setShowCreateModal(true)} data-testid="button-create-user">
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Usuario
+          </Button>
+        </div>
       </div>
 
       <Card>
