@@ -307,38 +307,35 @@ export default function ClientPortal() {
       ) : null}
 
       <Tabs defaultValue="pets" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="pets" data-testid="tab-pets">
-            <DogIcon className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Mis Mascotas</span>
-            <span className="sm:hidden">Mascotas</span>
-          </TabsTrigger>
-          <TabsTrigger value="packages" data-testid="tab-packages" className="relative">
-            <Package className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Paquetes</span>
-            <span className="sm:hidden">Paq.</span>
-            {alerts && alerts.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {alerts.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="appointments" data-testid="tab-appointments">
-            <Calendar className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Citas</span>
-            <span className="sm:hidden">Citas</span>
-          </TabsTrigger>
-          <TabsTrigger value="progress" data-testid="tab-progress">
-            <Star className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Progreso</span>
-            <span className="sm:hidden">Prog.</span>
-          </TabsTrigger>
-          <TabsTrigger value="billing" data-testid="tab-billing">
-            <CreditCard className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Facturación</span>
-            <span className="sm:hidden">Fact.</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="flex w-max sm:grid sm:w-full sm:grid-cols-5 min-w-full">
+            <TabsTrigger value="pets" data-testid="tab-pets" className="flex-col sm:flex-row gap-1 sm:gap-0 px-3 py-2 min-w-[64px] sm:min-w-0">
+              <DogIcon className="w-4 h-4 sm:mr-2" />
+              <span className="text-[10px] sm:text-sm leading-tight">Mascotas</span>
+            </TabsTrigger>
+            <TabsTrigger value="packages" data-testid="tab-packages" className="relative flex-col sm:flex-row gap-1 sm:gap-0 px-3 py-2 min-w-[64px] sm:min-w-0">
+              <Package className="w-4 h-4 sm:mr-2" />
+              <span className="text-[10px] sm:text-sm leading-tight">Paquetes</span>
+              {alerts && alerts.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {alerts.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="appointments" data-testid="tab-appointments" className="flex-col sm:flex-row gap-1 sm:gap-0 px-3 py-2 min-w-[64px] sm:min-w-0">
+              <Calendar className="w-4 h-4 sm:mr-2" />
+              <span className="text-[10px] sm:text-sm leading-tight">Citas</span>
+            </TabsTrigger>
+            <TabsTrigger value="progress" data-testid="tab-progress" className="flex-col sm:flex-row gap-1 sm:gap-0 px-3 py-2 min-w-[64px] sm:min-w-0">
+              <Star className="w-4 h-4 sm:mr-2" />
+              <span className="text-[10px] sm:text-sm leading-tight">Progreso</span>
+            </TabsTrigger>
+            <TabsTrigger value="billing" data-testid="tab-billing" className="flex-col sm:flex-row gap-1 sm:gap-0 px-3 py-2 min-w-[64px] sm:min-w-0">
+              <CreditCard className="w-4 h-4 sm:mr-2" />
+              <span className="text-[10px] sm:text-sm leading-tight">Facturación</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Pets Tab */}
         <TabsContent value="pets">
