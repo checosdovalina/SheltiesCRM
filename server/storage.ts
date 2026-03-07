@@ -404,18 +404,8 @@ export class DatabaseStorage implements IStorage {
     for (const client of clientsList) {
       const clientDogs = await db
         .select({
-          id: dogs.id,
-          clientId: dogs.clientId,
-          petTypeId: dogs.petTypeId,
+          dog: dogs,
           petTypeName: petTypes.name,
-          name: dogs.name,
-          breed: dogs.breed,
-          age: dogs.age,
-          weight: dogs.weight,
-          notes: dogs.notes,
-          imageUrl: dogs.imageUrl,
-          createdAt: dogs.createdAt,
-          updatedAt: dogs.updatedAt,
         })
         .from(dogs)
         .leftJoin(petTypes, eq(dogs.petTypeId, petTypes.id))
@@ -423,7 +413,7 @@ export class DatabaseStorage implements IStorage {
       
       result.push({
         ...client,
-        dogs: clientDogs
+        dogs: clientDogs.map(({ dog, petTypeName }) => ({ ...dog, petTypeName }))
       });
     }
     
@@ -480,24 +470,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDogsByClientId(clientId: string): Promise<any[]> {
-    return await db
+    const results = await db
       .select({
-        id: dogs.id,
-        clientId: dogs.clientId,
-        petTypeId: dogs.petTypeId,
+        dog: dogs,
         petTypeName: petTypes.name,
-        name: dogs.name,
-        breed: dogs.breed,
-        age: dogs.age,
-        weight: dogs.weight,
-        notes: dogs.notes,
-        imageUrl: dogs.imageUrl,
-        createdAt: dogs.createdAt,
-        updatedAt: dogs.updatedAt,
       })
       .from(dogs)
       .leftJoin(petTypes, eq(dogs.petTypeId, petTypes.id))
       .where(eq(dogs.clientId, clientId));
+    return results.map(({ dog, petTypeName }) => ({ ...dog, petTypeName }));
   }
 
   async getDog(id: string): Promise<Dog | undefined> {
