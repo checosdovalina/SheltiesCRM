@@ -299,9 +299,11 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
     },
   });
 
-  const onSubmit = useCallback((data: z.infer<typeof insertDogSchema>) => {
-    createDogMutation.mutate(data);
-  }, [createDogMutation]);
+  const onSubmit = useCallback((_data: z.infer<typeof insertDogSchema>) => {
+    // Use form.getValues() to include values from all tabs, even unvisited ones
+    // (Radix Tabs lazily mounts content, so unvisited tab fields may not be registered)
+    createDogMutation.mutate(form.getValues() as z.infer<typeof insertDogSchema>);
+  }, [createDogMutation, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

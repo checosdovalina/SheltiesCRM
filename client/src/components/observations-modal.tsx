@@ -225,8 +225,9 @@ export default function ObservationsModal({
     },
   });
 
-  const onSubmit = (data: ObservationsFormData) => {
-    updateMutation.mutate(data);
+  const onSubmit = (_data: ObservationsFormData) => {
+    // Use form.getValues() to include values from all tabs, even unvisited ones
+    updateMutation.mutate(form.getValues() as ObservationsFormData);
   };
 
   return (
