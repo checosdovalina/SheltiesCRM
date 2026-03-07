@@ -269,6 +269,9 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
       queryClient.invalidateQueries({ queryKey: ["/api/clients", clientId, "dogs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/clients-with-dogs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/metrics"] });
+      if (dog?.id) {
+        queryClient.invalidateQueries({ queryKey: ["/api/dogs", dog.id] });
+      }
       
       toast({
         title: dog ? "Mascota actualizada" : "Mascota registrada",
