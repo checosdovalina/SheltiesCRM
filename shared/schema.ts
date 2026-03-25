@@ -294,7 +294,7 @@ export const protocols = pgTable("protocols", {
   objectives: text("objectives"), // Objetivos del protocolo
   description: text("description"), // Descripción detallada
   steps: jsonb("steps"), // Pasos estructurados como array [{step: 1, title: "...", description: "..."}]
-  duration: integer("duration"), // Duración estimada en minutos
+  duration: varchar("duration"), // Duración estimada (ej: "4 semanas", "8 sesiones")
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
