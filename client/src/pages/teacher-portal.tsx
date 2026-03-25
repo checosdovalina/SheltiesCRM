@@ -1,10 +1,13 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Calendar, 
   Users, 
@@ -31,6 +34,16 @@ import type { Appointment, Dog as DogType, Client, Service, InternalNote, Traini
 import TrainingSessionModal from "@/components/training-session-modal";
 
 // Types for the teacher portal
+interface Protocol {
+  id: string;
+  name: string;
+  category: string;
+  objectives?: string;
+  duration?: string;
+  steps?: any;
+  isActive?: boolean;
+}
+
 interface AppointmentWithRelations extends Appointment {
   dog?: DogType & { client?: Client };
   client?: Client;
@@ -48,6 +61,8 @@ interface TeacherStats {
 
 export default function TeacherPortal() {
   const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [sessionModalOpen, setSessionModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
@@ -81,6 +96,25 @@ export default function TeacherPortal() {
   const { data: recentSessions = [], isLoading: sessionsLoading } = useQuery<TrainingSession[]>({
     queryKey: ["/api/teacher/training-sessions"],
     enabled: !!user && user.role === 'teacher',
+  });
+
+  // Protocols list
+  const { data: protocols = [] } = useQuery<Protocol[]>({
+    queryKey: ["/api/protocols"],
+    enabled: !!user && user.role === 'teacher',
+  });
+
+  // Mutation to assign protocol to a dog
+  const assignProtocolMutation = useMutation({
+    mutationFn: ({ dogId, protocolId }: { dogId: string; protocolId: string | null }) =>
+      apiRequest("PUT", `/api/dogs/${dogId}`, { activeProtocolId: protocolId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/teacher/assigned-dogs"] });
+      toast({ title: "Protocolo actualizado", description: "El protocolo se asignó correctamente." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo asignar el protocolo.", variant: "destructive" });
+    },
   });
 
   // Teacher's assigned tasks
@@ -532,9 +566,11 @@ export default function TeacherPortal() {
                 </div>
               ) : assignedDogs.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {assignedDogs.map((dog) => (
+                  {assignedDogs.map((dog) => {
+                    const activeProtocol = protocols.find(p => p.id === dog.activeProtocolId);
+                    return (
                     <Card key={dog.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
+                      <CardContent className="p-4 space-y-3">
                         <div className="flex items-center space-x-3">
                           {dog.imageUrl ? (
                             <img 
@@ -547,7 +583,7 @@ export default function TeacherPortal() {
                               <Dog className="w-6 h-6" />
                             </div>
                           )}
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <h3 className="font-medium">{dog.name}</h3>
                             <p className="text-sm text-muted-foreground">{dog.breed}</p>
                             <p className="text-xs text-muted-foreground">
@@ -555,29 +591,54 @@ export default function TeacherPortal() {
                             </p>
                           </div>
                         </div>
-                        <div className="mt-3 flex space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="flex-1"
-                            onClick={() => setLocation(`/expediente/${dog.id}`)}
-                            data-testid={`button-view-expediente-${dog.id}`}
+
+                        {/* Protocol Assignment */}
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                            <BookOpen className="w-3 h-3" />
+                            Protocolo activo
+                          </p>
+                          <Select
+                            value={dog.activeProtocolId || "none"}
+                            onValueChange={(value) =>
+                              assignProtocolMutation.mutate({ dogId: dog.id, protocolId: value === "none" ? null : value })
+                            }
+                            disabled={assignProtocolMutation.isPending}
                           >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Ver Expediente
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => setLocation(`/expediente/${dog.id}`)}
-                            data-testid={`button-view-file-${dog.id}`}
-                          >
-                            <FileText className="w-4 h-4" />
-                          </Button>
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Sin protocolo..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Sin protocolo</SelectItem>
+                              {protocols.filter(p => p.isActive).map((protocol) => (
+                                <SelectItem key={protocol.id} value={protocol.id} className="text-xs">
+                                  {protocol.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {activeProtocol && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {activeProtocol.duration && <span className="mr-2">⏱ {activeProtocol.duration}</span>}
+                              {activeProtocol.objectives}
+                            </p>
+                          )}
                         </div>
+
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setLocation(`/expediente/${dog.id}`)}
+                          data-testid={`button-view-expediente-${dog.id}`}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Ver Expediente Completo
+                        </Button>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">

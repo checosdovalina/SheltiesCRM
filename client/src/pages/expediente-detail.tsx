@@ -38,6 +38,11 @@ import {
   Smile,
   Laugh,
   Heart,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  Circle,
+  Clock,
 } from "lucide-react";
 import MedicalRecordModal from "@/components/medical-record-modal";
 import TrainingModal from "@/components/training-modal";
@@ -609,6 +614,7 @@ export default function ExpedienteDetail() {
 
   const [medicalModalOpen, setMedicalModalOpen] = useState(false);
   const [trainingModalOpen, setTrainingModalOpen] = useState(false);
+  const [protocolExpanded, setProtocolExpanded] = useState(true);
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
   const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
   const [observationsModalOpen, setObservationsModalOpen] = useState(false);
@@ -775,6 +781,65 @@ export default function ExpedienteDetail() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Active Protocol Steps Panel */}
+              {(() => {
+                const activeProtocol = protocols.find(p => p.id === dog.activeProtocolId);
+                if (!activeProtocol) return null;
+                const steps = (activeProtocol.steps as Array<{ title: string; description?: string; duration?: string }>) || [];
+                return (
+                  <div className="border rounded-lg overflow-hidden">
+                    <button
+                      className="w-full flex items-center justify-between p-3 bg-primary/5 hover:bg-primary/10 transition-colors text-left"
+                      onClick={() => setProtocolExpanded(!protocolExpanded)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-semibold text-primary">{activeProtocol.name}</span>
+                      </div>
+                      {protocolExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                    </button>
+                    {protocolExpanded && (
+                      <div className="p-3 space-y-3">
+                        {activeProtocol.duration && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{activeProtocol.duration}</span>
+                          </div>
+                        )}
+                        {activeProtocol.objectives && (
+                          <p className="text-xs text-muted-foreground italic">{activeProtocol.objectives}</p>
+                        )}
+                        {steps.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pasos del protocolo</p>
+                            {steps.map((step, idx) => (
+                              <div key={idx} className="flex items-start gap-2">
+                                <div className="flex-shrink-0 mt-0.5">
+                                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <span className="text-xs font-bold text-primary">{idx + 1}</span>
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium">{step.title}</p>
+                                  {step.description && (
+                                    <p className="text-xs text-muted-foreground">{step.description}</p>
+                                  )}
+                                  {step.duration && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                      <Clock className="h-3 w-3" />{step.duration}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <Separator />
 
