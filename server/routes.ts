@@ -476,6 +476,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Protocol progress routes (admin/teacher)
+  app.get('/api/dogs/:dogId/protocol-progress', isAuthenticated, async (req, res) => {
+    try {
+      const { dogId } = req.params;
+      const { protocolId } = req.query as { protocolId: string };
+      if (!protocolId) return res.status(400).json({ message: "protocolId query param required" });
+      const progress = await storage.getDogProtocolProgress(dogId, protocolId);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching protocol progress:", error);
+      res.status(500).json({ message: "Failed to fetch protocol progress" });
+    }
+  });
+
+  app.put('/api/dogs/:dogId/protocol-progress/:stepIndex', isAuthenticated, async (req, res) => {
+    try {
+      const { dogId, stepIndex } = req.params;
+      const { protocolId, completed, comments, evidenceNote } = req.body;
+      if (!protocolId) return res.status(400).json({ message: "protocolId required" });
+      const result = await storage.upsertStepProgress(dogId, protocolId, parseInt(stepIndex), { completed, comments, evidenceNote });
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating protocol progress:", error);
+      res.status(500).json({ message: "Failed to update protocol progress" });
+    }
+  });
+
   // Appointment routes
   app.post('/api/appointments', isAuthenticated, async (req, res) => {
     try {
@@ -1370,6 +1397,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching dog progress:", error);
       res.status(500).json({ message: "Failed to fetch dog progress" });
+    }
+  });
+
+  // Client portal - Protocol progress (read-only)
+  app.get('/api/client-portal/dogs/:dogId/protocol-progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (user?.role !== 'client') return res.status(403).json({ message: "Access denied" });
+      const client = await storage.getClientByUserId(user.id);
+      if (!client) return res.status(404).json({ message: "Client not found" });
+      const { dogId } = req.params;
+      const dog = await storage.getDog(dogId);
+      if (!dog || dog.clientId !== client.id) return res.status(403).json({ message: "Access denied" });
+      if (!dog.activeProtocolId) return res.json({ protocol: null, steps: [], progress: [] });
+      const [protocol, progress] = await Promise.all([
+        storage.getProtocol(dog.activeProtocolId),
+        storage.getDogProtocolProgress(dogId, dog.activeProtocolId),
+      ]);
+      res.json({ protocol, steps: (protocol as any)?.steps || [], progress });
+    } catch (error) {
+      console.error("Error fetching client protocol progress:", error);
+      res.status(500).json({ message: "Failed to fetch protocol progress" });
     }
   });
 

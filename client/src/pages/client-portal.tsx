@@ -111,6 +111,12 @@ export default function ClientPortal() {
     retry: false,
   });
 
+  const { data: protocolProgress, isLoading: protocolProgressLoading } = useQuery<any>({
+    queryKey: ["/api/client-portal/dogs", selectedDogForProgress, "protocol-progress"],
+    enabled: isAuthenticated && user?.role === 'client' && !!selectedDogForProgress,
+    retry: false,
+  });
+
   const requestAppointmentMutation = useMutation({
     mutationFn: async (data: typeof appointmentForm) => {
       const response = await apiRequest('POST', '/api/client-portal/request-appointment', data);
@@ -767,6 +773,100 @@ export default function ClientPortal() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Protocol Progress Card */}
+            {selectedDogForProgress && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-primary" />
+                    Protocolo de Entrenamiento
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {protocolProgressLoading ? (
+                    <div className="animate-pulse space-y-2">
+                      <div className="h-4 bg-muted rounded w-1/2" />
+                      <div className="h-2 bg-muted rounded" />
+                      <div className="h-20 bg-muted rounded" />
+                    </div>
+                  ) : !protocolProgress?.protocol ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <GraduationCap className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm">No hay protocolo asignado aún</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Protocol header */}
+                      <div className="space-y-1">
+                        <h3 className="font-semibold">{protocolProgress.protocol.name}</h3>
+                        {protocolProgress.protocol.objectives && (
+                          <p className="text-sm text-muted-foreground">{protocolProgress.protocol.objectives}</p>
+                        )}
+                        {protocolProgress.protocol.duration && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {protocolProgress.protocol.duration}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Overall progress */}
+                      {protocolProgress.steps?.length > 0 && (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>{protocolProgress.progress?.filter((p: any) => p.completed).length || 0} de {protocolProgress.steps.length} pasos completados</span>
+                            <span>{protocolProgress.steps.length > 0 ? Math.round(((protocolProgress.progress?.filter((p: any) => p.completed).length || 0) / protocolProgress.steps.length) * 100) : 0}%</span>
+                          </div>
+                          <Progress
+                            value={protocolProgress.steps.length > 0 ? Math.round(((protocolProgress.progress?.filter((p: any) => p.completed).length || 0) / protocolProgress.steps.length) * 100) : 0}
+                            className="h-2"
+                          />
+                        </div>
+                      )}
+
+                      {/* Steps list (read-only) */}
+                      <div className="space-y-2">
+                        {protocolProgress.steps.map((step: any, idx: number) => {
+                          const stepProg = protocolProgress.progress?.find((p: any) => p.stepIndex === idx);
+                          const done = stepProg?.completed || false;
+                          return (
+                            <div key={idx} className={`border rounded-lg p-3 ${done ? 'border-green-200 bg-green-50' : 'border-border bg-muted/20'}`}>
+                              <div className="flex items-start gap-2">
+                                <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${done ? 'bg-green-500' : 'bg-muted'}`}>
+                                  {done
+                                    ? <CheckCircle className="w-4 h-4 text-white" />
+                                    : <span className="text-xs font-bold text-muted-foreground">{idx + 1}</span>
+                                  }
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-medium ${done ? 'line-through text-muted-foreground' : ''}`}>{step.title}</p>
+                                  {step.description && (
+                                    <p className="text-xs text-muted-foreground">{step.description}</p>
+                                  )}
+                                  {stepProg?.comments && (
+                                    <div className="mt-2 p-2 bg-white/60 rounded text-xs text-foreground border">
+                                      <p className="font-medium text-muted-foreground mb-0.5">Comentarios del entrenador:</p>
+                                      <p>{stepProg.comments}</p>
+                                    </div>
+                                  )}
+                                  {stepProg?.evidenceNote && (
+                                    <div className="mt-1 p-2 bg-white/60 rounded text-xs text-foreground border">
+                                      <p className="font-medium text-muted-foreground mb-0.5">Evidencia:</p>
+                                      <p>{stepProg.evidenceNote}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Progress Timeline */}
             {selectedDogForProgress && (

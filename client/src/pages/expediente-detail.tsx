@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
   Dog,
@@ -615,6 +618,8 @@ export default function ExpedienteDetail() {
   const [medicalModalOpen, setMedicalModalOpen] = useState(false);
   const [trainingModalOpen, setTrainingModalOpen] = useState(false);
   const [protocolExpanded, setProtocolExpanded] = useState(true);
+  const [expandedSteps, setExpandedSteps] = useState<Record<number, boolean>>({});
+  const [stepEdits, setStepEdits] = useState<Record<number, { comments: string; evidenceNote: string }>>({});
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
   const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
   const [observationsModalOpen, setObservationsModalOpen] = useState(false);
@@ -670,6 +675,46 @@ export default function ExpedienteDetail() {
   const { data: assessments = [] } = useQuery<Assessment[]>({
     queryKey: ["/api/dogs", dogId, "assessments"],
     enabled: !!dogId,
+  });
+
+  // Protocol progress (loaded after dog data is available)
+  const activeProtocolId = dog?.activeProtocolId;
+  const { data: protocolProgressData = [] } = useQuery<any[]>({
+    queryKey: ["/api/dogs", dogId, "protocol-progress", activeProtocolId],
+    queryFn: async () => {
+      if (!dogId || !activeProtocolId) return [];
+      const res = await fetch(`/api/dogs/${dogId}/protocol-progress?protocolId=${activeProtocolId}`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!dogId && !!activeProtocolId,
+  });
+
+  // Sync remote progress data into local stepEdits when data loads
+  useEffect(() => {
+    if (protocolProgressData.length > 0) {
+      const edits: Record<number, { comments: string; evidenceNote: string }> = {};
+      protocolProgressData.forEach((p: any) => {
+        edits[p.stepIndex] = { comments: p.comments || "", evidenceNote: p.evidenceNote || "" };
+      });
+      setStepEdits(edits);
+    }
+  }, [protocolProgressData]);
+
+  const updateStepMutation = useMutation({
+    mutationFn: ({ stepIndex, completed, comments, evidenceNote }: { stepIndex: number; completed?: boolean; comments?: string; evidenceNote?: string }) =>
+      apiRequest("PUT", `/api/dogs/${dogId}/protocol-progress/${stepIndex}`, {
+        protocolId: activeProtocolId,
+        completed,
+        comments,
+        evidenceNote,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dogs", dogId, "protocol-progress", activeProtocolId] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo guardar el progreso.", variant: "destructive" });
+    },
   });
 
   if (isLoading) {
@@ -787,6 +832,8 @@ export default function ExpedienteDetail() {
                 const activeProtocol = protocols.find(p => p.id === dog.activeProtocolId);
                 if (!activeProtocol) return null;
                 const steps = (activeProtocol.steps as Array<{ title: string; description?: string; duration?: string }>) || [];
+                const completedCount = protocolProgressData.filter((p: any) => p.completed).length;
+                const progressPct = steps.length > 0 ? Math.round((completedCount / steps.length) * 100) : 0;
                 return (
                   <div className="border rounded-lg overflow-hidden">
                     <button
@@ -797,10 +844,20 @@ export default function ExpedienteDetail() {
                         <BookOpen className="h-4 w-4 text-primary" />
                         <span className="text-sm font-semibold text-primary">{activeProtocol.name}</span>
                       </div>
-                      {protocolExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{completedCount}/{steps.length}</span>
+                        {protocolExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                      </div>
                     </button>
                     {protocolExpanded && (
                       <div className="p-3 space-y-3">
+                        {/* Progress bar */}
+                        {steps.length > 0 && (
+                          <div className="space-y-1">
+                            <Progress value={progressPct} className="h-2" />
+                            <p className="text-xs text-muted-foreground text-right">{progressPct}% completado</p>
+                          </div>
+                        )}
                         {activeProtocol.duration && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
@@ -813,26 +870,91 @@ export default function ExpedienteDetail() {
                         {steps.length > 0 && (
                           <div className="space-y-2">
                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pasos del protocolo</p>
-                            {steps.map((step, idx) => (
-                              <div key={idx} className="flex items-start gap-2">
-                                <div className="flex-shrink-0 mt-0.5">
-                                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <span className="text-xs font-bold text-primary">{idx + 1}</span>
+                            {steps.map((step, idx) => {
+                              const stepProgress = protocolProgressData.find((p: any) => p.stepIndex === idx);
+                              const isCompleted = stepProgress?.completed || false;
+                              const isExpanded = expandedSteps[idx] || false;
+                              const edit = stepEdits[idx] || { comments: stepProgress?.comments || "", evidenceNote: stepProgress?.evidenceNote || "" };
+                              return (
+                                <div key={idx} className={`border rounded-md overflow-hidden ${isCompleted ? 'border-green-200 bg-green-50/50' : 'border-border'}`}>
+                                  <div className="flex items-center gap-2 p-2">
+                                    <Checkbox
+                                      checked={isCompleted}
+                                      onCheckedChange={(checked) => {
+                                        updateStepMutation.mutate({
+                                          stepIndex: idx,
+                                          completed: !!checked,
+                                          comments: edit.comments,
+                                          evidenceNote: edit.evidenceNote,
+                                        });
+                                      }}
+                                      disabled={updateStepMutation.isPending}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-xs font-medium ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>{step.title}</p>
+                                      {step.description && !isExpanded && (
+                                        <p className="text-xs text-muted-foreground truncate">{step.description}</p>
+                                      )}
+                                    </div>
+                                    <button
+                                      className="text-xs text-muted-foreground hover:text-foreground flex-shrink-0"
+                                      onClick={() => setExpandedSteps(prev => ({ ...prev, [idx]: !isExpanded }))}
+                                    >
+                                      {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                                    </button>
                                   </div>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium">{step.title}</p>
-                                  {step.description && (
-                                    <p className="text-xs text-muted-foreground">{step.description}</p>
+                                  {isExpanded && (
+                                    <div className="px-2 pb-2 space-y-2 border-t bg-muted/20">
+                                      {step.description && (
+                                        <p className="text-xs text-muted-foreground pt-2">{step.description}</p>
+                                      )}
+                                      {step.duration && (
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                          <Clock className="h-3 w-3" />{step.duration}
+                                        </span>
+                                      )}
+                                      <div className="space-y-1">
+                                        <p className="text-xs font-medium text-muted-foreground">Comentarios</p>
+                                        <Textarea
+                                          placeholder="Notas sobre este paso..."
+                                          className="text-xs min-h-[60px] resize-none"
+                                          value={edit.comments}
+                                          onChange={(e) => setStepEdits(prev => ({
+                                            ...prev,
+                                            [idx]: { ...prev[idx] || { evidenceNote: "" }, comments: e.target.value }
+                                          }))}
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <p className="text-xs font-medium text-muted-foreground">Evidencia (descripción o link)</p>
+                                        <Textarea
+                                          placeholder="Descripción de evidencia, enlace a foto/video..."
+                                          className="text-xs min-h-[50px] resize-none"
+                                          value={edit.evidenceNote}
+                                          onChange={(e) => setStepEdits(prev => ({
+                                            ...prev,
+                                            [idx]: { ...prev[idx] || { comments: "" }, evidenceNote: e.target.value }
+                                          }))}
+                                        />
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        className="w-full h-7 text-xs"
+                                        onClick={() => updateStepMutation.mutate({
+                                          stepIndex: idx,
+                                          completed: isCompleted,
+                                          comments: edit.comments,
+                                          evidenceNote: edit.evidenceNote,
+                                        })}
+                                        disabled={updateStepMutation.isPending}
+                                      >
+                                        Guardar
+                                      </Button>
+                                    </div>
                                   )}
-                                  {step.duration && (
-                                    <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                      <Clock className="h-3 w-3" />{step.duration}
-                                    </span>
-                                  )}
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>

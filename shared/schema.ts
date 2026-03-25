@@ -1268,3 +1268,23 @@ export const galleryItemsRelations = relations(galleryItems, ({ one }) => ({
     references: [galleryDays.id],
   }),
 }));
+
+// Dog Protocol Progress — tracks step completion, comments and evidence per dog/protocol
+export const dogProtocolProgress = pgTable("dog_protocol_progress", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dogId: varchar("dog_id").notNull().references(() => dogs.id, { onDelete: "cascade" }),
+  protocolId: varchar("protocol_id").notNull().references(() => protocols.id),
+  stepIndex: integer("step_index").notNull(),
+  completed: boolean("completed").default(false),
+  comments: text("comments"),
+  evidenceNote: text("evidence_note"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type DogProtocolProgress = typeof dogProtocolProgress.$inferSelect;
+export type InsertDogProtocolProgress = typeof dogProtocolProgress.$inferInsert;
+
+export const insertDogProtocolProgressSchema = createInsertSchema(dogProtocolProgress).omit({
+  id: true,
+  updatedAt: true,
+});

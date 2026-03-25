@@ -13,6 +13,8 @@ import {
   medicalRecords,
   trainingSessions,
   evidence,
+  dogProtocolProgress,
+  type DogProtocolProgress,
   teacherAssignments,
   internalNotes,
   servicePackages,
@@ -136,6 +138,10 @@ export interface IStorage {
   getActiveProtocols(): Promise<Protocol[]>;
   updateProtocol(id: string, protocol: Partial<InsertProtocol>): Promise<Protocol>;
   deleteProtocol(id: string): Promise<void>;
+
+  // Protocol progress operations
+  getDogProtocolProgress(dogId: string, protocolId: string): Promise<DogProtocolProgress[]>;
+  upsertStepProgress(dogId: string, protocolId: string, stepIndex: number, data: { completed?: boolean; comments?: string; evidenceNote?: string }): Promise<DogProtocolProgress>;
 
   // Appointment operations
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
@@ -561,6 +567,40 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProtocol(id: string): Promise<void> {
     await db.update(protocols).set({ isActive: false }).where(eq(protocols.id, id));
+  }
+
+  // Protocol progress operations
+  async getDogProtocolProgress(dogId: string, protocolId: string): Promise<DogProtocolProgress[]> {
+    return await db
+      .select()
+      .from(dogProtocolProgress)
+      .where(and(eq(dogProtocolProgress.dogId, dogId), eq(dogProtocolProgress.protocolId, protocolId)));
+  }
+
+  async upsertStepProgress(dogId: string, protocolId: string, stepIndex: number, data: { completed?: boolean; comments?: string; evidenceNote?: string }): Promise<DogProtocolProgress> {
+    const existing = await db
+      .select()
+      .from(dogProtocolProgress)
+      .where(and(
+        eq(dogProtocolProgress.dogId, dogId),
+        eq(dogProtocolProgress.protocolId, protocolId),
+        eq(dogProtocolProgress.stepIndex, stepIndex)
+      ));
+
+    if (existing.length > 0) {
+      const [updated] = await db
+        .update(dogProtocolProgress)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(dogProtocolProgress.id, existing[0].id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(dogProtocolProgress)
+        .values({ dogId, protocolId, stepIndex, ...data })
+        .returning();
+      return created;
+    }
   }
 
   // Appointment operations
