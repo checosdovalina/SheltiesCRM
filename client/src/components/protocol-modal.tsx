@@ -78,7 +78,7 @@ export function ProtocolModal({ isOpen, onClose, protocol }: ProtocolModalProps)
   }, [protocol, form]);
 
   const createMutation = useMutation({
-    mutationFn: (data: FormData) => apiRequest("/api/protocols", "POST", data),
+    mutationFn: (data: FormData) => apiRequest("POST", "/api/protocols", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/protocols"] });
       toast({
@@ -97,7 +97,7 @@ export function ProtocolModal({ isOpen, onClose, protocol }: ProtocolModalProps)
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: FormData) => apiRequest(`/api/protocols/${protocol?.id}`, "PUT", data),
+    mutationFn: (data: FormData) => apiRequest("PUT", `/api/protocols/${protocol?.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/protocols"] });
       toast({
@@ -129,7 +129,9 @@ export function ProtocolModal({ isOpen, onClose, protocol }: ProtocolModalProps)
   };
 
   const addStep = () => {
-    setSteps([...steps, { title: "", description: "", duration: "" }]);
+    const newSteps = [...steps, { title: "", description: "", duration: "" }];
+    setSteps(newSteps);
+    form.setValue("steps", newSteps);
   };
 
   const removeStep = (index: number) => {
