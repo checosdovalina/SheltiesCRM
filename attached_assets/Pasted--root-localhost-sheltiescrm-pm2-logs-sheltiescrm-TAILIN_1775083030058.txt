@@ -1,0 +1,35 @@
+[root@localhost sheltiescrm]# pm2 logs sheltiescrm
+[TAILING] Tailing last 15 lines for [sheltiescrm] process (change the value with --lines option)
+/root/.pm2/logs/sheltiescrm-error.log last 15 lines:
+4|shelties |   "severity": "ERROR",
+4|shelties |   "code": "22P02",
+4|shelties |   "file": "numutils.c",
+4|shelties |   "line": "320",
+4|shelties |   "routine": "pg_strtoint32"
+4|shelties | }
+4|shelties | Error creating protocol: {
+4|shelties |   "length": 110,
+4|shelties |   "name": "error",
+4|shelties |   "severity": "ERROR",
+4|shelties |   "code": "22P02",
+4|shelties |   "file": "numutils.c",
+4|shelties |   "line": "320",
+4|shelties |   "routine": "pg_strtoint32"
+4|shelties | }
+
+/root/.pm2/logs/sheltiescrm-out.log last 15 lines:
+4|shelties | > NODE_ENV=production node dist/index.js
+4|shelties | 
+4|shelties | 10:34:10 PM [express] serving on port 5000
+4|shelties | 10:34:22 PM [express] GET /api/auth/user 401 in 2ms :: {"message":"Unauthorized"}
+4|shelties | 10:34:23 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+4|shelties | 10:34:24 PM [express] GET /api/auth/admin-exists 200 in 7ms :: {"exists":true}
+4|shelties | 10:34:32 PM [express] POST /api/auth/login 200 in 259ms :: {"id":"b5052387-f280-4a00-9c3d-651ebc1963a…
+4|shelties | 10:34:33 PM [express] GET /api/auth/user 200 in 5ms :: {"id":"b5052387-f280-4a00-9c3d-651ebc1963ad","…
+4|shelties | 10:34:33 PM [express] GET /api/dashboard/metrics 304 in 10ms :: {"appointmentsToday":0,"monthlyRevenu…
+4|shelties | 10:34:33 PM [express] GET /api/appointments 304 in 5ms :: [{"id":"2385e007-3bb6-46f2-b9a2-3888c40519f…
+4|shelties | 10:34:33 PM [express] GET /api/reports/financial 304 in 5ms :: {"totalIncome":"0.00","totalExpenses":…
+4|shelties | 10:34:40 PM [express] GET /api/protocols 304 in 5ms :: []
+4|shelties | 10:35:31 PM [express] POST /api/protocols 400 in 18ms :: {"message":"Failed to create protocol","deta…
+4|shelties | 10:35:37 PM [express] POST /api/protocols 400 in 11ms :: {"message":"Failed to create protocol","deta…
+4|shelties | 10:35:44 PM [express] POST /api/protocols 400 in 11ms :: {"message":"Failed to create protocol","deta…
