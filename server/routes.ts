@@ -449,9 +449,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const protocolData = insertProtocolSchema.parse(req.body);
       const protocol = await storage.createProtocol(protocolData);
       res.json(protocol);
-    } catch (error) {
-      console.error("Error creating protocol:", error);
-      res.status(400).json({ message: "Failed to create protocol" });
+    } catch (error: any) {
+      console.error("Error creating protocol:", JSON.stringify(error?.issues ?? error, null, 2));
+      res.status(400).json({ message: "Failed to create protocol", details: error?.issues ?? String(error) });
     }
   });
 
@@ -460,9 +460,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const protocolData = insertProtocolSchema.partial().parse(req.body);
       const protocol = await storage.updateProtocol(req.params.id, protocolData);
       res.json(protocol);
-    } catch (error) {
-      console.error("Error updating protocol:", error);
-      res.status(400).json({ message: "Failed to update protocol" });
+    } catch (error: any) {
+      console.error("Error updating protocol:", JSON.stringify(error?.issues ?? error, null, 2));
+      res.status(400).json({ message: "Failed to update protocol", details: error?.issues ?? String(error) });
     }
   });
 
