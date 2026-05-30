@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Image, Video, Calendar } from "lucide-react";
 import type { GalleryDay, GalleryItem } from "@shared/schema";
 import logoSheltiesSmall from "@assets/logo shelties_1756234743860.png";
+import { ShareButton } from "@/components/share-button";
 
 type GalleryDayWithItems = GalleryDay & { items: GalleryItem[] };
 
@@ -65,6 +66,12 @@ export default function PublicGallery() {
               {data.date}
             </div>
           </div>
+          <ShareButton
+            url={window.location.href}
+            title={data.title}
+            text={`🐕 ${data.title} - Instituto Shelties`}
+            label="Compartir"
+          />
         </div>
       </header>
 

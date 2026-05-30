@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Share2, Image, Video, Upload, Copy, ExternalLink, Calendar, Eye } from "lucide-react";
+import { Plus, Trash2, Image, Video, Upload, ExternalLink, Calendar, Eye } from "lucide-react";
 import type { GalleryDay, GalleryItem } from "@shared/schema";
+import { ShareButton } from "@/components/share-button";
 
 function generateSlug() {
   return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
@@ -316,12 +317,6 @@ function GalleryDayDetail({
     }
   };
 
-  const copyShareLink = () => {
-    const url = `${window.location.origin}/galeria/${day.shareSlug}`;
-    navigator.clipboard.writeText(url);
-    toast({ title: "Enlace copiado", description: url });
-  };
-
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
@@ -333,9 +328,12 @@ function GalleryDayDetail({
             {day.date}
           </div>
         </div>
-        <Button variant="outline" onClick={copyShareLink}>
-          <Share2 className="w-4 h-4 mr-2" /> Compartir
-        </Button>
+        <ShareButton
+          url={`${window.location.origin}/galeria/${day.shareSlug}`}
+          title={day.title}
+          text={`🐕 ${day.title} - Instituto Shelties`}
+          label="Compartir"
+        />
         <Button variant="outline" onClick={() => window.open(`/galeria/${day.shareSlug}`, "_blank")}>
           <ExternalLink className="w-4 h-4 mr-2" /> Ver público
         </Button>

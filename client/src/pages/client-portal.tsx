@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Progress } from "@/components/ui/progress";
+import { ShareButton } from "@/components/share-button";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -798,17 +799,26 @@ export default function ClientPortal() {
                   ) : (
                     <div className="space-y-4">
                       {/* Protocol header */}
-                      <div className="space-y-1">
-                        <h3 className="font-semibold">{protocolProgress.protocol.name}</h3>
-                        {protocolProgress.protocol.objectives && (
-                          <p className="text-sm text-muted-foreground">{protocolProgress.protocol.objectives}</p>
-                        )}
-                        {protocolProgress.protocol.duration && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {protocolProgress.protocol.duration}
-                          </p>
-                        )}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1 flex-1">
+                          <h3 className="font-semibold">{protocolProgress.protocol.name}</h3>
+                          {protocolProgress.protocol.objectives && (
+                            <p className="text-sm text-muted-foreground">{protocolProgress.protocol.objectives}</p>
+                          )}
+                          {protocolProgress.protocol.duration && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {protocolProgress.protocol.duration}
+                            </p>
+                          )}
+                        </div>
+                        <ShareButton
+                          url={window.location.href}
+                          title={`Progreso de entrenamiento - Instituto Shelties`}
+                          text={`🐕 ¡Mi perro ha completado ${protocolProgress.progress?.filter((p: any) => p.completed).length || 0} de ${protocolProgress.steps?.length || 0} pasos del protocolo "${protocolProgress.protocol.name}" en Instituto Shelties!`}
+                          size="sm"
+                          label="Compartir"
+                        />
                       </div>
 
                       {/* Overall progress */}
