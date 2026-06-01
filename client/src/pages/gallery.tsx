@@ -161,7 +161,6 @@ export default function Gallery() {
                   deleteDayMutation.mutate(day.id);
                 }
               }}
-              onCopyLink={() => copyShareLink(day.shareSlug)}
             />
           ))}
         </div>
@@ -175,13 +174,11 @@ function GalleryDayCard({
   isAdminOrTeacher,
   onView,
   onDelete,
-  onCopyLink,
 }: {
   day: GalleryDay;
   isAdminOrTeacher: boolean;
   onView: () => void;
   onDelete: () => void;
-  onCopyLink: () => void;
 }) {
   const { data: items = [] } = useQuery<GalleryItem[]>({
     queryKey: ["/api/gallery-days", day.id, "items"],
@@ -218,9 +215,13 @@ function GalleryDayCard({
           <Button variant="outline" size="sm" className="flex-1" onClick={onView}>
             <Eye className="w-3 h-3 mr-1" /> Ver
           </Button>
-          <Button variant="outline" size="sm" onClick={onCopyLink} title="Copiar enlace público">
-            <Share2 className="w-3 h-3" />
-          </Button>
+          <ShareButton
+            url={`${window.location.origin}/galeria/${day.shareSlug}`}
+            title={day.title}
+            text={`🐕 ${day.title} - Instituto Shelties`}
+            size="icon"
+            className="h-8 w-8"
+          />
           {isAdminOrTeacher && (
             <Button variant="outline" size="sm" onClick={onDelete} className="text-destructive hover:text-destructive" title="Eliminar">
               <Trash2 className="w-3 h-3" />
