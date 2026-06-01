@@ -53,7 +53,7 @@ export function ShareButton({
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text || title)}&url=${encodeURIComponent(url)}`;
 
   return (
-    <div className={`relative inline-block ${className}`}>
+    <div className={`relative inline-flex items-center ${className}`}>
       <Button variant={variant} size={size} onClick={handleShare}>
         <Share2 className={`w-4 h-4 ${size !== "icon" ? "mr-2" : ""}`} />
         {size !== "icon" && label}
