@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Image, Video, Upload, ExternalLink, Calendar, Eye } from "lucide-react";
+import { Plus, Trash2, Share2, Image, Video, Upload, ExternalLink, Calendar, Eye } from "lucide-react";
 import type { GalleryDay, GalleryItem } from "@shared/schema";
 import { ShareButton } from "@/components/share-button";
 
