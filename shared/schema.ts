@@ -241,7 +241,18 @@ export const dogs = pgTable("dogs", {
 export type Dog = typeof dogs.$inferSelect;
 export type InsertDog = typeof dogs.$inferInsert;
 
-export const insertDogSchema = createInsertSchema(dogs).omit({
+export const insertDogSchema = createInsertSchema(dogs).extend({
+  clientId: z.string().trim().min(1, "Selecciona un cliente."),
+  petTypeId: z.string().trim().min(1, "Selecciona el tipo de mascota."),
+  name: z.string().trim().min(1, "Escribe el nombre de la mascota."),
+  weight: z.string().trim()
+    .refine(
+      (value) => value === "" || /^\d+(\.\d+)?$/.test(value),
+      "Ingresa un peso válido en kg, por ejemplo 25.5.",
+    )
+    .nullable().optional()
+    .transform((value) => value === "" ? null : value),
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,

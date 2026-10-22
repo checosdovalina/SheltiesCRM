@@ -296,17 +296,27 @@ export default function DogModal({ open, onOpenChange, clientId, clientName, dog
       }
       toast({
         title: "Error",
-        description: dog ? "No se pudo actualizar la mascota." : "No se pudo registrar la mascota.",
+        description: (() => {
+          // apiRequest wraps the server's JSON response with its HTTP status.
+          try {
+            const body = JSON.parse(
+              (error instanceof Error ? error.message : "").replace(/^\d+:\s*/, ""),
+            );
+            if (typeof body.message === "string") return body.message;
+          } catch {
+            // Network failures don't have a JSON response.
+          }
+          return dog ? "No se pudo actualizar la mascota. Intenta de nuevo." : "No se pudo registrar la mascota. Intenta de nuevo.";
+        })(),
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = useCallback((_data: z.infer<typeof insertDogSchema>) => {
-    // Use form.getValues() to include values from all tabs, even unvisited ones
-    // (Radix Tabs lazily mounts content, so unvisited tab fields may not be registered)
-    createDogMutation.mutate(form.getValues() as z.infer<typeof insertDogSchema>);
-  }, [createDogMutation, form]);
+  const onSubmit = useCallback((data: z.infer<typeof insertDogSchema>) => {
+    // Submit the resolver's validated and normalized values, including tab defaults.
+    createDogMutation.mutate(data);
+  }, [createDogMutation]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

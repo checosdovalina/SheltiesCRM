@@ -326,16 +326,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dog routes
   app.post('/api/dogs', isAuthenticated, async (req, res) => {
     try {
-      console.log("[DEBUG] Raw request body:", JSON.stringify(req.body, null, 2));
       const dogData = insertDogSchema.parse(req.body);
-      console.log("[DEBUG] Creating dog with data:", JSON.stringify(dogData, null, 2));
-      console.log("[DEBUG] ImageUrl from request:", dogData.imageUrl);
       const dog = await storage.createDog(dogData);
-      console.log("[DEBUG] Created dog result:", JSON.stringify(dog, null, 2));
       res.json(dog);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues.map((issue) => issue.message).join(" ") });
+      }
       console.error("Error creating dog:", error);
-      res.status(400).json({ message: "Failed to create dog" });
+      res.status(500).json({ message: "No se pudo registrar la mascota. Contacta al administrador para revisar el registro del servidor." });
     }
   });
 
@@ -383,8 +382,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dog = await storage.updateDog(req.params.id, dogData);
       res.json(dog);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues.map((issue) => issue.message).join(" ") });
+      }
       console.error("Error updating dog:", error);
-      res.status(400).json({ message: "Failed to update dog" });
+      res.status(500).json({ message: "No se pudo actualizar la mascota. Contacta al administrador para revisar el registro del servidor." });
     }
   });
 
@@ -722,18 +724,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating pet type:", error);
       res.status(400).json({ message: "Failed to create pet type" });
-    }
-  });
-
-  // Dogs routes
-  app.post('/api/dogs', isAuthenticated, async (req, res) => {
-    try {
-      const dogData = insertDogSchema.parse(req.body);
-      const dog = await storage.createDog(dogData);
-      res.json(dog);
-    } catch (error) {
-      console.error("Error creating dog:", error);
-      res.status(400).json({ message: "Failed to create dog" });
     }
   });
 
